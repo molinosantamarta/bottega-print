@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MVP Tiles · ePOS‑Print (Epson)</title>
+  <style>
+    :root{--bg:#0f1115;--panel:#171a21;--ink:#e6e8ef;--muted:#9aa3b2;--ok:#19c37d;--warn:#ffb020;--err:#ff5d5d;--card:#131720;--border:#2b3144}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1000px 600px at 10% -10%,#1b2130 0%,transparent 60%),var(--bg);color:var(--ink);font:14px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+    header{position:sticky;top:0;background:rgba(15,17,21,.9);backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--border);z-index:3}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 18px}
+    h1{margin:0;font-size:18px;letter-spacing:.3px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+    @media (max-width:1000px){.grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:680px){.grid{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,#171a21,#121621);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column}
+    .card h2{margin:0;padding:14px 14px 6px 14px;font-size:15px;color:#dfe6f6}
+    .card .sub{color:var(--muted);padding:0 14px 10px 14px;font-size:12px}
+    .card .body{padding:14px;display:flex;flex-direction:column;gap:10px}
+    label{display:block;margin:.3rem 0;color:var(--muted);font-size:12px}
+    input[type=text],input[type=number],textarea{width:100%;background:#0f1219;border:1px solid #2a2f3e;border-radius:10px;padding:10px 12px;color:var(--ink)}
+    textarea{min-height:80px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center}
+    .row>div{flex:1}
+    .btn{appearance:none;border:1px solid #2a2f3e;background:#222735;color:#e9eefb;border-radius:12px;padding:10px 14px;cursor:pointer}
+    .btn:hover{filter:brightness(1.07)}
+    .btn:active{transform:translateY(1px)}
+    .btn.ok{border-color:#135a3e;background:#0f2a1f;color:#c4f7df}
+    .btn.warn{border-color:#5a4b13;background:#2a230f;color:#ffe7b3}
+    .btn.err{border-color:#5a1313;background:#2a0f0f;color:#ffc7c7}
+    .log{height:160px;overflow:auto;background:#0b0e14;border:1px solid #2b3040;border-radius:10px;padding:10px;font-size:12px;color:#c6d3f5}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px dashed #32405a;color:#a8c5ff;background:#0c1220;margin-right:8px}
+    .badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#121722;border:1px solid #2a3144;color:#a7b2cc;font-size:12px}
+    .receipt{background:#fff;color:#111;border-radius:10px;padding:14px;font:13px/1.35 ui-monospace, menlo, monospace; width:300px; margin:10px 0; box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .receipt h3{margin:0 0 6px 0;font-size:14px;text-align:center}
+    .receipt .hr{border-top:1px dashed #888;margin:8px 0}
+    table.rcpt{width:100%;border-collapse:collapse;font-size:12px}
+    table.rcpt td{padding:2px 0}
+    table.rcpt td:last-child{text-align:right}
+    footer{opacity:.7;text-align:center;padding:22px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>🧪 MVP Tiles · ePOS‑Print → Epson TM‑m30II</h1>
+      <div class="row" style="margin-top:8px">
+        <div class="pill">Rete LAN (HTTP ePOS‑Print)</div>
+        <div class="pill">Deploy: GitHub Pages</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="max-width:340px;width:100%">
+          <label>IP stampante (ePOS‑Print)</label>
+          <input id="printerIP" type="text" value="192.168.0.192">
+        </div>
+        <button class="btn ok" id="btnSelfTest">Stampa test</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- BOTTEGA ORDINI -->
+      <section class="card" data-app="bottega">
+        <h2>🛒 Bottega · Ordini</h2>
+        <div class="sub">Polling JSON → stampa scontrino ordini online</div>
+        <div class="body">
+          <label>URL JSON ordini (ultimo ordine / ordine da stampare)</label>
+          <input type="text" class="url" placeholder="https://tuo-dominio/ordini/latest.json">
+          <div class="row">
+            <input type="number" class="secs" min="2" value="10" style="max-width:120px"> 
+            <button class="btn warn start">Avvia polling</button>
+            <button class="btn"  data-demo="bottega">Dati demo</button>
+            <button class="btn ok print">Stampa ora</button>
+          </div>
+          <div class="badge">Anteprima</div>
+          <div class="receipt preview"></div>
+        </div>
+      </section>
+
+      <!-- Ocapì / AVICOLI MACELLO -->
+      <section class="card" data-app="ocapi">
+        <h2>🦆 Ocapì · Avicoli Macello</h2>
+        <div class="sub">Turni macellazione → riepilogo giornaliero</div>
+        <div class="body">
+          <label>URL JSON riepilogo (data odierna)</label>
+          <input type="text" class="url" placeholder="https://tuo-dominio/avicoli/today.json">
+          <div class="row">
+            <input type="number" class="secs" min="2" value="30" style="max-width:120px">
+            <button class="btn warn start">Avvia polling</button>
+            <button class="btn"  data-demo="ocapi">Dati demo</button>
+            <button class="btn ok print">Stampa ora</button>
+          </div>
+          <div class="badge">Anteprima</div>
+          <div class="receipt preview"></div>
+        </div>
+      </section>
+
+      <!-- MASTER / DASHBOARD -->
+      <section class="card" data-app="master">
+        <h2>📟 Master · Dashboard</h2>
+        <div class="sub">Ticket operative / pick‑list di giornata</div>
+        <div class="body">
+          <label>URL JSON pick‑list</label>
+          <input type="text" class="url" placeholder="https://tuo-dominio/master/picklist.json">
+          <div class="row">
+            <input type="number" class="secs" min="2" value="20" style="max-width:120px">
+            <button class="btn warn start">Avvia polling</button>
+            <button class="btn"  data-demo="master">Dati demo</button>
+            <button class="btn ok print">Stampa ora</button>
+          </div>
+          <div class="badge">Anteprima</div>
+          <div class="receipt preview"></div>
+        </div>
+      </section>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="badge">Log</div>
+      <div class="log" id="log"></div>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    <small>MVP solo‑rete: ePOS‑Print (HTTP) verso TM‑m30II. Richiede abilitazione ePOS sulla stampante e che la pagina possa eseguire fetch sugli URL JSON (CORS). I dati demo non fanno fetch.</small>
+  </footer>
+
+<script>
+// ---------- Helpers ----------
+const $  = (sel,root=document)=> root.querySelector(sel);
+const $$ = (sel,root=document)=> Array.from(root.querySelectorAll(sel));
+const log = (m, level="info")=>{
+  const box = $("#log"); const time = new Date().toLocaleTimeString();
+  const color = level==="error"?"#ffc7c7": level==="warn"?"#ffe7b3":"#c6d3f5";
+  box.innerText += `[${time}] ${m}\n`; box.scrollTop = box.scrollHeight; box.style.color = color;
+};
+const fmt = n => (Math.round(n*100)/100).toFixed(2);
+
+function buildPreview({header, lines=[], footer}){
+  const total = lines.reduce((s,l)=> s + (l.qty||0)*(l.price||0), 0);
+  return `\n<div class="receipt">\n  <h3>${header||""}</h3>\n  <div class="hr"></div>\n  <table class="rcpt">\n    ${lines.map(l=>`<tr><td>${(l.name||"")}${l.qty>1?` <small>x${l.qty}</small>`:""}</td><td>€ ${fmt((l.qty||0)*(l.price||0))}</td></tr>`).join("")}\n  </table>\n  <div class="hr"></div>\n  <table class="rcpt">\n    <tr><td><b>TOTALE</b></td><td><b>€ ${fmt(total)}</b></td></tr>\n  </table>\n  <div class="hr"></div>\n  <div style="text-align:center">${footer||""}</div>\n</div>`;
+}
+
+function escapeHtml(s){return (s||"").replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function padSpaces(w, used){return " ".repeat(Math.max(0, w-used))}
+
+function toEPOSXml(payload){
+  const total = payload.lines.reduce((s,l)=> s + (l.qty||0)*(l.price||0), 0);
+  const body = [
+    `<text align="center">${escapeHtml(payload.header||"")}\n</text>`,
+    `<text>------------------------------\n</text>`,
+    ...payload.lines.map(l=>{
+      const t = fmt((l.qty||0)*(l.price||0));
+      const nm = escapeHtml(l.name||"");
+      const qty = l.qty>1?` x${l.qty}`:"";
+      const used = nm.length + qty.length + t.length;
+      return `<text>${nm}${qty}${padSpaces(30, used)}${t}\n</text>`;
+    }),
+    `<text>------------------------------\n</text>`,
+    `<text><bold>true</bold>TOTALE${padSpaces(30, "TOTALE".length + ("€ "+fmt(total)).length)}€ ${fmt(total)}\n</text>`,
+    `<text>\n${escapeHtml(payload.footer||"")}\n</text>`,
+    `<cut type="feed" />`
+  ].join("");
+  return `<?xml version="1.0" encoding="utf-8"?>\n<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">${body}</epos-print>`;
+}
+
+async function eposPrint(ip, payload){
+  const url = `http://${ip}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=60000`;
+  const xml = toEPOSXml(payload);
+  const res = await fetch(url, { method:"POST", headers:{"Content-Type":"text/xml; charset=utf-8"}, body: xml });
+  const txt = await res.text();
+  log(`ePOS → ${ip}: ${txt.substring(0,200)}…`);
+}
+
+// ---------- Demo payloads ----------
+const demos = {
+  bottega: {
+    id: 101,
+    header: "Bottega · Ordine #101",
+    lines: [
+      { name: "Caffè", qty: 1, price: 1.20 },
+      { name: "Brioches", qty: 2, price: 1.80 },
+      { name: "Succo", qty: 1, price: 2.50 }
+    ],
+    footer: "Grazie! #Molino"
+  },
+  ocapi: {
+    id: 202,
+    header: "Ocapì · Turno odierno",
+    lines: [
+      { name: "Quaglie", qty: 24, price: 0.00 },
+      { name: "Anatre", qty: 8,  price: 0.00 },
+      { name: "Oche",   qty: 2,  price: 0.00 }
+    ],
+    footer: "Check liste macello"
+  },
+  master: {
+    id: 303,
+    header: "Master · Pick‑List",
+    lines: [
+      { name: "Confezioni regalo", qty: 6, price: 0.00 },
+      { name: "Vaschette gelato",  qty: 12, price: 0.00 },
+      { name: "Taglieri salati",   qty: 5, price: 0.00 }
+    ],
+    footer: "Operativo di giornata"
+  }
+};
+
+// ---------- Tile controller ----------
+function bindTile(section){
+  const app   = section.dataset.app;
+  const urlIn = $(".url", section);
+  const secs  = $(".secs", section);
+  const start = $(".start", section);
+  const printBtn = $(".print", section);
+  const preview = $(".preview", section);
+  const demoBtn = $("button[data-demo]", section);
+
+  let timer = null; let lastId = 0;
+
+  // initial preview
+  preview.innerHTML = buildPreview(demos[app]);
+
+  demoBtn?.addEventListener("click", ()=>{
+    preview.innerHTML = buildPreview(demos[app]);
+  });
+
+  async function fetchPayload(){
+    const u = urlIn.value.trim();
+    if(!u) throw new Error("URL JSON non impostato");
+    const res = await fetch(u, {cache:"no-store"});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const j = await res.json();
+    // Normalizza campi comuni
+    return {
+      id: j.id ?? 0,
+      header: j.header ?? (j.title||app),
+      lines: j.lines || j.items || [],
+      footer: j.footer || ""
+    };
+  }
+
+  async function doPrint(payload){
+    const ip = $("#printerIP").value.trim();
+    if(!ip) throw new Error("IP stampante non impostato");
+    await eposPrint(ip, payload);
+  }
+
+  printBtn.addEventListener("click", async()=>{
+    try{
+      // se c'è un URL usa quello, altrimenti demo
+      const payload = urlIn.value.trim()? await fetchPayload() : demos[app];
+      preview.innerHTML = buildPreview(payload);
+      await doPrint(payload);
+      log(`${app}: stampa completata`);
+    }catch(err){ log(`${app}: errore stampa → ${err.message}`, "error"); }
+  });
+
+  function togglePolling(){
+    if(timer){
+      clearInterval(timer); timer=null; start.innerText = "Avvia polling"; log(`${app}: polling fermato`);
+    } else {
+      const every = Math.max(2, parseInt(secs.value||"10",10))*1000;
+      timer = setInterval(async()=>{
+        try{
+          const payload = await fetchPayload();
+          if(payload.id !== lastId){
+            lastId = payload.id;
+            preview.innerHTML = buildPreview(payload);
+            await doPrint(payload);
+            log(`${app}: nuovo id ${payload.id} → stampato`);
+          }
+        }catch(err){ log(`${app}: polling errore → ${err.message}`, "warn"); }
+      }, every);
+      start.innerText = "Ferma polling"; log(`${app}: polling ogni ${secs.value||10}s`);
+    }
+  }
+
+  start.addEventListener("click", togglePolling);
+}
+
+$$('.card').forEach(bindTile);
+
+// ---------- Global test ----------
+$('#btnSelfTest').addEventListener('click', async()=>{
+  try{
+    const payload = { header: 'Self‑Test · Epson ePOS', lines:[{name:'Riga di prova', qty:1, price:0}], footer: 'OK' };
+    await eposPrint($('#printerIP').value.trim(), payload);
+    log('Self‑Test inviato');
+  }catch(err){ log('Self‑Test errore → '+err.message, 'error'); }
+});
+</script>
+</body>
+</html>
