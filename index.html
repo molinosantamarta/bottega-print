@@ -3,130 +3,199 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Bottega Print — MVP UI</title>
+<title>Bottega Print – MVP UI</title>
 <style>
-:root{
-  --brand:#770505;
-  --ink:#111;
-  --paper:#fff;
-  --ui:#e8e8ec;
-  --ui-2:#f6f6f8;
-  --ticket-w:78mm;  /* larghezza fisica reale */
-  --radius:18px;
-  --shadow:0 10px 24px rgba(0,0,0,.18);
-  --fs-title:5.4mm;
-  --fs-body:3.8mm;
-}
+  :root{
+    --bg:#7a0a0a; --panel:#ffffff; --ink:#111; --muted:#666; --pill:#ffe066; --ok:#22c55e; --warn:#e11d48;
+    --radius:18px; --gap:14px; --side:340px; --ticket-w:360px; --ticket-h:max(560px, calc(100vh - 180px));
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg); font:15px/1.25 -apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif; color:#fff}
+  .wrap{display:grid; grid-template-columns: 1fr 2.5fr; gap:var(--gap); padding:16px; height:100%;}
+  @media (max-width:1100px){ .wrap{grid-template-columns: 1fr; grid-auto-rows:auto;}}
 
-/* ===== LAYOUT ===== */
-html,body{height:100%;margin:0}
-body{
-  background:var(--brand);
-  color:#fff;
-  font:16px/1.35 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;
-  display:grid;
-  grid-template-columns: minmax(280px, 540px) minmax(520px, 1fr);
-  gap:14px; padding:16px;
-}
-@media (max-width:1100px){ body{ grid-template-columns: 1fr; } }
+  .panel{background:var(--panel); color:var(--ink); border-radius:var(--radius); padding:14px; box-shadow:0 12px 24px rgba(0,0,0,.25); min-height:0}
 
-/* ===== PREVIEW COLUMN ===== */
-.preview-wrap{
-  position:sticky; top:16px; align-self:start;
-  background:transparent; height:calc(100vh - 32px);
-  display:flex; align-items:center; justify-content:center;
-}
-.preview-card{
-  background:#fff; color:#000;
-  border-radius:14px; box-shadow:var(--shadow);
-  padding:0; display:flex; justify-content:center; align-items:center;
-  width:50%; height:100%;
-  transform-origin: top center;
-}
-.preview-card.scaled{ transform:scale(0.5); } /* riduzione del 50% */
-.ticket{
-  width:var(--ticket-w); background:var(--paper); color:var(--ink);
-  display:flex; flex-direction:column; height:100%;
-  max-height:100%; overflow:hidden; border-radius:6px;
-}
-.tk-in{ flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:2mm 4mm 2mm; }
-.tk-body{ flex:1; overflow:auto; font-size:var(--fs-body); text-align:center; }
-.tk-body p, .tk-body li{ margin:2mm 0; }
-.tk-head{ border-bottom:0.26mm solid #ddd; padding-bottom:2mm; }
-.tk-title{ font-size:var(--fs-title); font-weight:900; margin:0; }
-.tk-band{ margin-top:2mm; background:#000; color:#fff; padding:2mm; border-radius:1mm; display:flex; justify-content:space-between; align-items:center; }
-.tk-footer{ margin-top:2mm; text-align:center; }
-.tk-thanks{ font-family:Georgia,serif; font-weight:700; font-size:4mm; }
-.tk-barcode{ height:12mm; width:86%; margin:2mm auto 0; background:repeating-linear-gradient(90deg,#000 0 1.2mm,transparent 1.2mm 2.2mm); border:1px solid #000; }
+  /* SINISTRA */
+  .left{display:flex; flex-direction:column; gap:var(--gap);}
+  .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .kpi .card{background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px}
+  .kpi .h{font-weight:800; font-size:13px; color:var(--muted)}
+  .kpi .v{font-weight:900; font-size:28px}
 
-/* ===== RIGHT PANEL ===== */
-.panel{ background:#fff; color:#111; border-radius:14px; box-shadow:var(--shadow); display:flex; flex-direction:column; }
-.toolbar{ display:flex; align-items:center; gap:8px; padding:12px; border-bottom:1px solid var(--ui); }
-.btn{ border:none; border-radius:999px; padding:10px 14px; font-weight:800; cursor:pointer; background:#f2f2f4; }
-.btn.primary{ background:var(--brand); color:#fff; }
-.kpi{ display:grid; grid-template-columns: repeat(3, minmax(140px,1fr)); gap:10px; padding:10px; }
-.kpi .card{ background:var(--ui-2); border:1px solid var(--ui); border-radius:12px; padding:12px; }
-.searchbar{ padding:8px 12px; }
-.searchbar .field{ width:100%; padding:12px 14px; border-radius:999px; border:1px solid var(--ui); font:inherit; }
-.list{ flex:1; overflow:auto; padding:10px; }
-.order{ background:#fff; border:1px solid var(--ui); border-radius:14px; padding:10px; margin:6px 0; display:flex; align-items:center; gap:10px; cursor:pointer; }
-.badge{ min-width:42px; height:30px; display:grid; place-items:center; border-radius:999px; background:#ffd60a; font-weight:900; }
-.order.active{ outline:2px solid var(--brand); }
+  .search{display:flex; gap:10px}
+  .search input{flex:1; border-radius:999px; padding:12px 14px; border:1px solid #ddd; font-size:15px}
+  .btn{border:none; border-radius:999px; padding:12px 16px; font-weight:800; cursor:pointer}
+  .btn.dim{background:#111; color:#fff}
+  .btn.primary{background:#111; color:#fff}
+  .btn.print{background:var(--ok); color:#fff}
 
-/* stampa */
-@media print{
-  body{ display:block; padding:0; background:#fff; }
-  .panel, .toolbar{ display:none !important; }
-  .preview-card{ box-shadow:none; border-radius:0; width:100%; transform:none; }
-}
+  .list{min-height:0; overflow:auto; border:1px solid #eee; border-radius:14px; background:#fff}
+  .row{display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #f1f1f1}
+  .row:last-child{border-bottom:none}
+  .badge{min-width:42px; height:28px; border-radius:999px; background:var(--pill); display:flex; align-items:center; justify-content:center; font-weight:900}
+  .meta{flex:1; min-width:0}
+  .name{font-weight:800}
+  .sub{font-size:12px; color:var(--muted)}
+  .row .btn{padding:8px 12px}
+
+  /* DESTRA */
+  .right{display:flex; flex-direction:column; gap:var(--gap); min-height:0}
+  .ticket-wrap{display:flex; align-items:flex-start; justify-content:center; padding:12px; background:#f7f7f8; border:1px solid #eee; border-radius:14px; min-height:0; flex:1}
+  .ticket{width:var(--ticket-w); max-width:100%; height:var(--ticket-h); background:#fff; color:#000; border:1px solid #ddd; border-radius:8px; overflow:auto; padding:16px}
+  .t-head{border-bottom:1px solid #111; padding-bottom:8px; margin-bottom:10px}
+  .t-title{font-weight:900; font-size:22px}
+  .t-sub{display:flex; gap:8px; align-items:center; color:#111}
+  .t-band{margin:12px 0; padding:10px; background:#111; color:#fff; display:flex; align-items:center; justify-content:space-between; font-weight:800}
+  .t-items{margin:20px 0}
+  .t-items li{margin:8px 0}
+  .t-foot{border-top:1px solid #111; margin-top:14px; padding-top:10px; text-align:center; font-style:italic}
+
+  .controls{display:flex; gap:10px; justify-content:center}
+  .controls .btn{padding:12px 18px}
+
+  .empty{padding:18px; text-align:center; color:#444}
 </style>
 </head>
 <body>
-
-  <!-- COLONNA PREVIEW -->
-  <div class="preview-wrap">
-    <div class="preview-card scaled">
-      <article class="ticket">
-        <div class="tk-in">
-          <header class="tk-head">
-            <h1 class="tk-title">Mario Rossi</h1>
-            <div class="tk-band"><div>🍖 CARNE</div><div>ORDINE #432</div></div>
-          </header>
-
-          <main class="tk-body">
-            <p>3 kg scamone</p>
-            <p>1 cappone a pezzi</p>
-            <p>½ anatra a pezzi</p>
-            <p>3 panettoni Filippi</p>
-          </main>
-
-          <footer class="tk-footer">
-            <div class="tk-thanks">Grazie e Buone Feste!</div>
-            <div class="tk-barcode"></div>
-          </footer>
-        </div>
-      </article>
-    </div>
-  </div>
-
-  <!-- COLONNA GESTIONALE -->
-  <section class="panel">
-    <div class="toolbar">
-      <button class="btn">◀︎</button>
-      <button class="btn">▶︎</button>
-      <button class="btn primary">Stampa</button>
-    </div>
+<div class="wrap">
+  <section class="left panel">
     <div class="kpi">
-      <div class="card"><b>195</b><div>Totale avicoli</div></div>
-      <div class="card"><b>9</b><div>Ordini di oggi</div></div>
-      <div class="card"><b>3</b><div>Da stampare</div></div>
+      <div class="card"><div class="h">Totale ordini</div><div class="v" id="kpi-total">0</div></div>
+      <div class="card"><div class="h">Inseriti oggi</div><div class="v" id="kpi-today">0</div></div>
+      <div class="card"><div class="h">Da stampare</div><div class="v" id="kpi-pending">0</div></div>
     </div>
-    <div class="searchbar"><input type="search" class="field" placeholder="Cerca cliente…"></div>
-    <div class="list">
-      <div class="order active"><div class="badge">432</div><div>Mario Rossi</div></div>
-      <div class="order"><div class="badge">433</div><div>Maria Borsani</div></div>
-      <div class="order"><div class="badge">434</div><div>Giuseppe Verdi</div></div>
+
+    <div class="search">
+      <input id="q" type="search" placeholder="Cerca per nome o n° ordine…"/>
+      <button class="btn dim" id="clear">Azzera</button>
     </div>
+
+    <div class="list" id="list"></div>
   </section>
 
+  <section class="right panel">
+    <div class="ticket-wrap">
+      <div class="ticket" id="ticket">
+        <div class="empty">Seleziona un ordine a sinistra per vedere l’anteprima.</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn dim" id="prev">◀︎ Indietro</button>
+      <button class="btn print" id="print">Stampa</button>
+      <button class="btn dim" id="next">Avanti ▶︎</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const ORDERS = [
+    {id:"451", name:"Maria Borsani", phone:"3334160088", date:"2025-12-30", time:"16:30", dept:"CARNE, ALTRO", cart:7, avicolo:true, items:["3 kg scamone","2 kg braciole","1 a rosic di viello","1 pollo nostrano"], barcode:"451"},
+    {id:"444", name:"Giuseppe Rossi", phone:"3200000000", date:"2025-12-20", time:"11:15", dept:"CARNE", cart:3, avicolo:false, items:["1 arrosto coniglio disossato"], barcode:"444"},
+    {id:"068", name:"Maria Pia", phone:"3390000000", date:"2025-12-20", time:"09:45", dept:"TUTTI", cart:5, avicolo:false, items:["3 panettoni Filippi","1 cappone a pezzi","1/2 anatra a pezzi"], barcode:"068"}
+  ];
+
+  const $ = s=>document.querySelector(s);
+  const listEl = $('#list');
+  const qEl = $('#q');
+  const ticketEl = $('#ticket');
+  let currentIds = []; // id degli ordini filtrati e non stampati
+  let cursor = -1;
+
+  const keyPrinted = 'bottega_printed_ids_v1';
+  const loadPrinted = ()=> new Set(JSON.parse(localStorage.getItem(keyPrinted)||'[]'));
+  const savePrinted = set => localStorage.setItem(keyPrinted, JSON.stringify([...set]));
+
+  function kpi(){
+    const printed = loadPrinted();
+    const today = new Date();
+    const isToday = d=>{ const x=new Date(d); return x.getFullYear()===today.getFullYear() && x.getMonth()===today.getMonth() && x.getDate()===today.getDate(); };
+    const total = ORDERS.length;
+    const todayCnt = ORDERS.filter(o=>isToday(o.date)).length;
+    const pending = ORDERS.filter(o=>!printed.has(o.id)).length;
+    $('#kpi-total').textContent = total;
+    $('#kpi-today').textContent = todayCnt;
+    $('#kpi-pending').textContent = pending;
+  }
+
+  function fmtDateIT(iso){
+    try{ const d=new Date(iso+"T12:00:00"); return new Intl.DateTimeFormat('it-IT',{weekday:'short', day:'2-digit', month:'short'}).format(d); }catch{ return iso }
+  }
+
+  function renderList(){
+    const printed = loadPrinted();
+    const q = (qEl.value||'').trim().toLowerCase();
+    const rows = ORDERS.filter(o=>!printed.has(o.id)).filter(o=>{
+      if(!q) return true;
+      return o.id.toLowerCase().includes(q) || (o.name||'').toLowerCase().includes(q);
+    });
+    currentIds = rows.map(o=>o.id);
+    if(rows.length===0){ listEl.innerHTML = '<div class="empty">Nessun ordine da stampare</div>'; return; }
+    listEl.innerHTML = rows.map(o=>`
+      <div class="row" data-id="${o.id}">
+        <div class="badge">${o.id}</div>
+        <div class="meta">
+          <div class="name">${o.name}</div>
+          <div class="sub">${fmtDateIT(o.date)} • ${o.time||''}</div>
+        </div>
+        <button class="btn dim act-preview">Anteprima</button>
+        <button class="btn print act-print">Stampa</button>
+      </div>`).join('');
+  }
+
+  function buildTicket(o){
+    return `
+      <div class="t-head">
+        <div class="t-title">${o.name}</div>
+        <div class="t-sub">${fmtDateIT(o.date)}&nbsp; ${o.time||''}&nbsp; ${o.phone||''}</div>
+      </div>
+      <div class="t-band">
+        <div>🍞🍖  La Bottega di Casterno</div>
+        <div>🛒 ${o.cart}</div>
+      </div>
+      <ul class="t-items">${(o.items||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+      <div class="t-foot">Grazie e Buone Feste!</div>
+    `;
+  }
+
+  function showById(id){
+    const o = ORDERS.find(x=>x.id===id);
+    if(!o){ ticketEl.innerHTML = '<div class="empty">Ordine non trovato</div>'; cursor=-1; return; }
+    ticketEl.innerHTML = buildTicket(o);
+    cursor = currentIds.indexOf(id);
+  }
+
+  function showAt(idx){
+    if(idx<0 || idx>=currentIds.length){ return; }
+    showById(currentIds[idx]);
+  }
+
+  function markPrinted(id){
+    const set = loadPrinted(); set.add(id); savePrinted(set);
+    kpi(); renderList();
+    if(currentIds.length){ showAt(Math.min(cursor, currentIds.length-1)); } else { ticketEl.innerHTML = '<div class="empty">Tutto stampato ✅</div>'; }
+  }
+
+  listEl.addEventListener('click', (e)=>{
+    const row = e.target.closest('.row'); if(!row) return; const id=row.dataset.id;
+    if(e.target.classList.contains('act-print')){ markPrinted(id); return; }
+    if(e.target.classList.contains('act-preview')){ showById(id); return; }
+    showById(id);
+  });
+
+  $('#clear').onclick = ()=>{ qEl.value=''; renderList(); };
+  qEl.oninput = ()=>{ renderList(); if(currentIds.length) showAt(0); else ticketEl.innerHTML='<div class="empty">Nessun risultato</div>'; };
+
+  $('#prev').onclick = ()=>{ if(cursor>0) showAt(cursor-1); };
+  $('#next').onclick = ()=>{ if(cursor>=0 && cursor<currentIds.length-1) showAt(cursor+1); };
+  $('#print').onclick = ()=>{ if(cursor>=0) markPrinted(currentIds[cursor]); };
+
+  // boot
+  kpi(); renderList(); if(currentIds.length) showAt(0);
+})();
+</script>
 </body>
+</html>
+
