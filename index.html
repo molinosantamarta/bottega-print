@@ -25,30 +25,31 @@
     .btn{border:none;border-radius:999px;padding:10px 16px;background:var(--main);color:#fff;font-weight:800;cursor:pointer;transition:transform .06s ease, opacity .2s;}
     .btn.secondary{background:#a21616}
     .btn:active{transform:scale(.985)}
-    /* Ticket container */
-    #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:1px solid #e5e5e7; border-radius:12px; overflow:auto; box-shadow:0 6px 18px rgba(0,0,0,.12) inset, 0 1px 0 rgba(0,0,0,.08);}    
-    .tkt{font:14px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:14px 14px 18px;}
+
+    /* Ticket: niente bordi stondati, nessuna ombra, solo testo */
+    #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
+    .tkt{font:14px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:8px 10px 10px;} /* padding ridotto per ottimizzare lo spazio */
     .tkt .center{text-align:center}
-    .tkt .muted{opacity:.85}
-    .tkt hr{border:0;border-top:1px dashed #222;margin:10px 0}
+    .tkt .muted{opacity:.9}
+    .tkt hr{border:0;border-top:1px dashed #222;margin:8px 0}
     .tkt .h{font-weight:800;letter-spacing:.3px}
-    .tkt .row{display:flex;justify-content:space-between;gap:8px}
-    .tkt .kv{display:grid;grid-template-columns:88px 1fr;gap:6px 10px}
-    .tkt .items{display:grid;grid-template-columns:36px 1fr;gap:6px 8px;margin-top:6px}
-    .tkt .foot{margin-top:10px}
-    .barcode{font-family:'Libre Barcode 39', cursive; font-size:46px; line-height:1; letter-spacing:1px; margin-top:8px}
+    .tkt .row{display:flex;justify-content:space-between;gap:6px}
+    .tkt .kv{display:grid;grid-template-columns:88px 1fr;gap:4px 8px}
+    .tkt .items{display:grid;grid-template-columns:36px 1fr;gap:4px 6px;margin-top:4px}
+    .tkt .foot{margin-top:8px}
+    .barcode{font-family:'Libre Barcode 39', cursive; font-size:44px; line-height:1; letter-spacing:1px; margin-top:6px}
     .barcode-num{font-size:12px; opacity:.85; margin-top:2px}
 
     /* === RIGHT: Controls === */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
-    .controls{padding:14px}
-    .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+    .controls{padding:var(--pane-pad)} /* padding laterale e top uguali */
+    .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:0} /* niente extra spazio sopra */
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--elev);user-select:none;cursor:pointer;transition:border-color .15s ease, box-shadow .15s ease}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
     .card.active{outline:2px solid var(--main)}
 
-    .searchbar{display:flex;gap:8px;margin-top:12px}
+    .searchbar{display:flex;gap:8px;margin-top:24px} /* barra di ricerca più in basso */
     .input{flex:1;padding:12px 14px;border-radius:999px;border:1px solid #ddd;font-size:16px}
     .list{padding:10px;border-top:1px solid #eee;max-height:calc(100vh - 280px);overflow:auto}
     .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
@@ -108,7 +109,6 @@
 
   <script>
     const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-    const isoToDate = (iso)=>{const a=iso.split('-');return new Date(+a[0], +a[1]-1, +a[2], 12)};
 
     let ORDERS = [];
     let view = [];
@@ -134,18 +134,20 @@
       $('#fc-pickup-future').textContent = pickupFuture;
     }
 
-    function sortByDateDesc(a,b){
+    // Sort: prima per numero ordine desc (se presente), poi per data desc e ora desc
+    function sortLatestFirst(a,b){
+      const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
+      const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
+      if(an!=null && bn!=null && an!==bn) return bn - an; // ordine dall'ultimo al primo
       if(a.date!==b.date) return a.date<b.date?1:-1;
       const ta=(a.time||''), tb=(b.time||'');
       return ta<tb?1:(ta>tb?-1:0);
     }
 
-    function highlightSelected(){
-      $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); });
-    }
+    function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); }); }
 
     function renderList(list){
-      const sorted=[...list].sort(sortByDateDesc);
+      const sorted=[...list].sort(sortLatestFirst);
       const el = $('#orders-list');
       if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; return; }
       el.innerHTML = sorted.map((o,i)=> `
@@ -232,6 +234,57 @@
       const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
       const t   = timeKey ? String(r[timeKey]||'').trim() : '';
       const num = ordKey  ? Number(r[ordKey]) : null;
+      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
+      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
+      const items = Object.keys(r)
+        .map(k=>String(k).trim())
+        .filter(k=>k.length>2 && k.charAt(1)===')' && k.charAt(0)>='0' && k.charAt(0)<='9')
+        .map(k=>({qty:1, desc:String(r[k]||'').trim()}))
+        .filter(it=>it.desc!=='');
+      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
+      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, items };
+    }
+
+    async function loadData(){
+      try{
+        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+        const rows = Array.isArray(data.rows)? data.rows : [];
+        ORDERS = rows.map(rowToOrder).filter(Boolean);
+        recomputeStats();
+        // preseleziona "Totale ordini" all'avvio
+        activeFilter = 'all';
+        $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
+        applyFilters();
+      }catch(e){
+        console.warn('API load error', e);
+        ORDERS = [];
+        recomputeStats();
+        renderList([]);
+        renderTicket(null);
+      }
+    }
+
+    (function init(){
+      // Flashcards click => filter toggle
+      $('#flashcards').addEventListener('click', (e)=>{
+        const card = e.target.closest('.card');
+        if(card && card.dataset.filter){ setFilter(card.dataset.filter); }
+      });
+
+      $('#btn-search').addEventListener('click', search);
+      $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
+      $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ select(+row.dataset.i); }});
+      $('#btn-next').addEventListener('click', next);
+      $('#btn-prev').addEventListener('click', prev);
+      $('#btn-print').addEventListener('click', doPrint);
+      loadData();
+    })();
+  </script>
+</body>
+</html>
+onst num = ordKey  ? Number(r[ordKey]) : null;
       const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
       const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
       const items = Object.keys(r)
