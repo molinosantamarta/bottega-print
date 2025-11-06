@@ -1,243 +1,349 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
-  <title>Bottega – Stampa Ordini</title>
-  <style>
-    :root{
-      --main:#770505; --fg:#f5f5f7; --card:#ffffff; --ink:#111;
-      --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15);
-      --gap:14px; --pane-pad:16px;
-      --sidebar-w:80%; --preview-w:20%;
-      --ticket-max-h:960px; --ticket-w:78mm; /* tipico rotolo 80mm */
-    }
-    html,body{height:100%;margin:0;background:#f5f5f7;color:#111;font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
-    .app{display:grid;grid-template-columns:minmax(260px, var(--preview-w)) minmax(480px, var(--sidebar-w));gap:var(--gap);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box;}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Stampa Ordini • Embed</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
+<style>
+  /* ===== Reset & base per lavorare in iframe, full-bleed ===== */
+  html,body{height:100%;width:100%;margin:0;padding:0}
+  body{background:transparent;color:#111;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden}
 
-    /* Panel base */
-    .panel{background:var(--card); color:var(--ink); border-radius:var(--radius); box-shadow:var(--elev); overflow:hidden; border:1px solid rgba(0,0,0,.08);}    
+  :root{
+    --radius:22px;
+    --muted:#f7f7f8;
+    --card:#fff;
+    --line:#e9e9eb;
+    --shadow:0 10px 24px rgba(0,0,0,.08);
+    --accent:#e11d48;
+    --accent-b:#be123c;
+    --hl:#ffd60a;
+  }
 
-    /* === LEFT: Preview / Ticket === */
-    .left{display:flex;flex-direction:column;}
-    .ticket-wrap{display:flex;justify-content:center;align-items:flex-start;padding:12px;}
-    #ticket{width:var(--ticket-w); max-height:var(--ticket-max-h); background:#fff; color:#000; border:1px solid #e5e5e7; border-radius:12px; overflow:auto; box-shadow:0 6px 18px rgba(0,0,0,.12) inset, 0 1px 0 rgba(0,0,0,.08);}    
-    .tkt{font:14px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:14px 14px 18px;}
-    .tkt .center{text-align:center}
-    .tkt .muted{opacity:.85}
-    .tkt hr{border:0;border-top:1px dashed #222;margin:10px 0}
-    .tkt .h{font-weight:800;letter-spacing:.3px}
-    .tkt .row{display:flex;justify-content:space-between;gap:8px}
-    .tkt .kv{display:grid;grid-template-columns:88px 1fr;gap:6px 10px}
-    .tkt .items{display:grid;grid-template-columns:36px 1fr;gap:6px 8px;margin-top:6px}
-    .tkt .foot{margin-top:10px}
-    .barcode{font-family:'Libre Barcode 39', cursive; font-size:46px; line-height:1; letter-spacing:1px; margin-top:8px}
-    .barcode-num{font-size:12px; opacity:.85; margin-top:2px}
+  /* ===== Griglia responsiva: 20/80 ma elastico ===== */
+  .app{
+    height:100%;
+    width:100%;
+    display:grid;
+    grid-template-columns: minmax(260px, 24%) 1fr; /* ~20/80 ma adattivo */
+    gap:14px;
+    box-sizing:border-box;
+    padding:12px;
+  }
 
-    /* Header bar above ticket */
-    .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:1}
-    .btn{border:none;border-radius:999px;padding:10px 16px;background:var(--main);color:#fff;font-weight:800;cursor:pointer;transition:transform .06s ease, opacity .2s;}
-    .btn.secondary{background:#111}
-    .btn:active{transform:scale(.985)}
+  .panel{
+    background:var(--card);
+    border:1px solid rgba(0,0,0,.06);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column;
+    min-width:0; min-height:0;
+  }
 
-    /* === RIGHT: Controls === */
-    .right{display:flex;flex-direction:column;gap:var(--gap)}
-    .controls{padding:14px}
-    .controls .title{margin:0 0 6px;font-weight:900;font-size:20px;}
-    .flashcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
-    .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--elev)}
-    .card .k{font-size:12px;opacity:.7}
-    .card .v{font-size:42px;font-weight:900;margin-top:4px}
+  /* ===== SINISTRA ===== */
+  .left{padding:10px; gap:10px}
+  .printbar{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn{
+    border:none;border-radius:26px;padding:10px 14px;font-weight:800;cursor:pointer;
+    transition:transform .06s ease,opacity .2s ease; font-size:14px;
+  }
+  .btn:active{transform:scale(.99)}
+  .btn-ghost{background:#111;color:#fff;border:1px solid #111}
+  .btn-primary{background:var(--accent);color:#fff;border:1px solid var(--accent-b)}
+  .btn:disabled{opacity:.5;cursor:default}
 
-    .searchbar{display:flex;gap:8px;margin-top:12px}
-    .input{flex:1;padding:12px 14px;border-radius:999px;border:1px solid #ddd;font-size:16px}
-    .list{padding:10px;border-top:1px solid #eee;max-height:calc(100vh - 280px);overflow:auto}
-    .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
-    .order + .order{margin-top:8px}
-    .order:hover{background:#f9f9fb}
-    .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
-    .meta{font-size:12px;opacity:.75}
+  /* Viewport: occupa TUTTA l’altezza; dentro ci metto il ticket scalato */
+  .ticket-viewport{
+    flex:1; min-height:0; overflow:auto; /* se serve, scroll */
+    position:relative; display:flex; align-items:flex-start; justify-content:center;
+  }
 
-    /* Responsive: sotto i 1100px porta il layout 30/70, sotto gli 860px verticale */
-    @media (max-width:1100px){ :root{ --preview-w:30%; --sidebar-w:70%; } }
-    @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} }
+  /* Ticket “base” (960px altezza di progetto) */
+  .ticket{
+    width:320px; /* larghezza di lavoro (simile al tuo template) */
+    height:960px; /* altezza di progetto */
+    background:#fff; color:#111; box-sizing:border-box;
+    border:1px dashed rgba(0,0,0,.15); border-radius:12px; padding:14px;
+    transform-origin: top left; /* verrà scalato per fit */
+  }
 
-    /* Print: solo ticket */
-    @media print{
-      @page{ size: 78mm auto; margin:0; }
-      body{background:#fff}
-      .app > .right, .ticket-bar{ display:none !important; }
-      .app{display:block;padding:0}
-      #ticket{border:0;box-shadow:none;border-radius:0;width:78mm;max-height:none;}
-    }
-  </style>
+  .hdr{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .tit{font-weight:900;font-size:18px}
+  .meta{font-size:12px;color:#333;display:flex;gap:10px;flex-wrap:wrap}
+  .hr{height:1px;background:var(--line);margin:10px 0}
+  .sec{font-size:13px;font-weight:900;letter-spacing:.02em;margin:8px 0 4px;color:#222}
+  .row{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0}
+  .row .l{font-weight:700}
+  .items .row{border-bottom:1px dashed #eee}
+  .thanks{text-align:center;font-weight:800;margin-top:12px}
+  .barcode{font-family:"Libre Barcode 39", monospace;font-size:42px;line-height:1;text-align:center}
+  .barcode-plain{font-size:12px;text-align:center;margin-top:4px}
+
+  /* ===== DESTRA ===== */
+  .right{padding:12px; gap:12px}
+  .flashgrid{
+    display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px;
+  }
+  .card{background:var(--muted);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .card .label{font-size:12px;color:#555;font-weight:700}
+  .card .num{font-size:32px;font-weight:900;line-height:1;color:#000}
+
+  .search{display:flex;gap:10px}
+  .input{flex:1;padding:12px 14px;border-radius:26px;border:1px solid #e5e5ea;font-size:16px;background:#fff;color:#111}
+
+  .list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:var(--shadow);cursor:pointer}
+  .badge{min-width:46px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:var(--hl);color:#000;font-weight:900}
+  .main{flex:1;min-width:0}
+  .name{font-weight:800;color:#0b0b0b;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{display:flex;gap:8px;color:#333;font-size:12px}
+  .empty{padding:12px;border-radius:16px;border:1px dashed rgba(0,0,0,.15);background:#fff;color:#333;text-align:center}
+
+  .status{font-size:12px;color:#555}
+  .linklike{border:none;background:none;padding:0;margin-left:.25rem;color:#0a84ff;text-decoration:underline;cursor:pointer;font:inherit}
+
+  /* ===== Stampa: solo ticket ===== */
+  @media print{
+    .app{display:block;padding:0}
+    .right,.printbar{display:none !important}
+    .ticket-viewport{overflow:visible}
+    .ticket{transform:none;border:none;padding:0;width:auto;height:auto}
+    body{background:#fff}
+  }
+</style>
 </head>
 <body>
-  <div class="app">
-    <!-- LEFT / PREVIEW 20% -->
-    <section class="panel left">
-      <div class="ticket-bar">
-        <button id="btn-prev" class="btn" aria-label="Ordine precedente">◀︎</button>
-        <button id="btn-print" class="btn secondary" aria-label="Stampa">Stampa</button>
-        <button id="btn-next" class="btn" aria-label="Ordine successivo">▶︎</button>
+<div class="app" id="app">
+  <!-- SINISTRA -->
+  <section class="panel left" aria-label="Anteprima e stampa">
+    <div class="printbar">
+      <button id="prev" class="btn btn-ghost" title="Ordine precedente">◀</button>
+      <button id="print" class="btn btn-primary">Stampa</button>
+      <button id="next" class="btn btn-ghost" title="Ordine successivo">▶</button>
+    </div>
+    <div class="ticket-viewport" id="ticketViewport">
+      <div id="ticket" class="ticket" aria-live="polite" aria-busy="true">
+        <div class="hdr">
+          <div class="tit">Molino Santa Marta</div>
+          <div class="meta"><span id="tDate">—</span><span id="tTime">—</span></div>
+        </div>
+        <div class="hr"></div>
+        <div class="sec">Cliente</div>
+        <div class="row"><div class="l">Nome</div><div class="r" id="tName">—</div></div>
+        <div class="row"><div class="l">Ordine #</div><div class="r" id="tOrd">—</div></div>
+        <div class="row"><div class="l">Ritiro</div><div class="r" id="tPickup">—</div></div>
+        <div class="row"><div class="l">Zona</div><div class="r" id="tZone">—</div></div>
+        <div class="hr"></div>
+        <div class="sec">Articoli</div>
+        <div class="items" id="tItems">
+          <div class="row"><div class="l">—</div><div class="r">—</div></div>
+        </div>
+        <div class="hr"></div>
+        <div class="thanks">Grazie e Buone Feste</div>
+        <div id="tBarcode" class="barcode">*000000*</div>
+        <div id="tBarcodePlain" class="barcode-plain">000000</div>
       </div>
-      <div class="ticket-wrap">
-        <div id="ticket" aria-label="Anteprima scontrino">
-          <div class="tkt" id="tkt-body">
-            <!-- Popolato via JS -->
-          </div>
-        </div>
+    </div>
+  </section>
+
+  <!-- DESTRA -->
+  <section class="panel right" aria-label="Controlli e lista">
+    <div class="flashgrid" style="padding:4px 4px 0">
+      <div class="card"><div class="label">Totale ordini</div><div id="fcTotal" class="num">0</div></div>
+      <div class="card"><div class="label">Inseriti oggi</div><div id="fcToday" class="num">0</div></div>
+      <div class="card"><div class="label">Da stampare</div><div id="fcToPrint" class="num">0</div></div>
+    </div>
+
+    <div style="padding:0 4px">
+      <div class="search" style="margin-top:10px">
+        <input id="q" class="input" type="search" placeholder="Cerca ordine…" />
+        <button id="go" class="btn btn-primary">Cerca</button>
       </div>
-    </section>
+      <div id="status" class="status" style="margin-top:8px"></div>
+    </div>
 
-    <!-- RIGHT / CONTROLS 80% -->
-    <aside class="panel right">
-      <div class="controls">
-        <div class="flashcards">
-          <div class="card"><div class="k">Totale ordini</div><div id="fc-total" class="v">—</div></div>
-          <div class="card"><div class="k">Inseriti oggi</div><div id="fc-today" class="v">—</div></div>
-          <div class="card"><div class="k">Da stampare</div><div id="fc-queue" class="v">—</div></div>
+    <div id="list" class="list" style="padding:4px"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const API_URL='https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
+
+  /* ===== Helpers ===== */
+  const $=s=>document.querySelector(s);
+  const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/\s+/g,' ').trim();
+  const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const ddmmyyyy=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  function parseAnyDate(s){ if(!s) return null; const str=String(s).trim();
+    let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){const dd=+m[1],mm=+m[2]-1,yy=+m[3];return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0)}
+    m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){return new Date(+m[1],+m[2]-1,+m[3],12,0,0)}
+    const d=new Date(str); return Number.isNaN(d.getTime())?null:d;
+  }
+  function pickKey(obj,cands){
+    const ks=Object.keys(obj);
+    for(const c of cands){const k=ks.find(x=>norm(x)===norm(c)); if(k) return k;}
+    for(const c of cands){const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k;}
+    return null;
+  }
+
+  /* ===== Stato ===== */
+  let ROWS=[], FILTERED=[], idx=-1;
+
+  /* ===== Riferimenti DOM ===== */
+  const ticketEl = $('#ticket'), vp = $('#ticketViewport');
+  const t={date:$('#tDate'), time:$('#tTime'), name:$('#tName'), ord:$('#tOrd'), pickup:$('#tPickup'), zone:$('#tZone'), items:$('#tItems'), bc:$('#tBarcode'), bcPlain:$('#tBarcodePlain')};
+  const flash={total:$('#fcTotal'), today:$('#fcToday'), toprint:$('#fcToPrint')};
+  const listEl=$('#list'), statusEl=$('#status');
+  const btn={prev:$('#prev'), next:$('#next'), print:$('#print'), go:$('#go')};
+  const q=$('#q');
+
+  /* ===== Fit dello scontrino all’altezza del riquadro ===== */
+  const BASE_W=320, BASE_H=960; // dimensioni “di progetto”
+  function fitTicket(){
+    const vw = vp.clientWidth, vh = vp.clientHeight;
+    if(vw<=0||vh<=0) return;
+    const scale = Math.min(vh/BASE_H, vw/BASE_W, 1); // non ingrandire oltre 1x
+    ticketEl.style.transform = `scale(${scale})`;
+  }
+  new ResizeObserver(fitTicket).observe(vp);
+  window.addEventListener('orientationchange', fitTicket);
+
+  /* ===== API ===== */
+  async function loadData(){
+    statusEl.textContent='Carico dati…';
+    try{
+      const res=await fetch(API_URL+'?_ts='+Date.now(),{cache:'no-store',mode:'cors'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data=await res.json();
+      ROWS = map(data.rows||[]);
+      paintCounts();
+      FILTERED=ROWS.slice();
+      paintList(FILTERED);
+      if(FILTERED.length) select(0);
+      statusEl.innerHTML=`Dati aggiornati: ${new Date(data.updatedAt||Date.now()).toLocaleString('it-IT')} — <button class="linklike" id="refresh-now">aggiorna</button>`;
+      $('#refresh-now')?.addEventListener('click',()=>loadData());
+    }catch(e){
+      console.warn(e);
+      statusEl.textContent='Errore nel caricamento dei dati (CORS?)';
+      listEl.innerHTML=`<div class="empty">Impossibile ottenere gli ordini dall’API</div>`;
+    }finally{
+      ticketEl.setAttribute('aria-busy','false');
+      fitTicket();
+    }
+  }
+
+  function map(rows){
+    const out=[];
+    for(const r of rows){
+      const nameKey=pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
+      const dateKey=pickKey(r,['DATA ORDINE','DATA','GIORNO']);
+      const timeKey=pickKey(r,['ORA','ORARIO']);
+      const zoneKey=pickKey(r,['ZONA STOCCAGGIO','ZONA','STOCCAGGIO','UBICAZIONE']);
+      const ordKey =pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD','#','N ORDINE']);
+
+      const name = nameKey? String(r[nameKey]||'').trim() : '';
+      if(!name) continue;
+      const d = dateKey? parseAnyDate(r[dateKey]) : null;
+
+      out.push({
+        name,
+        ord: ordKey? r[ordKey] : r.ord,
+        dateKey: d? ymd(d) : null,
+        dateText: d? ddmmyyyy(d) : '',
+        time: timeKey? String(r[timeKey]||'').trim() : '',
+        zone: zoneKey? String(r[zoneKey]||'').trim() : '',
+        src:r
+      });
+    }
+    out.sort((a,b)=>{
+      if(a.dateKey&&b.dateKey&&a.dateKey!==b.dateKey) return a.dateKey.localeCompare(b.dateKey);
+      const ta=a.time||'', tb=b.time||''; if(ta&&tb){const c=ta.localeCompare(tb); if(c!==0) return c;}
+      return a.name.localeCompare(b.name);
+    });
+    return out;
+  }
+
+  /* ===== UI ===== */
+  function paintCounts(){
+    flash.total.textContent=ROWS.length;
+    const todayKey=ymd(new Date());
+    flash.today.textContent=ROWS.filter(r=>r.dateKey===todayKey).length;
+    flash.toprint.textContent=ROWS.length; // in attesa del flag "stampato"
+  }
+
+  function paintList(rows){
+    if(!rows.length){ listEl.innerHTML='<div class="empty">Nessun ordine</div>'; return; }
+    listEl.innerHTML = rows.map(o=>{
+      const sub=[o.dateText,o.time].filter(Boolean).join(' • ');
+      return `<div class="item" data-ord="${esc(o.ord)}">
+        <span class="badge">${esc(o.ord??'—')}</span>
+        <div class="main">
+          <div class="name">${esc(o.name)}</div>
+          <div class="sub">${esc(sub||'')}</div>
         </div>
-        <div class="searchbar">
-          <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
-          <button id="btn-search" class="btn">Cerca</button>
-        </div>
-      </div>
-      <div class="list" id="orders-list" aria-live="polite"></div>
-    </aside>
-  </div>
+      </div>`;
+    }).join('');
+  }
 
-  <script>
-    // === Mock dataset (senza prezzi) – sostituire poi con API reali ===
-    const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-    let ORDERS = [];
+  function select(i){
+    if(i<0 || i>=FILTERED.length) return;
+    idx=i; const o=FILTERED[idx];
+    t.name.textContent=o.name||'—';
+    t.ord.textContent=o.ord??'—';
+    t.date.textContent=o.dateText||'—';
+    t.time.textContent=o.time||'—';
+    t.zone.textContent=(o.zone||'').trim()||'—';
+    t.pickup.textContent=[o.dateText,o.time].filter(Boolean).join(' • ')||'—';
+    t.items.innerHTML=`<div class="row"><div class="l">Articolo</div><div class="r">Q.tà</div></div>
+                       <div class="row"><div class="l">—</div><div class="r">—</div></div>`;
+    const code=(o.ord!=null && o.ord!=='')? String(o.ord) : '000000';
+    t.bc.textContent=`*${code}*`; t.bcPlain.textContent=code;
 
-    // Stato UI
-    let index = 0; // indice corrente nella lista filtrata
-    let view = [...ORDERS];
+    btn.prev.disabled=(idx<=0); btn.next.disabled=(idx>=FILTERED.length-1);
 
-    // Helpers
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-    const pad2 = n => (n<10?"0":"")+n;
-    const fmtDateIT = iso => { const d=new Date(iso+"T12:00:00"); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; };
+    // highlight
+    document.querySelectorAll('.item').forEach(n=>n.style.outline='none');
+    const cur=listEl.querySelector(`.item[data-ord="${CSS.escape(String(o.ord))}"]`);
+    if(cur) cur.style.outline='2px solid var(--accent)';
+  }
 
-    function recomputeStats(){
-      const total = ORDERS.length;
-      const today = ORDERS.filter(o=>o.date===todayYMD()).length;
-      const queue = ORDERS.filter(o=>!o.printed).length;
-      $('#fc-total').textContent = total;
-      $('#fc-today').textContent = today;
-      $('#fc-queue').textContent = queue;
-    }
+  function onListClick(e){
+    const it=e.target.closest('.item'); if(!it) return;
+    const ord=it.getAttribute('data-ord');
+    const i=FILTERED.findIndex(x=>String(x.ord)===String(ord));
+    if(i>=0) select(i);
+  }
 
-    function renderList(list){
-      const el = $('#orders-list');
-      if(!list.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; return; }
-      el.innerHTML = list.map((o,i)=> `
-        <div class="order" data-i="${i}">
-          <span class="badge">${o.number ?? '—'}</span>
-          <div>
-            <div style="font-weight:800">${o.name}</div>
-            <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
-          </div>
-        </div>
-      `).join('');
-    }
+  function doSearch(){
+    const n=norm(q.value||'');
+    if(!n){ FILTERED=ROWS.slice(); paintList(FILTERED); if(FILTERED.length) select(0); return; }
+    const exact=ROWS.filter(r=>norm(r.name)===n);
+    const starts=ROWS.filter(r=>norm(r.name).startsWith(n));
+    const includes=ROWS.filter(r=>norm(r.name).includes(n));
+    FILTERED = exact.length? exact : (starts.length? starts : includes);
+    paintList(FILTERED);
+    if(FILTERED.length) select(0);
+  }
 
-    function renderTicket(o){
-      if(!o){ $('#tkt-body').innerHTML = '<div class="center muted">Seleziona un ordine</div>'; return; }
-      const lines = o.items.map(it=> `<div class="row"><div>${it.qty}×</div><div>${it.desc}</div></div>`).join('');
-      const html = `
-        <div class="center h">Molino Santa Marta</div>
-        <div class="center muted">Bottega di Casterno</div>
-        <hr>
-        <div class="kv">
-          <div class="muted">Ordine</div><div><b>#${o.number ?? '—'}</b></div>
-          <div class="muted">Cliente</div><div>${o.name}</div>
-          <div class="muted">Data</div><div>${fmtDateIT(o.date)}</div>
-          <div class="muted">Ora</div><div>${o.time || '—'}</div>
-          <div class="muted">Numero</div><div>${o.id}</div>
-        </div>
-        <hr>
-        <div class="items">${lines}</div>
-        <hr>
-        <div class="foot center muted">Grazie – conservare per ritiro</div>
-      `;
-      $('#tkt-body').innerHTML = html;
-    }
+  /* ===== Eventi ===== */
+  listEl.addEventListener('click', onListClick);
+  btn.go.addEventListener('click', doSearch);
+  q.addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+  btn.print.addEventListener('click', ()=>window.print());
+  btn.prev.addEventListener('click', ()=>select(idx-1));
+  btn.next.addEventListener('click', ()=>select(idx+1));
 
-    function select(i){
-      if(i<0||i>=view.length) return; index=i; renderTicket(view[index]); highlightSelected();}
-
-    function highlightSelected(){
-      $$('#orders-list .order').forEach((n, i)=>{ n.style.outline = (i===index)? '2px solid var(--main)' : 'none'; });
-    }
-
-    function search(){
-      const q = ($('#q').value||'').trim().toLowerCase();
-      view = !q ? [...ORDERS] : ORDERS.filter(o=> o.name.toLowerCase().includes(q));
-      renderList(view); select(0);
-    }
-
-    function next(){ if(index < view.length-1){ select(index+1);} }
-    function prev(){ if(index > 0){ select(index-1);} }
-
-    function doPrint(){ window.print(); }
-
-    // === API Google Sheet (mapping minimal) ===
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
-    const norm = s => String(s||'').toLowerCase().trim();
-    function parseAnyDate(s){ if(!s) return null; const str=String(s).trim();
-      if(str.indexOf('/')>-1){ const a=str.split('/'); const dd=+a[0], mm=+a[1]-1, yRaw=+a[2]; const yy = yRaw<100?2000+yRaw:yRaw; return new Date(yy,mm,dd,12,0,0); }
-      if(str.indexOf('-')>-1){ const a=str.split('-'); return new Date(+a[0],+a[1]-1,+a[2],12,0,0); }
-      const d=new Date(str); return isNaN(d.getTime())? null : d; }
-    function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).indexOf(norm(c))>-1); if(k) return k; } return null; }
-    function rowToOrder(r){
-      const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
-      const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
-      const timeKey = pickKey(r,['ORA','ORARIO']);
-      const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
-      const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']);
-      const name = nameKey ? String(r[nameKey]||'').trim() : '';
-      if(!name) return null;
-      const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
-      const t   = timeKey ? String(r[timeKey]||'').trim() : '';
-      const num = ordKey  ? Number(r[ordKey]) : null;
-      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
-      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
-      const items = Object.keys(r).map(k=>String(k).trim()).filter(k=>k.length>2 && k.charAt(1)===')' && k.charAt(0)>='0' && k.charAt(0)<='9').map(k=>({qty:1, desc:String(r[k]||'').trim()})).filter(it=>it.desc!=='');
-      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
-      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, items };
-    }
-    async function loadData(){
-      try{
-        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const data = await res.json();
-        const rows = Array.isArray(data.rows)? data.rows : [];
-        ORDERS = rows.map(rowToOrder).filter(Boolean);
-        view = [...ORDERS];
-      }catch(e){
-        console.warn('API load error', e);
-        ORDERS = [];
-        view = [];
-      }
-    }
-
-    // Init
-    (function init(){
-      recomputeStats();
-      renderList(view);
-      select(0);
-      $('#btn-search').addEventListener('click', search);
-      $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
-      $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ select(+row.dataset.i); }});
-      $('#btn-next').addEventListener('click', next);
-      $('#btn-prev').addEventListener('click', prev);
-      $('#btn-print').addEventListener('click', doPrint);
-    })();
-  </script>
+  // Boot
+  (async function init(){
+    await loadData();
+    fitTicket();
+  })();
+})();
+</script>
 </body>
 </html>
