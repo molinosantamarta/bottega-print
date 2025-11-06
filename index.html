@@ -1,1 +1,132 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bottega Print — MVP UI</title>
+<style>
+:root{
+  --brand:#770505;
+  --ink:#111;
+  --paper:#fff;
+  --ui:#e8e8ec;
+  --ui-2:#f6f6f8;
+  --ticket-w:78mm;  /* larghezza fisica reale */
+  --radius:18px;
+  --shadow:0 10px 24px rgba(0,0,0,.18);
+  --fs-title:5.4mm;
+  --fs-body:3.8mm;
+}
 
+/* ===== LAYOUT ===== */
+html,body{height:100%;margin:0}
+body{
+  background:var(--brand);
+  color:#fff;
+  font:16px/1.35 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;
+  display:grid;
+  grid-template-columns: minmax(280px, 540px) minmax(520px, 1fr);
+  gap:14px; padding:16px;
+}
+@media (max-width:1100px){ body{ grid-template-columns: 1fr; } }
+
+/* ===== PREVIEW COLUMN ===== */
+.preview-wrap{
+  position:sticky; top:16px; align-self:start;
+  background:transparent; height:calc(100vh - 32px);
+  display:flex; align-items:center; justify-content:center;
+}
+.preview-card{
+  background:#fff; color:#000;
+  border-radius:14px; box-shadow:var(--shadow);
+  padding:0; display:flex; justify-content:center; align-items:center;
+  width:50%; height:100%;
+  transform-origin: top center;
+}
+.preview-card.scaled{ transform:scale(0.5); } /* riduzione del 50% */
+.ticket{
+  width:var(--ticket-w); background:var(--paper); color:var(--ink);
+  display:flex; flex-direction:column; height:100%;
+  max-height:100%; overflow:hidden; border-radius:6px;
+}
+.tk-in{ flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:2mm 4mm 2mm; }
+.tk-body{ flex:1; overflow:auto; font-size:var(--fs-body); text-align:center; }
+.tk-body p, .tk-body li{ margin:2mm 0; }
+.tk-head{ border-bottom:0.26mm solid #ddd; padding-bottom:2mm; }
+.tk-title{ font-size:var(--fs-title); font-weight:900; margin:0; }
+.tk-band{ margin-top:2mm; background:#000; color:#fff; padding:2mm; border-radius:1mm; display:flex; justify-content:space-between; align-items:center; }
+.tk-footer{ margin-top:2mm; text-align:center; }
+.tk-thanks{ font-family:Georgia,serif; font-weight:700; font-size:4mm; }
+.tk-barcode{ height:12mm; width:86%; margin:2mm auto 0; background:repeating-linear-gradient(90deg,#000 0 1.2mm,transparent 1.2mm 2.2mm); border:1px solid #000; }
+
+/* ===== RIGHT PANEL ===== */
+.panel{ background:#fff; color:#111; border-radius:14px; box-shadow:var(--shadow); display:flex; flex-direction:column; }
+.toolbar{ display:flex; align-items:center; gap:8px; padding:12px; border-bottom:1px solid var(--ui); }
+.btn{ border:none; border-radius:999px; padding:10px 14px; font-weight:800; cursor:pointer; background:#f2f2f4; }
+.btn.primary{ background:var(--brand); color:#fff; }
+.kpi{ display:grid; grid-template-columns: repeat(3, minmax(140px,1fr)); gap:10px; padding:10px; }
+.kpi .card{ background:var(--ui-2); border:1px solid var(--ui); border-radius:12px; padding:12px; }
+.searchbar{ padding:8px 12px; }
+.searchbar .field{ width:100%; padding:12px 14px; border-radius:999px; border:1px solid var(--ui); font:inherit; }
+.list{ flex:1; overflow:auto; padding:10px; }
+.order{ background:#fff; border:1px solid var(--ui); border-radius:14px; padding:10px; margin:6px 0; display:flex; align-items:center; gap:10px; cursor:pointer; }
+.badge{ min-width:42px; height:30px; display:grid; place-items:center; border-radius:999px; background:#ffd60a; font-weight:900; }
+.order.active{ outline:2px solid var(--brand); }
+
+/* stampa */
+@media print{
+  body{ display:block; padding:0; background:#fff; }
+  .panel, .toolbar{ display:none !important; }
+  .preview-card{ box-shadow:none; border-radius:0; width:100%; transform:none; }
+}
+</style>
+</head>
+<body>
+
+  <!-- COLONNA PREVIEW -->
+  <div class="preview-wrap">
+    <div class="preview-card scaled">
+      <article class="ticket">
+        <div class="tk-in">
+          <header class="tk-head">
+            <h1 class="tk-title">Mario Rossi</h1>
+            <div class="tk-band"><div>🍖 CARNE</div><div>ORDINE #432</div></div>
+          </header>
+
+          <main class="tk-body">
+            <p>3 kg scamone</p>
+            <p>1 cappone a pezzi</p>
+            <p>½ anatra a pezzi</p>
+            <p>3 panettoni Filippi</p>
+          </main>
+
+          <footer class="tk-footer">
+            <div class="tk-thanks">Grazie e Buone Feste!</div>
+            <div class="tk-barcode"></div>
+          </footer>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- COLONNA GESTIONALE -->
+  <section class="panel">
+    <div class="toolbar">
+      <button class="btn">◀︎</button>
+      <button class="btn">▶︎</button>
+      <button class="btn primary">Stampa</button>
+    </div>
+    <div class="kpi">
+      <div class="card"><b>195</b><div>Totale avicoli</div></div>
+      <div class="card"><b>9</b><div>Ordini di oggi</div></div>
+      <div class="card"><b>3</b><div>Da stampare</div></div>
+    </div>
+    <div class="searchbar"><input type="search" class="field" placeholder="Cerca cliente…"></div>
+    <div class="list">
+      <div class="order active"><div class="badge">432</div><div>Mario Rossi</div></div>
+      <div class="order"><div class="badge">433</div><div>Maria Borsani</div></div>
+      <div class="order"><div class="badge">434</div><div>Giuseppe Verdi</div></div>
+    </div>
+  </section>
+
+</body>
