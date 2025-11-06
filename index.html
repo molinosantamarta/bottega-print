@@ -10,7 +10,7 @@
       --main:#770505; --fg:#0b0b0b; --card:#ffffff; --ink:#111;
       --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15);
       --gap:14px; --pane-pad:16px;
-      --sidebar-w:70%; --preview-w:30%; /* 70/30 come richiesto */
+      --sidebar-w:70%; --preview-w:30%; /* 70/30 confermato */
       --ticket-max-h:960px;
     }
     html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
@@ -23,15 +23,15 @@
     .left{display:flex;flex-direction:column;}
     .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:1}
 
-    /* Bottoni uniformi */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--main);border-radius:12px;height:44px;padding:0 14px;background:#fff;color:var(--main);font-weight:800;cursor:pointer;transition:transform .06s ease, background .15s, color .15s}
+    /* Bottoni uniformi e stondati */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--main);border-radius:999px;height:44px;padding:0 18px;background:#fff;color:var(--main);font-weight:800;cursor:pointer;transition:transform .06s ease, background .15s, color .15s}
     .btn:active{transform:scale(.985)}
     .btn.primary{background:var(--main);color:#fff;border-color:var(--main)}
-    .btn.icon{width:44px;padding:0}
+    .btn.icon{width:44px;padding:0;border-radius:999px}
 
-    /* Ticket: niente bordi stondati, nessuna ombra, solo testo */
+    /* Ticket: solo testo (no bordi/ombre) */
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
-    .tkt{font:15px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:10px 12px 12px;} /* testo leggermente più grande */
+    .tkt{font:15px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:10px 12px 12px;}
     .tkt .center{text-align:center}
     .tkt .muted{opacity:.9}
     .tkt hr{border:0;border-top:1px dashed #222;margin:8px 0}
@@ -45,15 +45,15 @@
 
     /* === RIGHT: Controls === */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
-    .controls{padding:var(--pane-pad)} /* padding laterale e top uguali */
+    .controls{padding:var(--pane-pad)}
     .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:0}
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--elev);user-select:none;cursor:pointer;transition:border-color .15s ease, box-shadow .15s ease}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
     .card.active{outline:2px solid var(--main)}
 
-    .searchbar{display:flex;gap:8px;margin-top:24px} /* barra di ricerca più in basso */
-    .input{flex:1;padding:12px 14px;border-radius:999px;border:1px solid #ddd;font-size:16px}
+    .searchbar{display:flex;gap:8px;margin-top:24px}
+    .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
     .list{padding:10px;border-top:1px solid #eee;max-height:calc(100vh - 280px);overflow:auto}
     .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
     .order + .order{margin-top:8px}
@@ -77,6 +77,20 @@
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none;}
       .tkt{padding:0}
     }
+  /* ===== Modale Dettaglio (stile preso da stoccaggio.html e adattato) ===== */
+    .modal{ position:fixed; inset:0; display:none; z-index:2147483647; }
+    .modal.open{ display:block; }
+    .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); }
+    .modal .sheet{ position:absolute; inset:0; background:#fff; color:#111; display:flex; flex-direction:column; }
+    .modal header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 12px; border-bottom:1px solid #ececec; position:sticky; top:0; background:#fff; z-index:1; }
+    .modal header .h{ font-weight:900; font-size:20px; text-align:left; margin:0; }
+    .modal header .text{ font-size:14px; text-align:left; margin-top:6px; color:#555; }
+    .modal .close{ border:1px solid #ddd; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; cursor:pointer; }
+    .modal .content{ padding:12px 16px 28px; overflow:auto; font-size:16px; }
+    .kv{ width:100%; border-collapse:collapse; }
+    .kv th, .kv td{ text-align:left; padding:12px 10px; border-bottom:1px solid #f1f1f1; font-size:15px; }
+    .kv th{ width:36%; color:#444; font-weight:700; }
+    .kv tr:last-child th, .kv tr:last-child td{ border-bottom:none; }
   </style>
 </head>
 <body>
@@ -110,19 +124,38 @@
     </aside>
   </div>
 
+  <!-- Modale Dettaglio Ordine (estratta dallo stile di stoccaggio.html) -->
+  <div id="modal-order" class="modal" aria-hidden="true" role="dialog">
+    <div class="backdrop"></div>
+    <div class="sheet">
+      <header>
+        <div style="min-width:0;">
+          <div id="modal-order-title" class="h" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Dettaglio ordine</div>
+          <div id="modal-order-sub" class="text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+        </div>
+        <button id="modal-order-close" class="close" aria-label="Chiudi">Chiudi</button>
+      </header>
+      <div class="content">
+        <table class="kv" id="modal-order-table"></table>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Utils
     const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-
-    let ORDERS = [];
-    let view = [];
-    let index = 0;
-    let activeFilter = 'all'; // all | today | queue | pickup_today | pickup_future
-
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const pad2 = n => (n<10?"0":"")+n;
     const fmtDateIT = iso => { if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; };
 
+    // State
+    let ORDERS = [];
+    let view = [];
+    let index = 0;
+    let activeFilter = 'all';
+
+    // Stats
     function recomputeStats(){
       const total = ORDERS.length;
       const todayStr = todayYMD();
@@ -137,16 +170,17 @@
       $('#fc-pickup-future').textContent = pickupFuture;
     }
 
-    // Sort: prima per numero ordine desc (se presente), poi per data desc e ora desc
+    // Sort: numero ordine desc, poi data/ora desc
     function sortLatestFirst(a,b){
       const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
       const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
-      if(an!=null && bn!=null && an!==bn) return bn - an; // ordine dall'ultimo al primo
+      if(an!=null && bn!=null && an!==bn) return bn - an;
       if(a.date!==b.date) return a.date<b.date?1:-1;
       const ta=(a.time||''), tb=(b.time||'');
       return ta<tb?1:(ta>tb?-1:0);
     }
 
+    // Render
     function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); }); }
 
     function renderList(list){
@@ -192,6 +226,7 @@
         </div>`;
     }
 
+    // Filters
     function select(i){ if(i<0||i>=view.length) return; index=i; renderTicket(view[index]); highlightSelected(); }
 
     function applyFilters(){
@@ -216,16 +251,17 @@
       applyFilters();
     }
 
+    // Controls
     function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
     function doPrint(){ window.print(); }
 
-    // === API Google Sheet (mapping minimal) ===
+    // API
     const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
     const norm = s => String(s||'').toLowerCase().trim();
     function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); if(str.indexOf('/')>-1){ const a=str.split('/'); const dd=+a[0], mm=+a[1]-1, yRaw=+a[2]; const yy = yRaw<100?2000+yRaw:yRaw; return new Date(yy,mm,dd,12,0,0); } if(str.indexOf('-')>-1){ const a=str.split('-'); return new Date(+a[0],+a[1]-1,+a[2],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
-    function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).indexOf(norm(c))>-1); if(k) return k; } return null; }
+    function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
     function rowToOrder(r){
       const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
       const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
@@ -256,7 +292,6 @@
         const rows = Array.isArray(data.rows)? data.rows : [];
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
-        // preseleziona "Totale ordini" all'avvio
         activeFilter = 'all';
         $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
         applyFilters();
@@ -268,17 +303,54 @@
         renderTicket(null);
       }
     }
+    // Helpers per modale (come in stoccaggio.html)
+    function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
+    function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
+    // Apertura/chiusura modale con dettaglio ordine
+    const modalEl = document.getElementById('modal-order');
+    const modalCloseBtn = document.getElementById('modal-order-close');
+    const modalTitle = document.getElementById('modal-order-title');
+    const modalSub = document.getElementById('modal-order-sub');
+    const modalTable = document.getElementById('modal-order-table');
+
+    function openModal(o){
+      if(!o) return;
+      modalTitle.textContent = o.name || 'Dettaglio ordine';
+      const subParts = [ o.number!=null? `Ordine #${o.number}`: null, fmtDateIT(o.date)||null, o.time||null, o.printed? 'già stampato': null ].filter(Boolean);
+      modalSub.textContent = subParts.join(' • ');
+      const rows = [];
+      rows.push(['Cliente', o.name||'—']);
+      rows.push(['Numero ordine', o.number!=null? '#'+o.number : '—']);
+      rows.push(['Data', fmtDateIT(o.date)||'—']);
+      rows.push(['Ora', o.time||'—']);
+      rows.push(['Stampato', o.printed? 'Sì' : 'No']);
+      if(o.id!=null && o.id!==o.number) rows.push(['ID', String(o.id)]);
+      if(Array.isArray(o.items)&&o.items.length){
+        rows.push(['Articoli', '']);
+        o.items.forEach((it)=>{ rows.push([`– ${it.qty||1}×`, String(it.desc||'').trim()]); });
+      }
+      modalTable.innerHTML = rows.map(([k,v])=>`<tr><th>${k}</th><td>${v||''}</td></tr>`).join('');
+      modalEl.classList.add('open');
+      modalEl.setAttribute('aria-hidden','false');
+      lockScroll();
+    }
+    function closeModal(){ modalEl.classList.remove('open'); modalEl.setAttribute('aria-hidden','true'); unlockScroll(); }
+
+    modalCloseBtn && modalCloseBtn.addEventListener('click', closeModal);
+    modalEl && modalEl.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeModal(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modalEl.classList.contains('open')) closeModal(); });
+
+    
+    // Init
     (function init(){
-      // Flashcards click => filter toggle
       $('#flashcards').addEventListener('click', (e)=>{
         const card = e.target.closest('.card');
         if(card && card.dataset.filter){ setFilter(card.dataset.filter); }
       });
-
       $('#btn-search').addEventListener('click', search);
       $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
-      $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ select(+row.dataset.i); }});
+      $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ const i=+row.dataset.i; select(i); openModal(view[i]); }});
       $('#btn-next').addEventListener('click', next);
       $('#btn-prev').addEventListener('click', prev);
       $('#btn-print').addEventListener('click', doPrint);
@@ -287,4 +359,5 @@
   </script>
 </body>
 </html>
+
 
