@@ -1,4 +1,4 @@
-v<!doctype html>
+<!doctype html>
 <html lang="it">
 <head>
   <meta charset="utf-8" />
@@ -44,8 +44,24 @@ v<!doctype html>
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
     .card.active{outline:2px solid var(--main)}
 
-    .searchbar{display:flex;gap:8px;margin-top:24px}
+    .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
+
+    /* Chip filtro (stoccaggio.html) */
+    .chipbar{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid rgba(0,0,0,.06); background:#f7f7f8; border-radius:999px; box-sizing:border-box; }
+    #chipbar-filter{ cursor:pointer; }
+    #chipbar-filter .chip-inner{ display:inline-flex; align-items:center; gap:8px; min-height:40px; max-height:40px; border-radius:999px; }
+    #chipbar-filter.compact .chip-inner{ background:#f2f2f3; border:1px solid rgba(0,0,0,.06); border-radius:999px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; padding:0; }
+    #chipbar-filter.compact #sso-filter-label, #chipbar-filter.compact #sso-filter-badge{ opacity:0; width:0; pointer-events:none; }
+    #chipbar-filter.compact svg{ color:#111; width:18px; height:18px; }
+    #chipbar-filter.active{ display:inline-flex; background:#f7f7f8; border-color:rgba(0,0,0,.06); width:auto; }
+    #chipbar-filter.active .chip-inner{ background:#000; color:#fff; border:1px solid #000; padding:0px 8px; gap:4px; justify-content:center; align-items:center; }
+    #chipbar-filter.active .chip-inner svg{ display:inline-block; width:18px; height:18px; color:#ffd60a; margin-right:3px; }
+    #sso-filter-label{ display:none !important; }
+    .count-badge{ display:none; align-items:center; justify-content:center; padding:0 12px; height:28px; background:#ffd60a; color:#000; border-radius:999px; font-weight:900; font-size:14px; gap:8px; }
+    .count-badge .sep{ color:rgba(0,0,0,.55); }
+    #chipbar-filter.active #sso-filter-badge{ display:inline-flex; }
+
     .list{padding:10px;border-top:1px solid #eee;max-height:calc(100vh - 280px);overflow:auto}
     .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
     .order + .order{margin-top:8px}
@@ -54,25 +70,37 @@ v<!doctype html>
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Modale (come stoccaggio.html) */
+    /* Modali (stoccaggio.html) */
     .modal{ position:fixed; inset:0; display:none; z-index:2147483647; }
     .modal.open{ display:block; }
     .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); }
     .modal .sheet{ position:absolute; inset:0; background:#fff; color:#111; display:flex; flex-direction:column; }
     .modal header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 12px; border-bottom:1px solid #ececec; position:sticky; top:0; background:#fff; z-index:1; }
-    .modal header .h{ font-weight:900; font-size:20px; text-align:left; margin:0; }
-    .modal header .text{ font-size:14px; text-align:left; margin-top:6px; color:#555; }
+    .modal header .h{ font-weight:900; font-size:22px; text-align:left; margin:0; }
+    .modal header .text{ font-size:15px; text-align:left; margin-top:6px; color:#555; }
     .modal .close{ border:1px solid #ddd; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; cursor:pointer; }
     .modal .content{ padding:12px 16px 28px; overflow:auto; font-size:16px; }
     .kv{ width:100%; border-collapse:collapse; }
-    .kv th, .kv td{ text-align:left; padding:12px 10px; border-bottom:1px solid #f1f1f1; font-size:15px; }
+    .kv th, .kv td{ text-align:left; padding:12px 10px; border-bottom:1px solid #f1f1f1; font-size:16px; }
     .kv th{ width:36%; color:#444; font-weight:700; }
     .kv tr:last-child th, .kv tr:last-child td{ border-bottom:none; }
+    .kv tr.hl{ background:rgba(255,214,10,.22); }
+
+    /* Filter modal sheet rounded (as stoccaggio) */
+    #sso-filter-modal .sheet{ position:relative; inset:auto; margin:10vh auto; width:min(560px,92vw); max-height:80vh; background:#fff; color:#111; border-radius:var(--radius); overflow:hidden; border:1px solid rgba(0,0,0,.08); box-shadow:var(--elev); display:flex; flex-direction:column; }
+    #sso-filter-modal header{ position:sticky; top:0; z-index:1; background:#fff; border-bottom:1px solid #ececec; padding:14px 16px 10px; }
+    #sso-filter-modal header .h{ font-size:18px; font-weight:800; color:#111; margin:0; }
+    #sso-filter-modal .close{ border:1px solid #ddd; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; cursor:pointer; }
+    #sso-filter-modal .content{ padding:14px 16px 18px; font-size:15px; }
+    .filter-options{ display:flex; flex-direction:column; gap:10px; padding-top:4px; }
+    .filter-row{ display:flex; align-items:center; gap:10px; padding:6px 2px; }
+    .filter-row input{ width:20px; height:20px; }
+    .filter-actions{ display:flex; gap:10px; margin-top:16px; }
 
     /* Responsive */
-    @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} }
+    @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} .searchbar{grid-template-columns:1fr auto; grid-auto-flow:row;}} 
     @media (max-width:1100px){ :root{ --preview-w:35%; --sidebar-w:65%; } }
-    @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} }
+    @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} .searchbar{grid-template-columns:1fr;}}
 
     /* Print: solo ticket */
     @media print{
@@ -111,13 +139,27 @@ v<!doctype html>
         <div class="searchbar">
           <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
           <button id="btn-search" class="btn primary">Cerca</button>
+          <!-- filtro stoccaggio accanto al tasto Cerca -->
+          <div class="chipbar compact" id="chipbar-filter" title="Filtro" aria-haspopup="dialog" aria-expanded="false">
+            <div class="chip-inner">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <g fill="currentColor">
+                  <rect x="3" y="6" rx="1.5" ry="1.5" width="18" height="2"></rect>
+                  <rect x="6" y="11" rx="1.5" ry="1.5" width="12" height="2"></rect>
+                  <rect x="9" y="16" rx="1.5" ry="1.5" width="6" height="2"></rect>
+                </g>
+              </svg>
+              <span id="sso-filter-label" aria-hidden="true"></span>
+              <span id="sso-filter-badge" class="count-badge"></span>
+            </div>
+          </div>
         </div>
       </div>
       <div class="list" id="orders-list" aria-live="polite"></div>
     </aside>
   </div>
 
-  <!-- Modale (identica a stoccaggio.html a livello di ID/struttura) -->
+  <!-- Modale Dettaglio (identica allo stoccaggio per struttura/ID e contenuto) -->
   <div id="sso-modal" class="modal" aria-hidden="true" role="dialog">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -134,6 +176,25 @@ v<!doctype html>
     </div>
   </div>
 
+  <!-- Modale Filtri (stoccaggio) -->
+  <div id="sso-filter-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="backdrop"></div>
+    <div class="sheet">
+      <header>
+        <div class="h">Filtra reparti</div>
+        <button id="sso-filter-close" class="close" aria-label="Chiudi">Chiudi</button>
+      </header>
+      <div class="content">
+        <div class="text">Seleziona almeno un reparto. Verranno mostrati solo gli ordini del reparto/i selezionato/i.</div>
+        <div class="filter-options" id="sso-filter-options"></div>
+        <div class="filter-actions">
+          <button id="sso-filter-toggle-all" class="btn">Seleziona tutti</button>
+          <button id="sso-filter-apply" class="btn primary">Filtra</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Utils
     const $ = s => document.querySelector(s);
@@ -141,7 +202,10 @@ v<!doctype html>
     const pad2 = n => (n<10?"0":"")+n;
     const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
     const fmtDateIT = iso => { if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; };
-    const norm = s => String(s||'').toLowerCase().trim();
+    const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+    const esc = s => String(s==null? '': s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+    const hasValue = v => { const t = String(v??'').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
+    const isYes = v => { const t = norm(String(v??'')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
 
     // Stato
     let ORDERS = [];
@@ -155,6 +219,56 @@ v<!doctype html>
       if(!wrap) return;
       wrap.innerHTML = '<div class="tkt center h">Bottega di Casterno</div>';
     }
+
+    // === Stoccaggio: reparti e logiche filtro ===
+    const DEPARTMENTS = [
+      {id:'pane',   label:'1) PANE E PRODOTTI DA FORNO', keyExact: norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
+      {id:'banco',  label:'2) BANCO GASTRONOMIA',        keyExact: norm('2) BANCO GASTRONOMIA'),        icon:'🧀'},
+      {id:'fruver', label:'3) FRUTTA E VERDURA',         keyExact: norm('3) FRUTTA E VERDURA'),         icon:'🥦'},
+      {id:'carne',  label:'4) CARNE',                    keyExact: norm('4) CARNE'),                    icon:'🥩'},
+      {id:'altro',  label:'5) ALTRO',                    keyExact: norm('5) ALTRO'),                    icon:'📦'}
+    ];
+    const allDeptIds = DEPARTMENTS.map(d=>d.id);
+    let ACTIVE_DEPTS = new Set(JSON.parse(localStorage.getItem('sso_active_depts')||'[]'));
+    if(ACTIVE_DEPTS.size===0){ ACTIVE_DEPTS=new Set(allDeptIds); localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE_DEPTS])); }
+
+    function getDeptStatus(row, deptId){
+      const dep = DEPARTMENTS.find(d=>d.id===deptId); if(!dep) return {present:false, icon:null};
+      let headerHasContent = false;
+      for(const [k,v] of Object.entries(row.src||{})){
+        const nk = row.__normKeys[k] || norm(k);
+        if(nk === dep.keyExact){ headerHasContent = hasValue(v); break; }
+      }
+      if(deptId === 'carne'){
+        let avicoloYes = false;
+        for(const [k,v] of Object.entries(row.src||{})){
+          const nk = row.__normKeys[k] || norm(k);
+          if(nk === 'avicolo' || nk.includes('avicol')){ avicoloYes = isYes(v); break; }
+        }
+        if(headerHasContent) return {present:true, icon:'🥩'};
+        if(avicoloYes)      return {present:true, icon:'🐔'};
+        return {present:false, icon:null};
+      }
+      return {present:headerHasContent, icon: headerHasContent ? dep.icon : null};
+    }
+    const rowHasDept = (row,id)=> getDeptStatus(row,id).present;
+    function rowMatchesActiveDepts(row){ if(ACTIVE_DEPTS.size===0) return false; for(const id of ACTIVE_DEPTS){ if(rowHasDept(row,id)) return true; } return false; }
+
+    function updateFilterBadge(){
+      const badge=$('#sso-filter-badge');
+      if(!badge) return;
+      if(ACTIVE_DEPTS.size===allDeptIds.length){ badge.style.display='none'; badge.innerHTML=''; return; }
+      const parts=[]; const all=[{id:'pane',icon:'🥖'},{id:'banco',icon:'🧀'},{id:'fruver',icon:'🥦'},{id:'carne',icon:'🥩'},{id:'altro',icon:'📦'}];
+      for(const dep of all){ if(ACTIVE_DEPTS.has(dep.id)){ parts.push(dep.icon); } }
+      badge.style.display='inline-flex';
+      badge.innerHTML = parts.join(' <span class="sep">+</span> ');
+    }
+    function updateFilterChipLayout(){
+      const el=$('#chipbar-filter'); if(!el) return;
+      if(ACTIVE_DEPTS.size===allDeptIds.length){ el.classList.remove('active'); el.classList.add('compact'); }
+      else { el.classList.remove('compact'); el.classList.add('active'); }
+    }
+    function updateFilterUI(){ updateFilterBadge(); updateFilterChipLayout(); }
 
     // Stats
     function recomputeStats(){
@@ -192,7 +306,7 @@ v<!doctype html>
         <div class="order" data-i="${i}">
           <span class="badge">${o.number ?? '—'}</span>
           <div>
-            <div style="font-weight:800">${o.name}</div>
+            <div style="font-weight:800">${esc(o.name)}</div>
             <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
           </div>
         </div>
@@ -203,9 +317,9 @@ v<!doctype html>
       renderTicket();
     }
 
-    // Trasformazione riga API → ordine
+    // Trasformazione riga API → ordine (include src e __normKeys come stoccaggio)
     const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
-    function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); if(str.indexOf('/')>-1){ const a=str.split('/'); const dd=+a[0], mm=+a[1]-1, yRaw=+a[2]; const yy = yRaw<100?2000+yRaw:yRaw; return new Date(yy,mm,dd,12,0,0); } if(str.indexOf('-')>-1){ const a=str.split('-'); return new Date(+a[0],+a[1]-1,+a[2],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
+    function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){ const dd=+m[1], mm=+m[2]-1, yy=+m[3]; return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0); } m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){ return new Date(+m[1],+m[2]-1,+m[3],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
     function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
     function rowToOrder(r){
       const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
@@ -220,13 +334,9 @@ v<!doctype html>
       const num = ordKey  ? Number(r[ordKey]) : null;
       const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
       const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
-      const items = Object.keys(r)
-        .map(k=>String(k).trim())
-        .filter(k=>k.length>2 && k.charAt(1)===')' && k.charAt(0)>='0' && k.charAt(0)<='9')
-        .map(k=>({qty:1, desc:String(r[k]||'').trim()}))
-        .filter(it=>it.desc!=='');
       const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
-      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, items };
+      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
+      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys };
     }
 
     // Filtri e ricerca
@@ -236,6 +346,7 @@ v<!doctype html>
       const q = ($('#q').value||'').trim().toLowerCase();
       const todayStr = todayYMD();
       let base = [...ORDERS];
+      // filtri flashcard
       switch(activeFilter){
         case 'today': base = base.filter(o=>o.date===todayStr); break;
         case 'queue': base = base.filter(o=>!o.printed); break;
@@ -243,7 +354,9 @@ v<!doctype html>
         case 'pickup_future': base = base.filter(o=>o.date>todayStr); break;
         case 'all': default: break;
       }
-      if(q) base = base.filter(o=> o.name.toLowerCase().includes(q));
+      // filtro reparti (stoccaggio)
+      base = base.filter(rowMatchesActiveDepts);
+      if(q) base = base.filter(o=> norm(o.name).includes(norm(q)) );
       renderList(base);
       select(0);
     }
@@ -255,43 +368,86 @@ v<!doctype html>
       applyFilters();
     }
 
-    // Modale (ID come stoccaggio.html)
+    // Modale (contenuto identico allo stoccaggio: tutte le coppie chiave→valore, highlighting dagli articoli 1))
     function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
     function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
-    const SSO_MODAL = {
-      el: document.getElementById('sso-modal'),
-      close: document.getElementById('sso-modal-close'),
-      title: document.getElementById('sso-modal-title'),
-      sub: document.getElementById('sso-modal-sub'),
-      table: document.getElementById('sso-modal-table')
-    };
+    const modal = document.getElementById('sso-modal');
+    const modalClose = document.getElementById('sso-modal-close');
+    const modalTable = document.getElementById('sso-modal-table');
+    const modalTitle = document.getElementById('sso-modal-title');
+    const modalSub = document.getElementById('sso-modal-sub');
 
-    function openModal(o){
-      if(!o) return;
-      SSO_MODAL.title.textContent = o.name || 'Dettaglio ordine';
-      const sub = [ o.number!=null? `Ordine #${o.number}`: null, fmtDateIT(o.date)||null, o.time||null, o.printed? 'già stampato': null ].filter(Boolean).join(' • ');
-      SSO_MODAL.sub.textContent = sub;
-      const rows = [];
-      rows.push(['Cliente', o.name||'—']);
-      rows.push(['Numero ordine', o.number!=null? '#'+o.number : '—']);
-      rows.push(['Data', fmtDateIT(o.date)||'—']);
-      rows.push(['Ora', o.time||'—']);
-      rows.push(['Stampato', o.printed? 'Sì' : 'No']);
-      if(o.id!=null && o.id!==o.number) rows.push(['ID', String(o.id)]);
-      if(Array.isArray(o.items)&&o.items.length){ rows.push(['Articoli', '']); o.items.forEach(it=> rows.push([`– ${it.qty||1}×`, String(it.desc||'').trim()])); }
-      SSO_MODAL.table.innerHTML = rows.map(([k,v])=>`<tr><th>${k}</th><td>${v||''}</td></tr>`).join('');
-      SSO_MODAL.el.classList.add('open');
-      SSO_MODAL.el.setAttribute('aria-hidden','false');
-      lockScroll();
+    function openModal(row){
+      modalTitle.textContent = row.name || 'Dettaglio ordine';
+      modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • ');
+      const entries=Object.entries(row.src||{});
+      const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k)));
+      let seenItemsStart=false;
+      const rowsHtml=entries
+        .filter(([k,_])=>!skipKeys.has(norm(String(k))))
+        .map(([k,v])=>{
+          const keyStr=String(k).trim();
+          const valStr=(v==null)? '' : String(v).trim();
+          if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true;
+          const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0';
+          return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
+        }).join('');
+      modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`;
+      modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lockScroll();
     }
-    function closeModal(){ SSO_MODAL.el.classList.remove('open'); SSO_MODAL.el.setAttribute('aria-hidden','true'); unlockScroll(); }
+    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlockScroll(); }
+
+    // Filter modal handlers
+    const filterModal = document.getElementById('sso-filter-modal');
+    const filterOptionsEl = document.getElementById('sso-filter-options');
+    const filterApply = document.getElementById('sso-filter-apply');
+    const filterToggleAll = document.getElementById('sso-filter-toggle-all');
+    const filterCloseBtn = document.getElementById('sso-filter-close');
+
+    function openFilter(){ renderFilterOptions(); filterModal.classList.add('open'); filterModal.setAttribute('aria-hidden','false'); lockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','true'); }
+    function closeFilter(){ filterModal.classList.remove('open'); filterModal.setAttribute('aria-hidden','true'); unlockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','false'); updateFilterUI(); }
+
+    function renderFilterOptions(){
+      const DEPTS_SIMPLE = [
+        {id:'pane',   label:'🥖  PANE E PRODOTTI DA FORNO'},
+        {id:'banco',  label:'🧀  BANCO GASTRONOMIA'},
+        {id:'fruver', label:'🥦  FRUTTA E VERDURA'},
+        {id:'carne',  label:'🥩  CARNE'},
+        {id:'altro',  label:'📦  ALTRO'}
+      ];
+      const activeIds = new Set(ACTIVE_DEPTS);
+      filterOptionsEl.innerHTML = DEPTS_SIMPLE.map(dep=>`<label class="filter-row"><input type="checkbox" data-dep="${dep.id}" ${activeIds.has(dep.id)?'checked':''} /><span class="label">${dep.label}</span></label>`).join('');
+      filterOptionsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.addEventListener('change', ()=>{ updateToggleAllLabel(); updateApplyDisabled(); }); });
+      updateToggleAllLabel(); updateApplyDisabled();
+    }
+    function getModalSelectionCount(){ const inputs = filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]'); let c=0; inputs.forEach(i=>{ if(i.checked) c++; }); return c; }
+    function setAllInModal(checked){ filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{ i.checked = checked; }); updateToggleAllLabel(); updateApplyDisabled(); }
+    function updateToggleAllLabel(){ const total=5; const selected=getModalSelectionCount(); filterToggleAll.textContent=(selected===total)?'Deseleziona tutti':'Seleziona tutti'; }
+    function updateApplyDisabled(){ filterApply.disabled = (getModalSelectionCount()===0); }
+    filterToggleAll.addEventListener('click', ()=>{ const total=5; const selected=getModalSelectionCount(); setAllInModal(!(selected===total)); });
+    filterApply.addEventListener('click', ()=>{
+      const inputs=filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]');
+      const next=new Set();
+      inputs.forEach(i=>{ if(i.checked) next.add(i.dataset.dep); });
+      if(next.size===0){ return; }
+      ACTIVE_DEPTS = next;
+      localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE_DEPTS]));
+      updateFilterUI();
+      applyFilters();
+      closeFilter();
+    });
 
     // Controlli
     function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
     function doPrint(){ window.print(); }
+
+    $('#chipbar-filter').addEventListener('click', openFilter);
+    filterCloseBtn.addEventListener('click', closeFilter);
+    filterModal.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeFilter(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && (document.getElementById('sso-modal').classList.contains('open')||filterModal.classList.contains('open'))) { closeFilter(); closeModal(); } });
 
     // API
     async function loadData(){
@@ -305,6 +461,7 @@ v<!doctype html>
         // preseleziona Totale ordini
         activeFilter = 'all';
         $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
+        updateFilterUI();
         applyFilters();
       }catch(e){
         console.warn('API load error', e);
@@ -317,7 +474,6 @@ v<!doctype html>
 
     // Init
     (function init(){
-      // Ticket placeholder subito
       renderTicket();
       // Click flashcards
       $('#flashcards').addEventListener('click', (e)=>{
@@ -332,10 +488,6 @@ v<!doctype html>
       $('#btn-next').addEventListener('click', next);
       $('#btn-prev').addEventListener('click', prev);
       $('#btn-print').addEventListener('click', doPrint);
-      // Chiudi modale
-      SSO_MODAL.close && SSO_MODAL.close.addEventListener('click', closeModal);
-      SSO_MODAL.el && SSO_MODAL.el.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeModal(); });
-      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && SSO_MODAL.el.classList.contains('open')) closeModal(); });
       // Dati
       loadData();
     })();
