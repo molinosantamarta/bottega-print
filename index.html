@@ -13,7 +13,7 @@
       --sidebar-w:80%; --preview-w:20%;
       --ticket-max-h:960px;
     }
-    html,body{height:100%;margin:0;background:#fff;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
+    html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
     .app{display:grid;grid-template-columns:minmax(260px, var(--preview-w)) minmax(480px, var(--sidebar-w));gap:var(--gap);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box;}
 
     /* Panel base */
@@ -25,8 +25,9 @@
     .btn{border:none;border-radius:999px;padding:10px 16px;background:var(--main);color:#fff;font-weight:800;cursor:pointer;transition:transform .06s ease, opacity .2s;}
     .btn.secondary{background:#a21616}
     .btn:active{transform:scale(.985)}
-    /* Ticket uses 100% of column width (no extra wrappers) */
-    .tkt{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:1px solid #e5e5e7; border-radius:12px; overflow:auto; padding:14px 14px 18px; font:14px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    /* Ticket container */
+    #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:1px solid #e5e5e7; border-radius:12px; overflow:auto; box-shadow:0 6px 18px rgba(0,0,0,.12) inset, 0 1px 0 rgba(0,0,0,.08);}    
+    .tkt{font:14px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:14px 14px 18px;}
     .tkt .center{text-align:center}
     .tkt .muted{opacity:.85}
     .tkt hr{border:0;border-top:1px dashed #222;margin:10px 0}
@@ -41,10 +42,11 @@
     /* === RIGHT: Controls === */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:14px}
-    .flashcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
-    .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--elev)}
+    .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+    .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--elev);user-select:none;cursor:pointer;transition:border-color .15s ease, box-shadow .15s ease}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
+    .card.active{outline:2px solid var(--main)}
 
     .searchbar{display:flex;gap:8px;margin-top:12px}
     .input{flex:1;padding:12px 14px;border-radius:999px;border:1px solid #ddd;font-size:16px}
@@ -52,10 +54,12 @@
     .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
     .order + .order{margin-top:8px}
     .order:hover{background:#f9f9fb}
+    .order.selected{outline:2px solid var(--main)}
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Responsive: sotto i 1100px porta il layout 30/70, sotto gli 860px verticale */
+    /* Responsive */
+    @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} }
     @media (max-width:1100px){ :root{ --preview-w:30%; --sidebar-w:70%; } }
     @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} }
 
@@ -66,7 +70,8 @@
       .app > .right, .ticket-bar{ display:none !important; }
       .app{display:block;padding:0}
       .panel{border:0;box-shadow:none;border-radius:0}
-      .tkt{padding:0;border:0;border-radius:0}
+      #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none;}
+      .tkt{padding:0}
     }
   </style>
 </head>
@@ -85,10 +90,12 @@
     <!-- RIGHT / CONTROLS 80% -->
     <aside class="panel right">
       <div class="controls">
-        <div class="flashcards">
-          <div class="card"><div class="k">Totale ordini</div><div id="fc-total" class="v">—</div></div>
-          <div class="card"><div class="k">Inseriti oggi</div><div id="fc-today" class="v">—</div></div>
-          <div class="card"><div class="k">Da stampare</div><div id="fc-queue" class="v">—</div></div>
+        <div class="flashcards" id="flashcards">
+          <div class="card" data-filter="all"><div class="k">Totale ordini</div><div id="fc-total" class="v">—</div></div>
+          <div class="card" data-filter="today"><div class="k">Inseriti oggi</div><div id="fc-today" class="v">—</div></div>
+          <div class="card" data-filter="queue"><div class="k">Da stampare</div><div id="fc-queue" class="v">—</div></div>
+          <div class="card" data-filter="pickup_today"><div class="k">Ritiri oggi</div><div id="fc-pickup-today" class="v">—</div></div>
+          <div class="card" data-filter="pickup_future"><div class="k">Ritiri futuri</div><div id="fc-pickup-future" class="v">—</div></div>
         </div>
         <div class="searchbar">
           <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
@@ -101,9 +108,12 @@
 
   <script>
     const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+    const isoToDate = (iso)=>{const a=iso.split('-');return new Date(+a[0], +a[1]-1, +a[2], 12)};
+
     let ORDERS = [];
-    let index = 0;
     let view = [];
+    let index = 0;
+    let activeFilter = 'all'; // all | today | queue | pickup_today | pickup_future
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
@@ -112,27 +122,37 @@
 
     function recomputeStats(){
       const total = ORDERS.length;
-      const today = ORDERS.filter(o=>o.date===todayYMD()).length;
+      const todayStr = todayYMD();
+      const insertedToday = ORDERS.filter(o=>o.date===todayStr).length; // proxy
       const queue = ORDERS.filter(o=>!o.printed).length;
+      const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
+      const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
       $('#fc-total').textContent = total;
-      $('#fc-today').textContent = today;
+      $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
+      $('#fc-pickup-today').textContent = pickupToday;
+      $('#fc-pickup-future').textContent = pickupFuture;
+    }
+
+    function sortByDateDesc(a,b){
+      if(a.date!==b.date) return a.date<b.date?1:-1;
+      const ta=(a.time||''), tb=(b.time||'');
+      return ta<tb?1:(ta>tb?-1:0);
+    }
+
+    function highlightSelected(){
+      $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); });
     }
 
     function renderList(list){
-      const cmp=(a,b)=>{
-        if(a.date!==b.date) return a.date<b.date?1:-1; // decrescente per data
-        const ta=(a.time||''); const tb=(b.time||'');
-        return ta<tb?1:(ta>tb?-1:0); // decrescente per ora
-      };
-      const sorted=[...list].sort(cmp);
+      const sorted=[...list].sort(sortByDateDesc);
       const el = $('#orders-list');
-      if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; return; }
+      if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; return; }
       el.innerHTML = sorted.map((o,i)=> `
         <div class="order" data-i="${i}">
           <span class="badge">${o.number ?? '—'}</span>
           <div>
-            <div style=\"font-weight:800\">${o.name}</div>
+            <div style="font-weight:800">${o.name}</div>
             <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
           </div>
         </div>
@@ -143,37 +163,55 @@
     }
 
     function renderTicket(o){
-      if(!o){ $('#tkt-body').innerHTML = '<div class="center muted">Seleziona un ordine</div>'; return; }
+      const wrap = $('#tkt-body');
+      if(!o){ wrap.innerHTML = '<div class="tkt center muted">Seleziona un ordine</div>'; return; }
       const lines = (o.items||[]).map(it=> `<div class="row"><div>${it.qty||1}×</div><div>${it.desc}</div></div>`).join('');
       const code = o.number!=null? `*${String(o.number)}*` : '';
-      const html = `
-        <div class="center h">Molino Santa Marta</div>
-        <div class="center muted">Bottega di Casterno</div>
-        <hr>
-        <div class="kv">
-          <div class="muted">Ordine</div><div><b>#${o.number ?? '—'}</b></div>
-          <div class="muted">Cliente</div><div>${o.name}</div>
-          <div class="muted">Data</div><div>${fmtDateIT(o.date)}</div>
-          <div class="muted">Ora</div><div>${o.time || '—'}</div>
-          <div class="muted">Numero</div><div>${o.id ?? '—'}</div>
-        </div>
-        <hr>
-        <div class="items">${lines}</div>
-        <hr>
-        <div class="foot center muted">Grazie e Buone Feste</div>
-        ${code? `<div class="center"><div class="barcode">${code}</div><div class="barcode-num">#${o.number}</div></div>` : ''}
-      `;
-      $('#tkt-body').innerHTML = html;
+      wrap.innerHTML = `
+        <div class="tkt">
+          <div class="center h">Molino Santa Marta</div>
+          <div class="center muted">Bottega di Casterno</div>
+          <hr>
+          <div class="kv">
+            <div class="muted">Ordine</div><div><b>#${o.number ?? '—'}</b></div>
+            <div class="muted">Cliente</div><div>${o.name}</div>
+            <div class="muted">Data</div><div>${fmtDateIT(o.date)}</div>
+            <div class="muted">Ora</div><div>${o.time || '—'}</div>
+            <div class="muted">Numero</div><div>${o.id ?? '—'}</div>
+          </div>
+          <hr>
+          <div class="items">${lines}</div>
+          <hr>
+          <div class="foot center muted">Grazie e Buone Feste</div>
+          ${code? `<div class="center"><div class="barcode">${code}</div><div class="barcode-num">#${o.number}</div></div>` : ''}
+        </div>`;
     }
 
     function select(i){ if(i<0||i>=view.length) return; index=i; renderTicket(view[index]); highlightSelected(); }
-    function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.style.outline = (i===index)? '2px solid var(--main)' : 'none'; }); }
-    function search(){
+
+    function applyFilters(){
       const q = ($('#q').value||'').trim().toLowerCase();
-      const base = !q ? [...ORDERS] : ORDERS.filter(o=> o.name.toLowerCase().includes(q));
+      const todayStr = todayYMD();
+      let base = [...ORDERS];
+      switch(activeFilter){
+        case 'today': base = base.filter(o=>o.date===todayStr); break;
+        case 'queue': base = base.filter(o=>!o.printed); break;
+        case 'pickup_today': base = base.filter(o=>o.date===todayStr); break;
+        case 'pickup_future': base = base.filter(o=>o.date>todayStr); break;
+        case 'all': default: break;
+      }
+      if(q) base = base.filter(o=> o.name.toLowerCase().includes(q));
       renderList(base);
       select(0);
     }
+
+    function setFilter(key){
+      if(activeFilter===key){ activeFilter='all'; } else { activeFilter=key; }
+      $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
+      applyFilters();
+    }
+
+    function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
     function doPrint(){ window.print(); }
@@ -196,10 +234,15 @@
       const num = ordKey  ? Number(r[ordKey]) : null;
       const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
       const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
-      const items = Object.keys(r).map(k=>String(k).trim()).filter(k=>k.length>2 && k.charAt(1)===')' && k.charAt(0)>='0' && k.charAt(0)<='9').map(k=>({qty:1, desc:String(r[k]||'').trim()})).filter(it=>it.desc!=='');
+      const items = Object.keys(r)
+        .map(k=>String(k).trim())
+        .filter(k=>k.length>2 && k.charAt(1)===')' && k.charAt(0)>='0' && k.charAt(0)<='9')
+        .map(k=>({qty:1, desc:String(r[k]||'').trim()}))
+        .filter(it=>it.desc!=='');
       const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
       return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, items };
     }
+
     async function loadData(){
       try{
         const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
@@ -207,20 +250,24 @@
         const data = await res.json();
         const rows = Array.isArray(data.rows)? data.rows : [];
         ORDERS = rows.map(rowToOrder).filter(Boolean);
-        renderList(ORDERS);
         recomputeStats();
-        select(0);
+        applyFilters();
       }catch(e){
         console.warn('API load error', e);
         ORDERS = [];
-        view = [];
         recomputeStats();
-        renderList(view);
+        renderList([]);
         renderTicket(null);
       }
     }
 
     (function init(){
+      // Flashcards click => filter toggle
+      $('#flashcards').addEventListener('click', (e)=>{
+        const card = e.target.closest('.card');
+        if(card && card.dataset.filter){ setFilter(card.dataset.filter); }
+      });
+
       $('#btn-search').addEventListener('click', search);
       $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
       $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ select(+row.dataset.i); }});
@@ -232,3 +279,4 @@
   </script>
 </body>
 </html>
+
