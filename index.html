@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Barcode 39 font -->
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Code39 + Chewy (messaggio natalizio) -->
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&family=Chewy&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
     :root{
@@ -14,16 +14,15 @@
       --sidebar-w:82%; --preview-w:18%;
       --ticket-max-h:960px;
     }
-    html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
+    html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 Verdana, Geneva, sans-serif;}
     .app{display:grid;grid-template-columns:minmax(260px, var(--preview-w)) minmax(480px, var(--sidebar-w));gap:var(--gap);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box;}
 
-    /* Panel base */
+    /* Pannelli base */
     .panel{background:var(--card); color:var(--ink); border-radius:var(--radius); box-shadow:var(--elev); overflow:hidden; border:1px solid rgba(0,0,0,.08);}    
 
-    /* === LEFT: Preview / Ticket === */
+    /* LEFT: Anteprima scontrino */
     .left{display:flex;flex-direction:column;}
     .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
-
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--main);border-radius:999px;height:44px;padding:0 18px;background:#fff;color:var(--main);font-weight:800;cursor:pointer;transition:transform .06s ease, background .15s, color .15s}
     .btn:active{transform:scale(.985)}
     .btn.primary{background:var(--main);color:#fff;border-color:var(--main)}
@@ -33,13 +32,13 @@
     .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
     .tkt .h{font-weight:800;letter-spacing:.3px}
     .tkt .logo{ display:block; margin:6px auto 8px; max-width:46%; height:auto; }
-    .tkt hr{ border:0; border-top:1px dashed #222; margin:10px 0; }
-    .barcode{ font-family:'Libre Barcode 39', cursive; font-size:46px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
-    .barcode-num{ font-size:12px; opacity:.85; margin-top:2px; text-align:center; }
+    .tkt hr{ border:0; border-top:1px dashed #222; margin:10px 10px; }
+    .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
     .vals{ width:100%; }
     .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
+    .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
 
-    /* === RIGHT: Controls === */
+    /* RIGHT: Controlli */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:var(--pane-pad)}
     .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:0}
@@ -51,7 +50,7 @@
     .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
 
-    /* Chip filtro (stile Stoccaggio) */
+    /* Chip filtro stile Stoccaggio */
     .chipbar{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid rgba(0,0,0,.06); background:#f7f7f8; border-radius:999px; box-sizing:border-box; }
     #chipbar-filter{ cursor:pointer; }
     #chipbar-filter .chip-inner{ display:inline-flex; align-items:center; gap:8px; min-height:40px; max-height:40px; border-radius:999px; }
@@ -77,7 +76,7 @@
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Modal Filtro (solo questa modale resta) */
+    /* Modal FILTRO (l'unica modale rimasta) */
     .modal{ position:fixed; inset:0; display:none; z-index:2147483647; pointer-events:none; }
     .modal.open{ display:block; pointer-events:auto; }
     .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); z-index:1; }
@@ -97,7 +96,7 @@
     @media (max-width:1100px){ :root{ --preview-w:35%; --sidebar-w:65%; } }
     @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} .searchbar{grid-template-columns:1fr;}}
 
-    /* Print */
+    /* Stampa */
     @media print{
       @page{ size: auto; margin:0; }
       body{background:#fff}
@@ -106,22 +105,24 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none;}
       .tkt{font-family: Verdana, Geneva, sans-serif; font-size:16px; line-height:1.5; text-align:center; padding:0}
+      .barcode{ font-size:92px; }
+      .holiday-msg{ font-size:22px; color:var(--main); }
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- LEFT / PREVIEW 18% -->
+    <!-- LEFT: Anteprima scontrino (18%) -->
     <section class="panel left">
       <div class="ticket-bar">
         <button id="btn-prev" class="btn icon" aria-label="Ordine precedente" title="Ordine precedente">◀︎</button>
         <button id="btn-print" class="btn primary" aria-label="Stampa" title="Stampa">Stampa</button>
         <button id="btn-next" class="btn icon" aria-label="Ordine successivo" title="Ordine successivo">▶︎</button>
       </div>
-      <div class="tkt" id="tkt-body"></div>
+      <div class="tkt" id="tkt-body"><!-- render dinamico --></div>
     </section>
 
-    <!-- RIGHT / CONTROLS 82% -->
+    <!-- RIGHT: Controlli (82%) -->
     <aside class="panel right">
       <div class="controls">
         <div class="flashcards" id="flashcards">
@@ -147,7 +148,7 @@
     </aside>
   </div>
 
-  <!-- Solo MODAL FILTRO (la modale ordine è stata rimossa) -->
+  <!-- MODAL FILTRO (unica modale attiva) -->
   <div id="sso-filter-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -167,7 +168,7 @@
   </div>
 
   <script>
-    // ==== Utils ====
+    /* ===================== Utils ===================== */
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const pad2 = n => (n<10?"0":"")+n;
@@ -178,57 +179,62 @@
     const hasValue = v => { const t = String(v || '').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
     const isYes = v => { const t = norm(String(v || '')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
 
+    /* ===================== Stato ===================== */
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
-    // ==== Ticket builder: solo contenuti (niente etichette) ====
+    /* ===================== Ticket: contenuti ===================== */
     function buildValueLines(row){
       const entries = Object.entries(row.src || {});
-      // Chiavi da nascondere totalmente (meta/intestazioni inutili sullo scontrino)
       const dropKeys = new Set([
         'ord','numero ordine (parsed)','ora (parsed)','zona (parsed)',
         'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'
       ].map(k => norm(k)));
 
+      // Heuristica AVICOLI: conserva etichetta accanto alla quantità
+      const AVICOLI = [
+        'anatra','anatre','oca','oche','capone','capponi',
+        'faraona','faraone','pollo','polli','gallo','galline',
+        'quaglia','quaglie','germano','germani'
+      ];
+      const isAvicoloKey = (k) => AVICOLI.some(tok => k.includes(tok));
+
       const lines = [];
-      for(const [rawK, rawV] of entries){
-        const k = norm(String(rawK));
-        const v = (rawV==null? '' : String(rawV)).trim();
-        if(dropKeys.has(k)) continue;                 // via meta
-        if(!hasValue(v)) continue;                    // via vuoti
-        // Evita righe che sono SOLO titoli tipo "1) ..." senza contenuti reali
-        if(/^\s*\d+\)\s*$/i.test(v)) continue;
-        lines.push(`<div class="line">${esc(v)}</div>`); // solo contenuto, niente etichette
+      for(const [kRaw,vRaw] of entries){
+        const k = norm(kRaw);
+        if(dropKeys.has(k)) continue; // meta off
+        const val = (vRaw==null? '' : String(vRaw)).trim();
+        if(!hasValue(val)) continue;  // vuoti off
+        if(/^\s*\d+\)\s*$/i.test(val)) continue; // titoli tipo "1)" off
+
+        if(isAvicoloKey(k)){
+          const label = AVICOLI.find(tok => k.includes(tok)) || '';
+          lines.push(`<div class="line">${esc(val)} ${esc(label)}</div>`);
+        } else {
+          lines.push(`<div class="line">${esc(val)}</div>`);
+        }
       }
       return lines.join('');
     }
 
-    // ==== Ticket Preview (WYSIWYG stampa) ====
     function renderTicket(){
       try{
         const wrap = $('#tkt-body');
         if(!wrap) return;
-
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
-
         const parts = [];
         parts.push(`<img id=\"tkt-logo\" class=\"logo\" src=\"${LOGO_URL}\" alt=\"Bottega di Casterno\">`);
-
         if(row){
           const vals = buildValueLines(row);
           parts.push(`<div class=\"vals\">${vals}</div>`);
-          // separatore + grazie + barcode Code39 (Libre Barcode 39)
           parts.push(`<hr>`);
-          parts.push(`<div class=\"center\">Grazie e Buone Feste</div>`);
+          parts.push(`<div class=\"holiday-msg\">Grazie e Buone Feste</div>`);
           if(typeof row.number === 'number' && !isNaN(row.number)){
-            const code39 = `*${row.number}*`; // start/stop per Code39
+            const code39 = `*${row.number}*`;
             parts.push(`<div class=\"barcode\">${code39}</div>`);
-            parts.push(`<div class=\"barcode-num\">#${row.number}</div>`);
           }
         }
-
         wrap.innerHTML = `<div class=\"tkt\">${parts.join('')}</div>`;
-
         const logoEl = document.getElementById('tkt-logo');
         if(logoEl){
           logoEl.onerror = () => {
@@ -244,7 +250,7 @@
       }
     }
 
-    // ==== Reparti / Filtri Stoccaggio-like ====
+    /* ===================== Reparti / Filtri (stile Stoccaggio) ===================== */
     const DEPARTMENTS = [
       {id:'pane',   label:'1) PANE E PRODOTTI DA FORNO', keyExact: norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
       {id:'banco',  label:'2) BANCO GASTRONOMIA',        keyExact: norm('2) BANCO GASTRONOMIA'),        icon:'🧀'},
@@ -282,7 +288,7 @@
     function updateFilterChipLayout(){ const el=$('#chipbar-filter'); if(!el) return; if(ACTIVE_DEPTS.size===allDeptIds.length){ el.classList.remove('active'); el.classList.add('compact'); } else { el.classList.remove('compact'); el.classList.add('active'); } }
     function updateFilterUI(){ updateFilterBadge(); updateFilterChipLayout(); }
 
-    // ==== Stat / Flashcards ====
+    /* ===================== Stat / Flashcards ===================== */
     function recomputeStats(){
       const total = ORDERS.length;
       const todayStr = todayYMD();
@@ -291,7 +297,7 @@
       const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
       const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
       const maxNum = ORDERS.reduce((m,o)=> (typeof o.number==='number' && !isNaN(o.number) ? Math.max(m,o.number) : m), 0);
-      const totalDisplay = Math.max(maxNum, total + 1); // richiesta: tot = max(numero, n+1)
+      const totalDisplay = Math.max(maxNum, total + 1); // Totale = max(numero massimo, n+1)
       $('#fc-total').textContent = totalDisplay;
       $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
@@ -299,13 +305,13 @@
       $('#fc-pickup-future').textContent = pickupFuture;
     }
 
-    // ==== List rendering ====
+    /* ===================== Lista ordini ===================== */
     function sortLatestFirst(a,b){
       const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
       const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
-      if(an!=null && bn!=null && an!==bn) return bn - an;
-      if(a.date!==b.date) return a.date<b.date?1:-1;
-      const ta=(a.time||''), tb=(b.time||'');
+      if(an!=null && bn!=null && an!==bn) return bn - an; // per numero
+      if(a.date!==b.date) return a.date<b.date?1:-1;       // poi data
+      const ta=(a.time||''), tb=(b.time||'');              // poi ora
       return ta<tb?1:(ta>tb?-1:0);
     }
 
@@ -333,29 +339,7 @@
       renderTicket();
     }
 
-    // ==== API / Mapping ====
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
-    function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){ const dd=+m[1], mm=+m[2]-1, yy=+m[3]; return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0); } m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){ return new Date(+m[1],+m[2]-1,+m[3],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
-    function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
-    function rowToOrder(r){
-      const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
-      const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
-      const timeKey = pickKey(r,['ORA','ORARIO']);
-      const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
-      const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']);
-      const name = nameKey ? String(r[nameKey]||'').trim() : '';
-      if(!name) return null;
-      const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
-      const t   = timeKey ? String(r[timeKey]||'').trim() : '';
-      const num = ordKey  ? Number(r[ordKey]) : null;
-      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
-      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
-      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
-      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
-      return { id:(num != null ? num : null), number:(num != null ? num : null), name, date: dateISO, time:t, printed, src:r, __normKeys };
-    }
-
-    // ==== Interazione elenco / filtri ====
+    /* ===================== Ricerca/Filtri ===================== */
     function select(i){ if(i<0||i>=view.length) return; index=i; highlightSelected(); renderTicket(); }
 
     function applyFilters(){
@@ -382,7 +366,7 @@
       applyFilters();
     }
 
-    // ==== Modal filtro ====
+    /* ===================== Modal Filtro ===================== */
     const filterModal = document.getElementById('sso-filter-modal');
     const filterOptionsEl = document.getElementById('sso-filter-options');
     const filterApply = document.getElementById('sso-filter-apply');
@@ -411,11 +395,11 @@
     function updateToggleAllLabel(){ const total=5; const selected=getModalSelectionCount(); filterToggleAll.textContent=(selected===total)?'Deseleziona tutti':'Seleziona tutti'; }
     function updateApplyDisabled(){ filterApply.disabled = (getModalSelectionCount()===0); }
 
-    // ==== Scroll lock helpers (usati dal filtro) ====
+    /* Scroll lock per modale filtro */
     function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
     function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
-    // ==== Azioni UI ====
+    /* ===================== Azioni UI / tastiera ===================== */
     function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
@@ -425,35 +409,43 @@
     if (filterCloseBtn) { filterCloseBtn.addEventListener('click', closeFilter); }
     if (filterModal) { filterModal.addEventListener('click', (e)=>{ if(e.target.classList && e.target.classList.contains('backdrop')) closeFilter(); }); }
 
-    // Keyboard: navigazione e stampa
+    // Tastiera: navigazione e stampa (Enter)
     document.addEventListener('keydown', (e)=>{
       const key = e.key;
       const isTyping = /input|textarea/i.test(e.target.tagName) || e.target.isContentEditable;
-
-      // Se il filtro è aperto: solo chiusura con Esc/Q
       if(filterModal && filterModal.classList.contains('open')){
-        if(key==='Escape' || key==='q' || key==='Q'){
-          e.preventDefault();
-          closeFilter();
-        }
+        if(key==='Escape' || key==='q' || key==='Q'){ e.preventDefault(); closeFilter(); }
         return;
       }
-
       if(isTyping){ return; }
-
-      if(key === 'ArrowDown'){
-        e.preventDefault();
-        next();
-      } else if(key === 'ArrowUp'){
-        e.preventDefault();
-        prev();
-      } else if(key === 'Enter'){
-        e.preventDefault();
-        doPrint();
-      }
+      if(key === 'ArrowDown'){ e.preventDefault(); next(); }
+      else if(key === 'ArrowUp'){ e.preventDefault(); prev(); }
+      else if(key === 'Enter'){ e.preventDefault(); doPrint(); }
     });
 
-    // ==== Data load ====
+    /* ===================== API / Mapping ===================== */
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
+    function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){ const dd=+m[1], mm=+m[2]-1, yy=+m[3]; return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0); } m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){ return new Date(+m[1],+m[2]-1,+m[3],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
+    function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
+    function rowToOrder(r){
+      const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
+      const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
+      const timeKey = pickKey(r,['ORA','ORARIO']);
+      const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
+      const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']);
+      const name = nameKey ? String(r[nameKey]||'').trim() : '';
+      if(!name) return null;
+      const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
+      const t   = timeKey ? String(r[timeKey]||'').trim() : '';
+      const num = ordKey  ? Number(r[ordKey]) : null;
+      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
+      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
+      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
+      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
+      return { id:(num != null ? num : null), number:(num != null ? num : null), name, date: dateISO, time:t, printed, src:r, __normKeys };
+    }
+
+    /* ===================== Caricamento dati ===================== */
     async function loadData(){
       try{
         const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
@@ -477,11 +469,11 @@
       }
     }
 
-    // ==== Init ====
+    /* ===================== Init ===================== */
     (function init(){
       renderTicket();
       $('#flashcards').addEventListener('click', (e)=>{ const card = e.target.closest('.card'); if(card && card.dataset.filter){ setFilter(card.dataset.filter); } });
-      $('#btn-search').addEventListener('click', search);
+      $('#btn-search').addEventListener('click', ()=>search());
       $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
       $('#orders-list').addEventListener('click', (e)=>{
         const row = e.target.closest('.order');
