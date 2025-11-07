@@ -6,12 +6,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
-    :root{ --main:#770505; --fg:#0b0b0b; --card:#ffffff; --ink:#111; --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15); --gap:14px; --pane-pad:16px; --sidebar-w:82%; --preview-w:18%; --ticket-max-h:960px; }
+    :root{
+      --main:#770505; --fg:#0b0b0b; --card:#ffffff; --ink:#111;
+      --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15);
+      --gap:14px; --pane-pad:16px;
+      --sidebar-w:82%; --preview-w:18%;
+      --ticket-max-h:960px;
+    }
     html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
     .app{display:grid;grid-template-columns:minmax(260px, var(--preview-w)) minmax(480px, var(--sidebar-w));gap:var(--gap);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box;}
 
+    /* Panel base */
     .panel{background:var(--card); color:var(--ink); border-radius:var(--radius); box-shadow:var(--elev); overflow:hidden; border:1px solid rgba(0,0,0,.08);}    
 
+    /* === LEFT: Preview / Ticket === */
     .left{display:flex;flex-direction:column;}
     .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
 
@@ -21,11 +29,12 @@
     .btn.icon{width:44px;padding:0;border-radius:999px}
 
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
-    .tkt{font:15px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:10px 12px 12px;}
+    .tkt{font-family: Verdana, Geneva, sans-serif; font-size:17px; line-height:1.5; padding:10px 0 12px 0;}
     .tkt .center{text-align:center}
     .tkt .h{font-weight:800;letter-spacing:.3px}
     .tkt .logo{ display:block; margin:6px auto 8px; max-width:92%; height:auto; }
 
+    /* === RIGHT: Controls === */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:var(--pane-pad)}
     .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:0}
@@ -37,6 +46,7 @@
     .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
 
+    /* Chip filtro (stile Stoccaggio) */
     .chipbar{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid rgba(0,0,0,.06); background:#f7f7f8; border-radius:999px; box-sizing:border-box; }
     #chipbar-filter{ cursor:pointer; }
     #chipbar-filter .chip-inner{ display:inline-flex; align-items:center; gap:8px; min-height:40px; max-height:40px; border-radius:999px; }
@@ -62,14 +72,11 @@
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Tabella del ticket */
-    .kv{ width:100%; border-collapse:collapse; }
-    .kv th, .kv td{ text-align:left; padding:12px 10px; border-bottom:1px solid #f1f1f1; font-size:16px; }
-    .kv th{ width:36%; color:#444; font-weight:700; }
-    .kv tr:last-child th, .kv tr:last-child td{ border-bottom:none; }
-    .kv tr.hl{ background:rgba(255,214,10,.22); }
+    /* Valori del ticket (solo contenuti) */
+    .vals{ width:100%; }
+    .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
 
-    /* Modal Filtro */
+    /* Modal Filtro (solo questa modale resta) */
     .modal{ position:fixed; inset:0; display:none; z-index:2147483647; pointer-events:none; }
     .modal.open{ display:block; pointer-events:auto; }
     .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); z-index:1; }
@@ -84,10 +91,12 @@
     .filter-row input{ width:20px; height:20px; }
     .filter-actions{ display:flex; gap:10px; margin-top:16px; }
 
+    /* Responsive */
     @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} .searchbar{grid-template-columns:1fr auto; grid-auto-flow:row;}} 
     @media (max-width:1100px){ :root{ --preview-w:35%; --sidebar-w:65%; } }
     @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} .searchbar{grid-template-columns:1fr;}}
 
+    /* Print */
     @media print{
       @page{ size: auto; margin:0; }
       body{background:#fff}
@@ -95,12 +104,13 @@
       .app{display:block;padding:0}
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none;}
-      .tkt{padding:0}
+      .tkt{font-family: Verdana, Geneva, sans-serif; font-size:18px; line-height:1.55; padding:0}
     }
   </style>
 </head>
 <body>
   <div class="app">
+    <!-- LEFT / PREVIEW 18% -->
     <section class="panel left">
       <div class="ticket-bar">
         <button id="btn-prev" class="btn icon" aria-label="Ordine precedente" title="Ordine precedente">◀︎</button>
@@ -110,6 +120,7 @@
       <div class="tkt" id="tkt-body"></div>
     </section>
 
+    <!-- RIGHT / CONTROLS 82% -->
     <aside class="panel right">
       <div class="controls">
         <div class="flashcards" id="flashcards">
@@ -163,29 +174,31 @@
     const fmtDateIT = iso => { if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; };
     const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
     const esc = s => String(s==null? '': s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
-    const hasValue = v => { const t = String(v??'').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
-    const isYes = v => { const t = norm(String(v??'')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
+    const hasValue = v => { const t = String(v || '').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
+    const isYes = v => { const t = norm(String(v || '')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
 
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
-    // ==== Ticket builder (per ora mantiene label+valore) ====
-    function buildKvRows(row){
+    // ==== Ticket builder: solo contenuti (niente etichette) ====
+    function buildValueLines(row){
       const entries = Object.entries(row.src || {});
-      const skipKeys = new Set([
+      // Chiavi da nascondere totalmente (meta/intestazioni inutili sullo scontrino)
+      const dropKeys = new Set([
         'ord','numero ordine (parsed)','ora (parsed)','zona (parsed)',
         'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'
       ].map(k => norm(k)));
-      let seenItemsStart = false;
-      return entries
-        .filter(([k,_]) => !skipKeys.has(norm(String(k))))
-        .map(([k,v]) => {
-          const keyStr = String(k).trim();
-          const valStr = (v == null) ? '' : String(v).trim();
-          if (/^\s*1\)\s*/i.test(keyStr)) seenItemsStart = true;
-          const shouldHL = seenItemsStart && valStr !== '' && valStr !== '0';
-          return `<tr class="${shouldHL ? 'hl' : ''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
-        })
-        .join('');
+
+      const lines = [];
+      for(const [rawK, rawV] of entries){
+        const k = norm(String(rawK));
+        const v = (rawV==null? '' : String(rawV)).trim();
+        if(dropKeys.has(k)) continue;                 // via meta
+        if(!hasValue(v)) continue;                    // via vuoti
+        // Evita righe che sono SOLO titoli tipo "1) ..." senza contenuti reali
+        if(/^\s*\d+\)\s*$/i.test(v)) continue;
+        lines.push(`<div class="line">${esc(v)}</div>`); // solo contenuto, niente etichette
+      }
+      return lines.join('');
     }
 
     // ==== Ticket Preview (WYSIWYG stampa) ====
@@ -202,7 +215,7 @@
           const userKey = (window.PRINT_TOP_FIELD || '').toString().trim();
           if(userKey){
             const k = pickKey(row.src || {}, [userKey]);
-            if(k) topValue = String(row.src[k] ?? '').trim();
+            if(k) topValue = String((row.src[k] || '')).trim();
           }
           if(!topValue && row.number!=null) topValue = `Ordine #${row.number}`;
         }
@@ -212,8 +225,8 @@
         parts.push(`<img id="tkt-logo" class="logo" src="${LOGO_URL}" alt="Bottega di Casterno">`);
 
         if(row){
-          const kv = buildKvRows(row);
-          parts.push(`<table class="kv">${kv}</table>`);
+          const vals = buildValueLines(row);
+          parts.push(`<div class="vals">${vals}</div>`);
         }
 
         wrap.innerHTML = `<div class="tkt">${parts.join('')}</div>`;
@@ -233,7 +246,7 @@
       }
     }
 
-    // ==== Reparti / Filtri ====
+    // ==== Reparti / Filtri Stoccaggio-like ====
     const DEPARTMENTS = [
       {id:'pane',   label:'1) PANE E PRODOTTI DA FORNO', keyExact: norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
       {id:'banco',  label:'2) BANCO GASTRONOMIA',        keyExact: norm('2) BANCO GASTRONOMIA'),        icon:'🧀'},
@@ -280,7 +293,7 @@
       const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
       const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
       const maxNum = ORDERS.reduce((m,o)=> (typeof o.number==='number' && !isNaN(o.number) ? Math.max(m,o.number) : m), 0);
-      const totalDisplay = Math.max(maxNum, total + 1);
+      const totalDisplay = Math.max(maxNum, total + 1); // richiesta: tot = max(numero, n+1)
       $('#fc-total').textContent = totalDisplay;
       $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
@@ -289,7 +302,14 @@
     }
 
     // ==== List rendering ====
-    function sortLatestFirst(a,b){ const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null; const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null; if(an!=null && bn!=null && an!==bn) return bn - an; if(a.date!==b.date) return a.date<b.date?1:-1; const ta=(a.time||''), tb=(b.time||''); return ta<tb?1:(ta>tb?-1:0); }
+    function sortLatestFirst(a,b){
+      const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
+      const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
+      if(an!=null && bn!=null && an!==bn) return bn - an;
+      if(a.date!==b.date) return a.date<b.date?1:-1;
+      const ta=(a.time||''), tb=(b.time||'');
+      return ta<tb?1:(ta>tb?-1:0);
+    }
 
     function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); }); }
 
@@ -299,7 +319,7 @@
       if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; renderTicket(); return; }
       el.innerHTML = sorted.map((o,i)=> `
         <div class="order" data-i="${i}">
-          <span class="badge">${o.number ?? '—'}</span>
+          <span class="badge">${(o.number != null ? o.number : '—')}</span>
           <div>
             <div style="font-weight:800">${esc(o.name)}</div>
             <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
@@ -334,7 +354,7 @@
       const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
       const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
       const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
-      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys };
+      return { id:(num != null ? num : null), number:(num != null ? num : null), name, date: dateISO, time:t, printed, src:r, __normKeys };
     }
 
     // ==== Interazione elenco / filtri ====
@@ -406,25 +426,32 @@
     if (document.getElementById('chipbar-filter')) { $('#chipbar-filter').addEventListener('click', openFilter); }
     if (filterCloseBtn) { filterCloseBtn.addEventListener('click', closeFilter); }
     if (filterModal) { filterModal.addEventListener('click', (e)=>{ if(e.target.classList && e.target.classList.contains('backdrop')) closeFilter(); }); }
-    document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(filterModal && filterModal.classList.contains('open')) closeFilter(); } });
 
-    // ==== Tastiera: frecce per navigare, Invio per stampare ====
-    function isTypingTarget(el){
-      if(!el) return false;
-      const tag = (el.tagName||'').toUpperCase();
-      return tag==='INPUT' || tag==='TEXTAREA' || el.isContentEditable;
-    }
+    // Keyboard: navigazione e stampa
     document.addEventListener('keydown', (e)=>{
-      // Non interferire quando si sta scrivendo o quando è aperta la modale filtro
-      if(isTypingTarget(e.target)) return;
-      if(filterModal && filterModal.classList.contains('open')) return;
-      if(!view || view.length===0) return;
+      const key = e.key;
+      const isTyping = /input|textarea/i.test(e.target.tagName) || e.target.isContentEditable;
 
-      switch(e.key){
-        case 'ArrowUp': e.preventDefault(); prev(); break;
-        case 'ArrowDown': e.preventDefault(); next(); break;
-        case 'Enter': e.preventDefault(); doPrint(); break; // apre la finestra di stampa del browser
-        default: break;
+      // Se il filtro è aperto: solo chiusura con Esc/Q
+      if(filterModal && filterModal.classList.contains('open')){
+        if(key==='Escape' || key==='q' || key==='Q'){
+          e.preventDefault();
+          closeFilter();
+        }
+        return;
+      }
+
+      if(isTyping){ return; }
+
+      if(key === 'ArrowDown'){
+        e.preventDefault();
+        next();
+      } else if(key === 'ArrowUp'){
+        e.preventDefault();
+        prev();
+      } else if(key === 'Enter'){
+        e.preventDefault();
+        doPrint();
       }
     });
 
