@@ -56,6 +56,9 @@
     .order + .order{margin-top:8px}
     .order:hover{background:#f9f9fb}
     .order.selected{outline:2px solid var(--main)}
+    .order-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+    .btn.smol{height:32px;padding:0 12px;font-size:13px;border-radius:999px}
+    .btn.icon.smol{width:32px;height:32px;padding:0}
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
@@ -183,7 +186,27 @@
 
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
-    // ==== Ticket Preview ====
+    // ==== Ticket builder (identico alla modale) ====
+    function buildKvRows(row){
+      const entries = Object.entries(row.src || {});
+      const skipKeys = new Set([
+        'ord','numero ordine (parsed)','ora (parsed)','zona (parsed)',
+        'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'
+      ].map(k => norm(k)));
+      let seenItemsStart = false;
+      return entries
+        .filter(([k,_]) => !skipKeys.has(norm(String(k))))
+        .map(([k,v]) => {
+          const keyStr = String(k).trim();
+          const valStr = (v == null) ? '' : String(v).trim();
+          if (/^\s*1\)\s*/i.test(keyStr)) seenItemsStart = true;
+          const shouldHL = seenItemsStart && valStr !== '' && valStr !== '0';
+          return `<tr class="${shouldHL ? 'hl' : ''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
+        })
+        .join('');
+    }
+
+    // ==== Ticket Preview (WYSIWYG stampa) ====
     function renderTicket(){
       try{
         const wrap = $('#tkt-body');
@@ -207,7 +230,11 @@
         if(topValue){ parts.push(`<div class="center h" style="margin:4px 0 6px">${esc(topValue)}</div>`); }
         parts.push(`<img id="tkt-logo" class="logo" src="${LOGO_URL}" alt="Bottega di Casterno">`);
 
-        // Inserisco tutto in un contenitore .tkt
+        if(row){
+          const kv = buildKvRows(row);
+          parts.push(`<table class="kv">${kv}</table>`);
+        }
+
         wrap.innerHTML = `<div class="tkt">${parts.join('')}</div>`;
 
         const logoEl = document.getElementById('tkt-logo');
@@ -298,6 +325,10 @@
             <div style="font-weight:800">${esc(o.name)}</div>
             <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
           </div>
+          <div class="order-actions">
+            <button class="btn smol btn-open" type="button" aria-label="Apri dettagli">Apri</button>
+            <button class="btn smol primary btn-row-print" type="button" aria-label="Stampa ordine">Stampa</button>
+          </div>
         </div>
       `).join('');
       view = sorted;
@@ -368,16 +399,7 @@
     function openModal(row){
       modalTitle.textContent = row.name || 'Dettaglio ordine';
       modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • ');
-      const entries=Object.entries(row.src||{});
-      const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k)));
-      let seenItemsStart=false;
-      const rowsHtml=entries.filter(([k,_])=>!skipKeys.has(norm(String(k)))).map(([k,v])=>{
-        const keyStr=String(k).trim();
-        const valStr=(v==null)? '' : String(v).trim();
-        if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true;
-        const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0';
-        return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
-      }).join('');
+      const rowsHtml = buildKvRows(row);
       modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden','false');
@@ -459,7 +481,17 @@
       $('#flashcards').addEventListener('click', (e)=>{ const card = e.target.closest('.card'); if(card && card.dataset.filter){ setFilter(card.dataset.filter); } });
       $('#btn-search').addEventListener('click', search);
       $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
-      $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ const i=+row.dataset.i; select(i); openModal(view[i]); }});
+      $('#orders-list').addEventListener('click', (e)=>{
+        const row = e.target.closest('.order');
+        if(!row) return;
+        const i = +row.dataset.i;
+        const isOpenBtn = e.target.closest('.btn-open');
+        const isPrintBtn = e.target.closest('.btn-row-print');
+        if(isOpenBtn){ select(i); openModal(view[i]); e.preventDefault(); e.stopPropagation(); return; }
+        if(isPrintBtn){ select(i); doPrint(); e.preventDefault(); e.stopPropagation(); return; }
+        // Clic altrove sulla riga: solo selezione e anteprima a sinistra
+        select(i);
+      });
       $('#btn-next').addEventListener('click', next);
       $('#btn-prev').addEventListener('click', prev);
       $('#btn-print').addEventListener('click', doPrint);
@@ -468,4 +500,3 @@
   </script>
 </body>
 </html>
-
