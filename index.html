@@ -6,36 +6,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
-    :root{
-      --main:#770505; --fg:#0b0b0b; --card:#ffffff; --ink:#111;
-      --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15);
-      --gap:14px; --pane-pad:16px;
-      --sidebar-w:70%; --preview-w:30%;
-      --ticket-max-h:960px;
-    }
+    :root{ --main:#770505; --fg:#0b0b0b; --card:#ffffff; --ink:#111; --radius:22px; --elev:0 10px 24px rgba(0,0,0,.15); --gap:14px; --pane-pad:16px; --sidebar-w:70%; --preview-w:30%; --ticket-max-h:960px; }
     html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;}
     .app{display:grid;grid-template-columns:minmax(260px, var(--preview-w)) minmax(480px, var(--sidebar-w));gap:var(--gap);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box;}
 
-    /* Panel base */
     .panel{background:var(--card); color:var(--ink); border-radius:var(--radius); box-shadow:var(--elev); overflow:hidden; border:1px solid rgba(0,0,0,.08);}    
 
-    /* LEFT: Preview / Ticket */
     .left{display:flex;flex-direction:column;}
-    .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:1}
+    .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
 
-    /* Bottoni uniformi, stondati */
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--main);border-radius:999px;height:44px;padding:0 18px;background:#fff;color:var(--main);font-weight:800;cursor:pointer;transition:transform .06s ease, background .15s, color .15s}
     .btn:active{transform:scale(.985)}
     .btn.primary{background:var(--main);color:#fff;border-color:var(--main)}
     .btn.icon{width:44px;padding:0;border-radius:999px}
 
-    /* Ticket: SOLO TESTO */
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
     .tkt{font:15px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:10px 12px 12px;}
     .tkt .center{text-align:center}
     .tkt .h{font-weight:800;letter-spacing:.3px}
+    .tkt .logo{ display:block; margin:6px auto 8px; max-width:92%; height:auto; }
 
-    /* RIGHT: Controls */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:var(--pane-pad)}
     .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:0}
@@ -47,7 +37,6 @@
     .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
 
-    /* Chip filtro (stoccaggio.html) */
     .chipbar{ display:flex; align-items:center; gap:8px; padding:6px; border:1px solid rgba(0,0,0,.06); background:#f7f7f8; border-radius:999px; box-sizing:border-box; }
     #chipbar-filter{ cursor:pointer; }
     #chipbar-filter .chip-inner{ display:inline-flex; align-items:center; gap:8px; min-height:40px; max-height:40px; border-radius:999px; }
@@ -70,15 +59,14 @@
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Modali (stoccaggio.html) */
-    .modal{ position:fixed; inset:0; display:none; z-index:2147483647; }
-    .modal.open{ display:block; }
-    .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); }
-    .modal .sheet{ position:absolute; inset:0; background:#fff; color:#111; display:flex; flex-direction:column; }
-    .modal header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 12px; border-bottom:1px solid #ececec; position:sticky; top:0; background:#fff; z-index:1; }
+    .modal{ position:fixed; inset:0; display:none; z-index:2147483647; pointer-events:none; }
+    .modal.open{ display:block; pointer-events:auto; }
+    .modal .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:saturate(1.2) blur(6px); z-index:1; }
+    .modal .sheet{ position:absolute; inset:0; background:#fff; color:#111; display:flex; flex-direction:column; z-index:2; }
+    .modal header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 12px; border-bottom:1px solid #ececec; position:sticky; top:0; background:#fff; z-index:3; }
     .modal header .h{ font-weight:900; font-size:22px; text-align:left; margin:0; }
     .modal header .text{ font-size:15px; text-align:left; margin-top:6px; color:#555; }
-    .modal .close{ border:1px solid #ddd; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; cursor:pointer; }
+    .modal .close{ border:1px solid #ddd; background:#fff; border-radius:999px; padding:8px 12px; font-weight:800; cursor:pointer; position:relative; z-index:4; }
     .modal .content{ padding:12px 16px 28px; overflow:auto; font-size:16px; }
     .kv{ width:100%; border-collapse:collapse; }
     .kv th, .kv td{ text-align:left; padding:12px 10px; border-bottom:1px solid #f1f1f1; font-size:16px; }
@@ -86,7 +74,6 @@
     .kv tr:last-child th, .kv tr:last-child td{ border-bottom:none; }
     .kv tr.hl{ background:rgba(255,214,10,.22); }
 
-    /* Filter modal sheet rounded (as stoccaggio) */
     #sso-filter-modal .sheet{ position:relative; inset:auto; margin:10vh auto; width:min(560px,92vw); max-height:80vh; background:#fff; color:#111; border-radius:var(--radius); overflow:hidden; border:1px solid rgba(0,0,0,.08); box-shadow:var(--elev); display:flex; flex-direction:column; }
     #sso-filter-modal header{ position:sticky; top:0; z-index:1; background:#fff; border-bottom:1px solid #ececec; padding:14px 16px 10px; }
     #sso-filter-modal header .h{ font-size:18px; font-weight:800; color:#111; margin:0; }
@@ -97,12 +84,10 @@
     .filter-row input{ width:20px; height:20px; }
     .filter-actions{ display:flex; gap:10px; margin-top:16px; }
 
-    /* Responsive */
     @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} .searchbar{grid-template-columns:1fr auto; grid-auto-flow:row;}} 
     @media (max-width:1100px){ :root{ --preview-w:35%; --sidebar-w:65%; } }
     @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} .searchbar{grid-template-columns:1fr;}}
 
-    /* Print: solo ticket */
     @media print{
       @page{ size: auto; margin:0; }
       body{background:#fff}
@@ -116,7 +101,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- LEFT / PREVIEW 30% -->
     <section class="panel left">
       <div class="ticket-bar">
         <button id="btn-prev" class="btn icon" aria-label="Ordine precedente" title="Ordine precedente">◀︎</button>
@@ -126,7 +110,6 @@
       <div class="tkt" id="tkt-body"></div>
     </section>
 
-    <!-- RIGHT / CONTROLS 70% -->
     <aside class="panel right">
       <div class="controls">
         <div class="flashcards" id="flashcards">
@@ -139,16 +122,9 @@
         <div class="searchbar">
           <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
           <button id="btn-search" class="btn primary">Cerca</button>
-          <!-- filtro stoccaggio accanto al tasto Cerca -->
           <div class="chipbar compact" id="chipbar-filter" title="Filtro" aria-haspopup="dialog" aria-expanded="false">
             <div class="chip-inner">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <g fill="currentColor">
-                  <rect x="3" y="6" rx="1.5" ry="1.5" width="18" height="2"></rect>
-                  <rect x="6" y="11" rx="1.5" ry="1.5" width="12" height="2"></rect>
-                  <rect x="9" y="16" rx="1.5" ry="1.5" width="6" height="2"></rect>
-                </g>
-              </svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="6" rx="1.5" ry="1.5" width="18" height="2"></rect><rect x="6" y="11" rx="1.5" ry="1.5" width="12" height="2"></rect><rect x="9" y="16" rx="1.5" ry="1.5" width="6" height="2"></rect></g></svg>
               <span id="sso-filter-label" aria-hidden="true"></span>
               <span id="sso-filter-badge" class="count-badge"></span>
             </div>
@@ -159,7 +135,6 @@
     </aside>
   </div>
 
-  <!-- Modale Dettaglio (identica allo stoccaggio per struttura/ID e contenuto) -->
   <div id="sso-modal" class="modal" aria-hidden="true" role="dialog">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -168,7 +143,7 @@
           <div id="sso-modal-title" class="h" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Dettaglio ordine</div>
           <div id="sso-modal-sub" class="text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
         </div>
-        <button id="sso-modal-close" class="close" aria-label="Chiudi">Chiudi</button>
+        <button id="sso-modal-close" type="button" class="close" aria-label="Chiudi">Chiudi</button>
       </header>
       <div class="content">
         <table class="kv" id="sso-modal-table"></table>
@@ -176,7 +151,6 @@
     </div>
   </div>
 
-  <!-- Modale Filtri (stoccaggio) -->
   <div id="sso-filter-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -196,7 +170,6 @@
   </div>
 
   <script>
-    // Utils
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const pad2 = n => (n<10?"0":"")+n;
@@ -207,20 +180,16 @@
     const hasValue = v => { const t = String(v??'').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
     const isYes = v => { const t = norm(String(v??'')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
 
-    // Stato
-    let ORDERS = [];
-    let view = [];
-    let index = 0;
-    let activeFilter = 'all';
+    let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
-    // Ticket: SOLO scritta
     function renderTicket(){
-      const wrap = $('#tkt-body');
-      if(!wrap) return;
-      wrap.innerHTML = '<div class="tkt center h">Bottega di Casterno</div>';
+      const wrap = $('#tkt-body'); if(!wrap) return;
+      const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
+      // Mostra logo al top; fallback a testo se l'immagine non è disponibile
+      const imgHtml = `<img class=\"logo\" src=\"${LOGO_URL}\" alt=\"Bottega di Casterno\" onerror=\"this.onerror=null; this.replaceWith('<div class\\'tkt center h\\'>Bottega di Casterno<\/div>');\">`;
+      wrap.innerHTML = imgHtml;
     }
 
-    // === Stoccaggio: reparti e logiche filtro ===
     const DEPARTMENTS = [
       {id:'pane',   label:'1) PANE E PRODOTTI DA FORNO', keyExact: norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
       {id:'banco',  label:'2) BANCO GASTRONOMIA',        keyExact: norm('2) BANCO GASTRONOMIA'),        icon:'🧀'},
@@ -254,121 +223,45 @@
     const rowHasDept = (row,id)=> getDeptStatus(row,id).present;
     function rowMatchesActiveDepts(row){ if(ACTIVE_DEPTS.size===0) return false; for(const id of ACTIVE_DEPTS){ if(rowHasDept(row,id)) return true; } return false; }
 
-    function updateFilterBadge(){
-      const badge=$('#sso-filter-badge');
-      if(!badge) return;
-      if(ACTIVE_DEPTS.size===allDeptIds.length){ badge.style.display='none'; badge.innerHTML=''; return; }
-      const parts=[]; const all=[{id:'pane',icon:'🥖'},{id:'banco',icon:'🧀'},{id:'fruver',icon:'🥦'},{id:'carne',icon:'🥩'},{id:'altro',icon:'📦'}];
-      for(const dep of all){ if(ACTIVE_DEPTS.has(dep.id)){ parts.push(dep.icon); } }
-      badge.style.display='inline-flex';
-      badge.innerHTML = parts.join(' <span class="sep">+</span> ');
-    }
-    function updateFilterChipLayout(){
-      const el=$('#chipbar-filter'); if(!el) return;
-      if(ACTIVE_DEPTS.size===allDeptIds.length){ el.classList.remove('active'); el.classList.add('compact'); }
-      else { el.classList.remove('compact'); el.classList.add('active'); }
-    }
+    function updateFilterBadge(){ const badge=$('#sso-filter-badge'); if(!badge) return; if(ACTIVE_DEPTS.size===allDeptIds.length){ badge.style.display='none'; badge.innerHTML=''; return; } const parts=[]; const all=[{id:'pane',icon:'🥖'},{id:'banco',icon:'🧀'},{id:'fruver',icon:'🥦'},{id:'carne',icon:'🥩'},{id:'altro',icon:'📦'}]; for(const dep of all){ if(ACTIVE_DEPTS.has(dep.id)){ parts.push(dep.icon); } } badge.style.display='inline-flex'; badge.innerHTML = parts.join(' <span class="sep">+</span> '); }
+    function updateFilterChipLayout(){ const el=$('#chipbar-filter'); if(!el) return; if(ACTIVE_DEPTS.size===allDeptIds.length){ el.classList.remove('active'); el.classList.add('compact'); } else { el.classList.remove('compact'); el.classList.add('active'); } }
     function updateFilterUI(){ updateFilterBadge(); updateFilterChipLayout(); }
 
-    // Stats
     function recomputeStats(){
       const total = ORDERS.length;
       const todayStr = todayYMD();
-      const insertedToday = ORDERS.filter(o=>o.date===todayStr).length; // proxy
+      const insertedToday = ORDERS.filter(o=>o.date===todayStr).length;
       const queue = ORDERS.filter(o=>!o.printed).length;
       const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
       const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
-      $('#fc-total').textContent = total;
+      // Totale ordini: mostra il massimo numero d'ordine oppure (conteggio+1)
+      const maxNum = ORDERS.reduce((m,o)=> (typeof o.number==='number' && !isNaN(o.number) ? Math.max(m,o.number) : m), 0);
+      const totalDisplay = Math.max(maxNum, total + 1);
+      $('#fc-total').textContent = totalDisplay;
+      // Altre card: numeri reali
       $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
       $('#fc-pickup-today').textContent = pickupToday;
       $('#fc-pickup-future').textContent = pickupFuture;
     }
 
-    // Sort ultimo→primo per numero, fallback data/ora
-    function sortLatestFirst(a,b){
-      const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
-      const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
-      if(an!=null && bn!=null && an!==bn) return bn - an;
-      if(a.date!==b.date) return a.date<b.date?1:-1;
-      const ta=(a.time||''), tb=(b.time||'');
-      return ta<tb?1:(ta>tb?-1:0);
-    }
+    function sortLatestFirst(a,b){ const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null; const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null; if(an!=null && bn!=null && an!==bn) return bn - an; if(a.date!==b.date) return a.date<b.date?1:-1; const ta=(a.time||''), tb=(b.time||''); return ta<tb?1:(ta>tb?-1:0); }
 
-    // Render lista
     function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); }); }
 
-    function renderList(list){
-      const sorted=[...list].sort(sortLatestFirst);
-      const el = $('#orders-list');
-      if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; renderTicket(); return; }
-      el.innerHTML = sorted.map((o,i)=> `
-        <div class="order" data-i="${i}">
-          <span class="badge">${o.number ?? '—'}</span>
-          <div>
-            <div style="font-weight:800">${esc(o.name)}</div>
-            <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
-          </div>
-        </div>
-      `).join('');
-      view = sorted;
-      index = Math.min(index, view.length-1);
-      highlightSelected();
-      renderTicket();
-    }
+    function renderList(list){ const sorted=[...list].sort(sortLatestFirst); const el = $('#orders-list'); if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; renderTicket(); return; } el.innerHTML = sorted.map((o,i)=> `<div class="order" data-i="${i}"><span class="badge">${o.number ?? '—'}</span><div><div style="font-weight:800">${esc(o.name)}</div><div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div></div></div>`).join(''); view = sorted; index = Math.min(index, view.length-1); highlightSelected(); renderTicket(); }
 
-    // Trasformazione riga API → ordine (include src e __normKeys come stoccaggio)
     const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
     function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){ const dd=+m[1], mm=+m[2]-1, yy=+m[3]; return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0); } m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){ return new Date(+m[1],+m[2]-1,+m[3],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
     function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
-    function rowToOrder(r){
-      const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
-      const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
-      const timeKey = pickKey(r,['ORA','ORARIO']);
-      const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
-      const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']);
-      const name = nameKey ? String(r[nameKey]||'').trim() : '';
-      if(!name) return null;
-      const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
-      const t   = timeKey ? String(r[timeKey]||'').trim() : '';
-      const num = ordKey  ? Number(r[ordKey]) : null;
-      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
-      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
-      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
-      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
-      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys };
-    }
+    function rowToOrder(r){ const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']); const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']); const timeKey = pickKey(r,['ORA','ORARIO']); const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']); const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']); const name = nameKey ? String(r[nameKey]||'').trim() : ''; if(!name) return null; const d   = dateKey ? parseAnyDate(r[dateKey]) : null; const t   = timeKey ? String(r[timeKey]||'').trim() : ''; const num = ordKey  ? Number(r[ordKey]) : null; const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : ''; const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1'); const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD(); const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)])); return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys }; }
 
-    // Filtri e ricerca
     function select(i){ if(i<0||i>=view.length) return; index=i; highlightSelected(); renderTicket(); }
 
-    function applyFilters(){
-      const q = ($('#q').value||'').trim().toLowerCase();
-      const todayStr = todayYMD();
-      let base = [...ORDERS];
-      // filtri flashcard
-      switch(activeFilter){
-        case 'today': base = base.filter(o=>o.date===todayStr); break;
-        case 'queue': base = base.filter(o=>!o.printed); break;
-        case 'pickup_today': base = base.filter(o=>o.date===todayStr); break;
-        case 'pickup_future': base = base.filter(o=>o.date>todayStr); break;
-        case 'all': default: break;
-      }
-      // filtro reparti (stoccaggio)
-      base = base.filter(rowMatchesActiveDepts);
-      if(q) base = base.filter(o=> norm(o.name).includes(norm(q)) );
-      renderList(base);
-      select(0);
-    }
+    function applyFilters(){ const q = ($('#q').value||'').trim().toLowerCase(); const todayStr = todayYMD(); let base = [...ORDERS]; switch(activeFilter){ case 'today': base = base.filter(o=>o.date===todayStr); break; case 'queue': base = base.filter(o=>!o.printed); break; case 'pickup_today': base = base.filter(o=>o.date===todayStr); break; case 'pickup_future': base = base.filter(o=>o.date>todayStr); break; case 'all': default: break; } base = base.filter(rowMatchesActiveDepts); if(q) base = base.filter(o=> norm(o.name).includes(norm(q)) ); renderList(base); select(0); }
 
-    function setFilter(key){
-      if(key==='all'){ activeFilter='all'; }
-      else { activeFilter = (activeFilter===key ? 'all' : key); }
-      $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
-      applyFilters();
-    }
+    function setFilter(key){ if(key==='all'){ activeFilter='all'; } else { activeFilter = (activeFilter===key ? 'all' : key); } $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter)); applyFilters(); }
 
-    // Modale (contenuto identico allo stoccaggio: tutte le coppie chiave→valore, highlighting dagli articoli 1))
     function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
     function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
@@ -378,27 +271,13 @@
     const modalTitle = document.getElementById('sso-modal-title');
     const modalSub = document.getElementById('sso-modal-sub');
 
-    function openModal(row){
-      modalTitle.textContent = row.name || 'Dettaglio ordine';
-      modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • ');
-      const entries=Object.entries(row.src||{});
-      const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k)));
-      let seenItemsStart=false;
-      const rowsHtml=entries
-        .filter(([k,_])=>!skipKeys.has(norm(String(k))))
-        .map(([k,v])=>{
-          const keyStr=String(k).trim();
-          const valStr=(v==null)? '' : String(v).trim();
-          if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true;
-          const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0';
-          return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
-        }).join('');
-      modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`;
-      modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lockScroll();
-    }
+    function openModal(row){ modalTitle.textContent = row.name || 'Dettaglio ordine'; modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • '); const entries=Object.entries(row.src||{}); const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k))); let seenItemsStart=false; const rowsHtml=entries.filter(([k,_])=>!skipKeys.has(norm(String(k)))).map(([k,v])=>{ const keyStr=String(k).trim(); const valStr=(v==null)? '' : String(v).trim(); if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true; const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0'; return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`; }).join(''); modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`; modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lockScroll(); }
     function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlockScroll(); }
 
-    // Filter modal handlers
+    // Close hooks (button + backdrop + ESC)
+    if (modalClose) modalClose.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeModal(); });
+    if (modal) modal.addEventListener('click', (e)=>{ if (e.target.classList && e.target.classList.contains('backdrop')) closeModal(); });
+
     const filterModal = document.getElementById('sso-filter-modal');
     const filterOptionsEl = document.getElementById('sso-filter-options');
     const filterApply = document.getElementById('sso-filter-apply');
@@ -408,37 +287,14 @@
     function openFilter(){ renderFilterOptions(); filterModal.classList.add('open'); filterModal.setAttribute('aria-hidden','false'); lockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','true'); }
     function closeFilter(){ filterModal.classList.remove('open'); filterModal.setAttribute('aria-hidden','true'); unlockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','false'); updateFilterUI(); }
 
-    function renderFilterOptions(){
-      const DEPTS_SIMPLE = [
-        {id:'pane',   label:'🥖  PANE E PRODOTTI DA FORNO'},
-        {id:'banco',  label:'🧀  BANCO GASTRONOMIA'},
-        {id:'fruver', label:'🥦  FRUTTA E VERDURA'},
-        {id:'carne',  label:'🥩  CARNE'},
-        {id:'altro',  label:'📦  ALTRO'}
-      ];
-      const activeIds = new Set(ACTIVE_DEPTS);
-      filterOptionsEl.innerHTML = DEPTS_SIMPLE.map(dep=>`<label class="filter-row"><input type="checkbox" data-dep="${dep.id}" ${activeIds.has(dep.id)?'checked':''} /><span class="label">${dep.label}</span></label>`).join('');
-      filterOptionsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.addEventListener('change', ()=>{ updateToggleAllLabel(); updateApplyDisabled(); }); });
-      updateToggleAllLabel(); updateApplyDisabled();
-    }
+    function renderFilterOptions(){ const DEPTS_SIMPLE = [ {id:'pane',   label:'🥖  PANE E PRODOTTI DA FORNO'}, {id:'banco',  label:'🧀  BANCO GASTRONOMIA'}, {id:'fruver', label:'🥦  FRUTTA E VERDURA'}, {id:'carne',  label:'🥩  CARNE'}, {id:'altro',  label:'📦  ALTRO'} ]; const activeIds = new Set(ACTIVE_DEPTS); filterOptionsEl.innerHTML = DEPTS_SIMPLE.map(dep=>`<label class="filter-row"><input type="checkbox" data-dep="${dep.id}" ${activeIds.has(dep.id)?'checked':''} /><span class="label">${dep.label}</span></label>`).join(''); filterOptionsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.addEventListener('change', ()=>{ updateToggleAllLabel(); updateApplyDisabled(); }); }); updateToggleAllLabel(); updateApplyDisabled(); }
     function getModalSelectionCount(){ const inputs = filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]'); let c=0; inputs.forEach(i=>{ if(i.checked) c++; }); return c; }
     function setAllInModal(checked){ filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{ i.checked = checked; }); updateToggleAllLabel(); updateApplyDisabled(); }
     function updateToggleAllLabel(){ const total=5; const selected=getModalSelectionCount(); filterToggleAll.textContent=(selected===total)?'Deseleziona tutti':'Seleziona tutti'; }
     function updateApplyDisabled(){ filterApply.disabled = (getModalSelectionCount()===0); }
     filterToggleAll.addEventListener('click', ()=>{ const total=5; const selected=getModalSelectionCount(); setAllInModal(!(selected===total)); });
-    filterApply.addEventListener('click', ()=>{
-      const inputs=filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]');
-      const next=new Set();
-      inputs.forEach(i=>{ if(i.checked) next.add(i.dataset.dep); });
-      if(next.size===0){ return; }
-      ACTIVE_DEPTS = next;
-      localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE_DEPTS]));
-      updateFilterUI();
-      applyFilters();
-      closeFilter();
-    });
+    filterApply.addEventListener('click', ()=>{ const inputs=filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]'); const next=new Set(); inputs.forEach(i=>{ if(i.checked) next.add(i.dataset.dep); }); if(next.size===0){ return; } ACTIVE_DEPTS = next; localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE_DEPTS])); updateFilterUI(); applyFilters(); closeFilter(); });
 
-    // Controlli
     function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
@@ -447,51 +303,23 @@
     $('#chipbar-filter').addEventListener('click', openFilter);
     filterCloseBtn.addEventListener('click', closeFilter);
     filterModal.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeFilter(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && (document.getElementById('sso-modal').classList.contains('open')||filterModal.classList.contains('open'))) { closeFilter(); closeModal(); } });
+    document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(document.getElementById('sso-modal').classList.contains('open')) closeModal(); if(filterModal.classList.contains('open')) closeFilter(); } });
 
-    // API
-    async function loadData(){
-      try{
-        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const data = await res.json();
-        const rows = Array.isArray(data.rows)? data.rows : [];
-        ORDERS = rows.map(rowToOrder).filter(Boolean);
-        recomputeStats();
-        // preseleziona Totale ordini
-        activeFilter = 'all';
-        $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
-        updateFilterUI();
-        applyFilters();
-      }catch(e){
-        console.warn('API load error', e);
-        ORDERS = [];
-        recomputeStats();
-        renderList([]);
-        renderTicket();
-      }
-    }
+    async function loadData(){ try{ const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status); const data = await res.json(); const rows = Array.isArray(data.rows)? data.rows : []; ORDERS = rows.map(rowToOrder).filter(Boolean); recomputeStats(); activeFilter = 'all'; $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter)); updateFilterUI(); applyFilters(); }catch(e){ console.warn('API load error', e); ORDERS = []; recomputeStats(); renderList([]); renderTicket(); } }
 
-    // Init
     (function init(){
       renderTicket();
-      // Click flashcards
-      $('#flashcards').addEventListener('click', (e)=>{
-        const card = e.target.closest('.card');
-        if(card && card.dataset.filter){ setFilter(card.dataset.filter); }
-      });
-      // Ricerca e lista
+      $('#flashcards').addEventListener('click', (e)=>{ const card = e.target.closest('.card'); if(card && card.dataset.filter){ setFilter(card.dataset.filter); } });
       $('#btn-search').addEventListener('click', search);
       $('#q').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
       $('#orders-list').addEventListener('click', (e)=>{ const row=e.target.closest('.order'); if(row){ const i=+row.dataset.i; select(i); openModal(view[i]); }});
-      // Navigazione e stampa
       $('#btn-next').addEventListener('click', next);
       $('#btn-prev').addEventListener('click', prev);
       $('#btn-print').addEventListener('click', doPrint);
-      // Dati
       loadData();
     })();
   </script>
 </body>
 </html>
+
 
