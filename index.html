@@ -24,7 +24,7 @@
     .tkt{font:15px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding:10px 12px 12px;}
     .tkt .center{text-align:center}
     .tkt .h{font-weight:800;letter-spacing:.3px}
-    .tkt .logo{ display:block; margin:6px auto 8px; max-width:92%; height:auto; }
+    .tkt .logo{ display:block; margin:8px auto 10px; width:46%; height:auto; }
 
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:var(--pane-pad)}
@@ -170,6 +170,7 @@
   </div>
 
   <script>
+    // ==== Utils ====
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const pad2 = n => (n<10?"0":"")+n;
@@ -182,14 +183,49 @@
 
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
+    // ==== Ticket Preview ====
     function renderTicket(){
-      const wrap = $('#tkt-body'); if(!wrap) return;
-      const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
-      // Mostra logo al top; fallback a testo se l'immagine non è disponibile
-      const imgHtml = `<img class=\"logo\" src=\"${LOGO_URL}\" alt=\"Bottega di Casterno\" onerror=\"this.onerror=null; this.replaceWith('<div class\\'tkt center h\\'>Bottega di Casterno<\/div>');\">`;
-      wrap.innerHTML = imgHtml;
+      try{
+        const wrap = $('#tkt-body');
+        if(!wrap) return;
+
+        const row = view[index] || ORDERS[0] || null;
+        const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
+
+        // Valore in alto (personalizzabile via window.PRINT_TOP_FIELD), fallback a Ordine #N
+        let topValue = '';
+        if(row){
+          const userKey = (window.PRINT_TOP_FIELD || '').toString().trim();
+          if(userKey){
+            const k = pickKey(row.src || {}, [userKey]);
+            if(k) topValue = String(row.src[k] ?? '').trim();
+          }
+          if(!topValue && row.number!=null) topValue = `Ordine #${row.number}`;
+        }
+
+        const parts = [];
+        if(topValue){ parts.push(`<div class="center h" style="margin:4px 0 6px">${esc(topValue)}</div>`); }
+        parts.push(`<img id="tkt-logo" class="logo" src="${LOGO_URL}" alt="Bottega di Casterno">`);
+
+        // Inserisco tutto in un contenitore .tkt
+        wrap.innerHTML = `<div class="tkt">${parts.join('')}</div>`;
+
+        const logoEl = document.getElementById('tkt-logo');
+        if(logoEl){
+          logoEl.onerror = () => {
+            const dv = document.createElement('div');
+            dv.className = 'tkt center h';
+            dv.textContent = 'Bottega di Casterno';
+            logoEl.replaceWith(dv);
+          };
+        }
+      }catch(_e){
+        const wrap = $('#tkt-body');
+        if(wrap){ wrap.innerHTML = '<div class="tkt center h">Bottega di Casterno</div>'; }
+      }
     }
 
+    // ==== Reparti / Filtri ====
     const DEPARTMENTS = [
       {id:'pane',   label:'1) PANE E PRODOTTI DA FORNO', keyExact: norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
       {id:'banco',  label:'2) BANCO GASTRONOMIA',        keyExact: norm('2) BANCO GASTRONOMIA'),        icon:'🧀'},
@@ -227,6 +263,7 @@
     function updateFilterChipLayout(){ const el=$('#chipbar-filter'); if(!el) return; if(ACTIVE_DEPTS.size===allDeptIds.length){ el.classList.remove('active'); el.classList.add('compact'); } else { el.classList.remove('compact'); el.classList.add('active'); } }
     function updateFilterUI(){ updateFilterBadge(); updateFilterChipLayout(); }
 
+    // ==== Stat / Flashcards ====
     function recomputeStats(){
       const total = ORDERS.length;
       const todayStr = todayYMD();
@@ -245,23 +282,80 @@
       $('#fc-pickup-future').textContent = pickupFuture;
     }
 
+    // ==== List rendering ====
     function sortLatestFirst(a,b){ const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null; const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null; if(an!=null && bn!=null && an!==bn) return bn - an; if(a.date!==b.date) return a.date<b.date?1:-1; const ta=(a.time||''), tb=(b.time||''); return ta<tb?1:(ta>tb?-1:0); }
 
     function highlightSelected(){ $$('#orders-list .order').forEach((n, i)=>{ n.classList.toggle('selected', i===index); }); }
 
-    function renderList(list){ const sorted=[...list].sort(sortLatestFirst); const el = $('#orders-list'); if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; renderTicket(); return; } el.innerHTML = sorted.map((o,i)=> `<div class="order" data-i="${i}"><span class="badge">${o.number ?? '—'}</span><div><div style="font-weight:800">${esc(o.name)}</div><div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div></div></div>`).join(''); view = sorted; index = Math.min(index, view.length-1); highlightSelected(); renderTicket(); }
+    function renderList(list){
+      const sorted=[...list].sort(sortLatestFirst);
+      const el = $('#orders-list');
+      if(!sorted.length){ el.innerHTML = '<div class="card">Nessun ordine</div>'; view=[]; index=0; renderTicket(); return; }
+      el.innerHTML = sorted.map((o,i)=> `
+        <div class="order" data-i="${i}">
+          <span class="badge">${o.number ?? '—'}</span>
+          <div>
+            <div style="font-weight:800">${esc(o.name)}</div>
+            <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
+          </div>
+        </div>
+      `).join('');
+      view = sorted;
+      index = Math.min(index, view.length-1);
+      highlightSelected();
+      renderTicket();
+    }
 
+    // ==== API / Mapping ====
     const API_URL = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
     function parseAnyDate(s){ if(!s) return null; const str=String(s).trim(); let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){ const dd=+m[1], mm=+m[2]-1, yy=+m[3]; return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0); } m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m){ return new Date(+m[1],+m[2]-1,+m[3],12,0,0); } const d=new Date(str); return isNaN(d.getTime())? null : d; }
     function pickKey(obj, cands){ const ks=Object.keys(obj||{}); for(const c of cands){ const k=ks.find(x=>norm(x)===norm(c)); if(k) return k; } for(const c of cands){ const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k; } return null; }
-    function rowToOrder(r){ const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']); const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']); const timeKey = pickKey(r,['ORA','ORARIO']); const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']); const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']); const name = nameKey ? String(r[nameKey]||'').trim() : ''; if(!name) return null; const d   = dateKey ? parseAnyDate(r[dateKey]) : null; const t   = timeKey ? String(r[timeKey]||'').trim() : ''; const num = ordKey  ? Number(r[ordKey]) : null; const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : ''; const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1'); const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD(); const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)])); return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys }; }
+    function rowToOrder(r){
+      const nameKey = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
+      const dateKey = pickKey(r,['DATA ORDINE','DATA','GIORNO']);
+      const timeKey = pickKey(r,['ORA','ORARIO']);
+      const ordKey  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
+      const printedKey = pickKey(r,['STAMPATO','STAMPA','PRINTED']);
+      const name = nameKey ? String(r[nameKey]||'').trim() : '';
+      if(!name) return null;
+      const d   = dateKey ? parseAnyDate(r[dateKey]) : null;
+      const t   = timeKey ? String(r[timeKey]||'').trim() : '';
+      const num = ordKey  ? Number(r[ordKey]) : null;
+      const pv  = printedKey ? String(r[printedKey]||'').trim().toLowerCase() : '';
+      const printed = (pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1');
+      const dateISO = d? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : todayYMD();
+      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k, norm(k)]));
+      return { id:num ?? null, number:num ?? null, name, date: dateISO, time:t, printed, src:r, __normKeys };
+    }
 
+    // ==== Interazione elenco / filtri ====
     function select(i){ if(i<0||i>=view.length) return; index=i; highlightSelected(); renderTicket(); }
 
-    function applyFilters(){ const q = ($('#q').value||'').trim().toLowerCase(); const todayStr = todayYMD(); let base = [...ORDERS]; switch(activeFilter){ case 'today': base = base.filter(o=>o.date===todayStr); break; case 'queue': base = base.filter(o=>!o.printed); break; case 'pickup_today': base = base.filter(o=>o.date===todayStr); break; case 'pickup_future': base = base.filter(o=>o.date>todayStr); break; case 'all': default: break; } base = base.filter(rowMatchesActiveDepts); if(q) base = base.filter(o=> norm(o.name).includes(norm(q)) ); renderList(base); select(0); }
+    function applyFilters(){
+      const q = ($('#q').value||'').trim().toLowerCase();
+      const todayStr = todayYMD();
+      let base = [...ORDERS];
+      switch(activeFilter){
+        case 'today': base = base.filter(o=>o.date===todayStr); break;
+        case 'queue': base = base.filter(o=>!o.printed); break;
+        case 'pickup_today': base = base.filter(o=>o.date===todayStr); break;
+        case 'pickup_future': base = base.filter(o=>o.date>todayStr); break;
+        case 'all': default: break;
+      }
+      base = base.filter(rowMatchesActiveDepts);
+      if(q) base = base.filter(o=> norm(o.name).includes(norm(q)) );
+      renderList(base);
+      select(0);
+    }
 
-    function setFilter(key){ if(key==='all'){ activeFilter='all'; } else { activeFilter = (activeFilter===key ? 'all' : key); } $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter)); applyFilters(); }
+    function setFilter(key){
+      if(key==='all'){ activeFilter='all'; }
+      else { activeFilter = (activeFilter===key ? 'all' : key); }
+      $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
+      applyFilters();
+    }
 
+    // ==== Modal ordine ====
     function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
     function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
@@ -271,13 +365,31 @@
     const modalTitle = document.getElementById('sso-modal-title');
     const modalSub = document.getElementById('sso-modal-sub');
 
-    function openModal(row){ modalTitle.textContent = row.name || 'Dettaglio ordine'; modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • '); const entries=Object.entries(row.src||{}); const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k))); let seenItemsStart=false; const rowsHtml=entries.filter(([k,_])=>!skipKeys.has(norm(String(k)))).map(([k,v])=>{ const keyStr=String(k).trim(); const valStr=(v==null)? '' : String(v).trim(); if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true; const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0'; return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`; }).join(''); modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`; modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lockScroll(); }
+    function openModal(row){
+      modalTitle.textContent = row.name || 'Dettaglio ordine';
+      modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • ');
+      const entries=Object.entries(row.src||{});
+      const skipKeys=new Set(['ord','numero ordine (parsed)','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'].map(k=>norm(k)));
+      let seenItemsStart=false;
+      const rowsHtml=entries.filter(([k,_])=>!skipKeys.has(norm(String(k)))).map(([k,v])=>{
+        const keyStr=String(k).trim();
+        const valStr=(v==null)? '' : String(v).trim();
+        if(/^\s*1\)\s*/i.test(keyStr)) seenItemsStart=true;
+        const shouldHL=seenItemsStart && valStr!=='' && valStr!=='0';
+        return `<tr class="${shouldHL?'hl':''}"><th>${esc(keyStr)}</th><td>${esc(valStr)}</td></tr>`;
+      }).join('');
+      modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+      lockScroll();
+    }
     function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlockScroll(); }
 
     // Close hooks (button + backdrop + ESC)
     if (modalClose) modalClose.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeModal(); });
     if (modal) modal.addEventListener('click', (e)=>{ if (e.target.classList && e.target.classList.contains('backdrop')) closeModal(); });
 
+    // ==== Modal filtro ====
     const filterModal = document.getElementById('sso-filter-modal');
     const filterOptionsEl = document.getElementById('sso-filter-options');
     const filterApply = document.getElementById('sso-filter-apply');
@@ -287,7 +399,20 @@
     function openFilter(){ renderFilterOptions(); filterModal.classList.add('open'); filterModal.setAttribute('aria-hidden','false'); lockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','true'); }
     function closeFilter(){ filterModal.classList.remove('open'); filterModal.setAttribute('aria-hidden','true'); unlockScroll(); $('#chipbar-filter').setAttribute('aria-expanded','false'); updateFilterUI(); }
 
-    function renderFilterOptions(){ const DEPTS_SIMPLE = [ {id:'pane',   label:'🥖  PANE E PRODOTTI DA FORNO'}, {id:'banco',  label:'🧀  BANCO GASTRONOMIA'}, {id:'fruver', label:'🥦  FRUTTA E VERDURA'}, {id:'carne',  label:'🥩  CARNE'}, {id:'altro',  label:'📦  ALTRO'} ]; const activeIds = new Set(ACTIVE_DEPTS); filterOptionsEl.innerHTML = DEPTS_SIMPLE.map(dep=>`<label class="filter-row"><input type="checkbox" data-dep="${dep.id}" ${activeIds.has(dep.id)?'checked':''} /><span class="label">${dep.label}</span></label>`).join(''); filterOptionsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.addEventListener('change', ()=>{ updateToggleAllLabel(); updateApplyDisabled(); }); }); updateToggleAllLabel(); updateApplyDisabled(); }
+    function renderFilterOptions(){
+      const DEPTS_SIMPLE = [
+        {id:'pane',   label:'🥖  PANE E PRODOTTI DA FORNO'},
+        {id:'banco',  label:'🧀  BANCO GASTRONOMIA'},
+        {id:'fruver', label:'🥦  FRUTTA E VERDURA'},
+        {id:'carne',  label:'🥩  CARNE'},
+        {id:'altro',  label:'📦  ALTRO'}
+      ];
+      const activeIds = new Set(ACTIVE_DEPTS);
+      filterOptionsEl.innerHTML = DEPTS_SIMPLE.map(dep=>`<label class="filter-row"><input type="checkbox" data-dep="${dep.id}" ${activeIds.has(dep.id)?'checked':''} /><span class="label">${dep.label}</span></label>`).join('');
+      filterOptionsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>{ i.addEventListener('change', ()=>{ updateToggleAllLabel(); updateApplyDisabled(); }); });
+      updateToggleAllLabel();
+      updateApplyDisabled();
+    }
     function getModalSelectionCount(){ const inputs = filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]'); let c=0; inputs.forEach(i=>{ if(i.checked) c++; }); return c; }
     function setAllInModal(checked){ filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{ i.checked = checked; }); updateToggleAllLabel(); updateApplyDisabled(); }
     function updateToggleAllLabel(){ const total=5; const selected=getModalSelectionCount(); filterToggleAll.textContent=(selected===total)?'Deseleziona tutti':'Seleziona tutti'; }
@@ -295,6 +420,7 @@
     filterToggleAll.addEventListener('click', ()=>{ const total=5; const selected=getModalSelectionCount(); setAllInModal(!(selected===total)); });
     filterApply.addEventListener('click', ()=>{ const inputs=filterOptionsEl.querySelectorAll('input[type="checkbox"][data-dep]'); const next=new Set(); inputs.forEach(i=>{ if(i.checked) next.add(i.dataset.dep); }); if(next.size===0){ return; } ACTIVE_DEPTS = next; localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE_DEPTS])); updateFilterUI(); applyFilters(); closeFilter(); });
 
+    // ==== Azioni UI ====
     function search(){ applyFilters(); }
     function next(){ if(index < view.length-1){ select(index+1);} }
     function prev(){ if(index > 0){ select(index-1);} }
@@ -305,8 +431,29 @@
     filterModal.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeFilter(); });
     document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(document.getElementById('sso-modal').classList.contains('open')) closeModal(); if(filterModal.classList.contains('open')) closeFilter(); } });
 
-    async function loadData(){ try{ const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status); const data = await res.json(); const rows = Array.isArray(data.rows)? data.rows : []; ORDERS = rows.map(rowToOrder).filter(Boolean); recomputeStats(); activeFilter = 'all'; $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter)); updateFilterUI(); applyFilters(); }catch(e){ console.warn('API load error', e); ORDERS = []; recomputeStats(); renderList([]); renderTicket(); } }
+    // ==== Data load ====
+    async function loadData(){
+      try{
+        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+        const rows = Array.isArray(data.rows)? data.rows : [];
+        ORDERS = rows.map(rowToOrder).filter(Boolean);
+        recomputeStats();
+        activeFilter = 'all';
+        $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
+        updateFilterUI();
+        applyFilters();
+      }catch(e){
+        console.warn('API load error', e);
+        ORDERS = [];
+        recomputeStats();
+        renderList([]);
+        renderTicket();
+      }
+    }
 
+    // ==== Init ====
     (function init(){
       renderTicket();
       $('#flashcards').addEventListener('click', (e)=>{ const card = e.target.closest('.card'); if(card && card.dataset.filter){ setFilter(card.dataset.filter); } });
@@ -321,5 +468,3 @@
   </script>
 </body>
 </html>
-
-
