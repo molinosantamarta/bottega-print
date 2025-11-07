@@ -138,9 +138,7 @@
     </aside>
   </div>
 
-  <div id="sso-modal" class="modal" aria-hidden="true" role="dialog">
-    <div class="backdrop"></div>
-    <div class="sheet">
+  <div class="sheet">
       <header>
         <div style="min-width:0;">
           <div id="sso-modal-title" class="h" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Dettaglio ordine</div>
@@ -326,7 +324,6 @@
             <div class="meta">${fmtDateIT(o.date)} • ${o.time || ''} ${o.printed? '• già stampato':''}</div>
           </div>
           <div class="order-actions">
-            <button class="btn smol btn-open" type="button" aria-label="Apri dettagli">Apri</button>
             <button class="btn smol primary btn-row-print" type="button" aria-label="Stampa ordine">Stampa</button>
           </div>
         </div>
@@ -390,27 +387,6 @@
     function lockScroll(){ const y = window.scrollY || window.pageYOffset; document.body.dataset.scrollY = y; document.body.style.position='fixed'; document.body.style.top=`-${y}px`; document.body.style.left='0'; document.body.style.right='0'; document.body.style.width='100%'; }
     function unlockScroll(){ const y = +(document.body.dataset.scrollY||0); document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; document.body.style.width=''; window.scrollTo(0,y); delete document.body.dataset.scrollY; }
 
-    const modal = document.getElementById('sso-modal');
-    const modalClose = document.getElementById('sso-modal-close');
-    const modalTable = document.getElementById('sso-modal-table');
-    const modalTitle = document.getElementById('sso-modal-title');
-    const modalSub = document.getElementById('sso-modal-sub');
-
-    function openModal(row){
-      modalTitle.textContent = row.name || 'Dettaglio ordine';
-      modalSub.textContent = [ row.number? `Ordine #${row.number}`: null, fmtDateIT(row.date) || null, row.time || null ].filter(Boolean).join(' • ');
-      const rowsHtml = buildKvRows(row);
-      modalTable.innerHTML = rowsHtml || `<tr><td>Nessun dettaglio</td></tr>`;
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden','false');
-      lockScroll();
-    }
-    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlockScroll(); }
-
-    // Close hooks (button + backdrop + ESC)
-    if (modalClose) modalClose.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeModal(); });
-    if (modal) modal.addEventListener('click', (e)=>{ if (e.target.classList && e.target.classList.contains('backdrop')) closeModal(); });
-
     // ==== Modal filtro ====
     const filterModal = document.getElementById('sso-filter-modal');
     const filterOptionsEl = document.getElementById('sso-filter-options');
@@ -451,7 +427,7 @@
     $('#chipbar-filter').addEventListener('click', openFilter);
     filterCloseBtn.addEventListener('click', closeFilter);
     filterModal.addEventListener('click', (e)=>{ if(e.target.classList.contains('backdrop')) closeFilter(); });
-    document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(document.getElementById('sso-modal').classList.contains('open')) closeModal(); if(filterModal.classList.contains('open')) closeFilter(); } });
+    document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(filterModal.classList.contains('open')) closeFilter(); } }); if(filterModal.classList.contains('open')) closeFilter(); } });
 
     // ==== Data load ====
     async function loadData(){
@@ -485,9 +461,7 @@
         const row = e.target.closest('.order');
         if(!row) return;
         const i = +row.dataset.i;
-        const isOpenBtn = e.target.closest('.btn-open');
-        const isPrintBtn = e.target.closest('.btn-row-print');
-        if(isOpenBtn){ select(i); openModal(view[i]); e.preventDefault(); e.stopPropagation(); return; }
+        
         if(isPrintBtn){ select(i); doPrint(); e.preventDefault(); e.stopPropagation(); return; }
         // Clic altrove sulla riga: solo selezione e anteprima a sinistra
         select(i);
