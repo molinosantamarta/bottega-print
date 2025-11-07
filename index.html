@@ -408,6 +408,26 @@
     if (filterModal) { filterModal.addEventListener('click', (e)=>{ if(e.target.classList && e.target.classList.contains('backdrop')) closeFilter(); }); }
     document.addEventListener('keydown', (e)=>{ const key=e.key; if(key==='Escape'||key==='q'||key==='Q'){ if(filterModal && filterModal.classList.contains('open')) closeFilter(); } });
 
+    // ==== Tastiera: frecce per navigare, Invio per stampare ====
+    function isTypingTarget(el){
+      if(!el) return false;
+      const tag = (el.tagName||'').toUpperCase();
+      return tag==='INPUT' || tag==='TEXTAREA' || el.isContentEditable;
+    }
+    document.addEventListener('keydown', (e)=>{
+      // Non interferire quando si sta scrivendo o quando è aperta la modale filtro
+      if(isTypingTarget(e.target)) return;
+      if(filterModal && filterModal.classList.contains('open')) return;
+      if(!view || view.length===0) return;
+
+      switch(e.key){
+        case 'ArrowUp': e.preventDefault(); prev(); break;
+        case 'ArrowDown': e.preventDefault(); next(); break;
+        case 'Enter': e.preventDefault(); doPrint(); break; // apre la finestra di stampa del browser
+        default: break;
+      }
+    });
+
     // ==== Data load ====
     async function loadData(){
       try{
@@ -454,4 +474,3 @@
   </script>
 </body>
 </html>
-
