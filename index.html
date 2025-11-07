@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- Barcode 39 font -->
   <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
@@ -29,10 +30,14 @@
     .btn.icon{width:44px;padding:0;border-radius:999px}
 
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
-    .tkt{font-family: Verdana, Geneva, sans-serif; font-size:17px; line-height:1.5; padding:10px 0 12px 0;}
-    .tkt .center{text-align:center}
+    .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
     .tkt .h{font-weight:800;letter-spacing:.3px}
-    .tkt .logo{ display:block; margin:6px auto 8px; max-width:92%; height:auto; }
+    .tkt .logo{ display:block; margin:6px auto 8px; max-width:46%; height:auto; }
+    .tkt hr{ border:0; border-top:1px dashed #222; margin:10px 0; }
+    .barcode{ font-family:'Libre Barcode 39', cursive; font-size:46px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
+    .barcode-num{ font-size:12px; opacity:.85; margin-top:2px; text-align:center; }
+    .vals{ width:100%; }
+    .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
 
     /* === RIGHT: Controls === */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
@@ -72,10 +77,6 @@
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Valori del ticket (solo contenuti) */
-    .vals{ width:100%; }
-    .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
-
     /* Modal Filtro (solo questa modale resta) */
     .modal{ position:fixed; inset:0; display:none; z-index:2147483647; pointer-events:none; }
     .modal.open{ display:block; pointer-events:auto; }
@@ -104,7 +105,7 @@
       .app{display:block;padding:0}
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none;}
-      .tkt{font-family: Verdana, Geneva, sans-serif; font-size:18px; line-height:1.55; padding:0}
+      .tkt{font-family: Verdana, Geneva, sans-serif; font-size:16px; line-height:1.5; text-align:center; padding:0}
     }
   </style>
 </head>
@@ -210,26 +211,23 @@
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
 
-        let topValue = '';
-        if(row){
-          const userKey = (window.PRINT_TOP_FIELD || '').toString().trim();
-          if(userKey){
-            const k = pickKey(row.src || {}, [userKey]);
-            if(k) topValue = String((row.src[k] || '')).trim();
-          }
-          if(!topValue && row.number!=null) topValue = `Ordine #${row.number}`;
-        }
-
         const parts = [];
-        if(topValue){ parts.push(`<div class="center h" style="margin:4px 0 6px">${esc(topValue)}</div>`); }
-        parts.push(`<img id="tkt-logo" class="logo" src="${LOGO_URL}" alt="Bottega di Casterno">`);
+        parts.push(`<img id=\"tkt-logo\" class=\"logo\" src=\"${LOGO_URL}\" alt=\"Bottega di Casterno\">`);
 
         if(row){
           const vals = buildValueLines(row);
-          parts.push(`<div class="vals">${vals}</div>`);
+          parts.push(`<div class=\"vals\">${vals}</div>`);
+          // separatore + grazie + barcode Code39 (Libre Barcode 39)
+          parts.push(`<hr>`);
+          parts.push(`<div class=\"center\">Grazie e Buone Feste</div>`);
+          if(typeof row.number === 'number' && !isNaN(row.number)){
+            const code39 = `*${row.number}*`; // start/stop per Code39
+            parts.push(`<div class=\"barcode\">${code39}</div>`);
+            parts.push(`<div class=\"barcode-num\">#${row.number}</div>`);
+          }
         }
 
-        wrap.innerHTML = `<div class="tkt">${parts.join('')}</div>`;
+        wrap.innerHTML = `<div class=\"tkt\">${parts.join('')}</div>`;
 
         const logoEl = document.getElementById('tkt-logo');
         if(logoEl){
