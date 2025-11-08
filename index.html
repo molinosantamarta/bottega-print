@@ -30,13 +30,14 @@
 
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
     .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
-    .tkt .logo{ display:block; margin:6px auto 8px; max-width:46%; height:auto; }
+    .tkt .logo{ display:block; margin:6px auto 8px; max-width:50%; height:auto; }
     .tkt(hr){ border:0; border-top:1px dashed #222; margin:10px 10px; }
-    .tkt .info-top{ font-weight:700; text-align:center; margin-bottom:6px; }
+    .tkt .info-top{ font-weight:700; text-align:center; margin-bottom:6px; font-size:1.1em; }
     .vals{ width:100%; }
     .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
+    .insert-ts{ text-align:center; font-size:12px; margin:4px 0 2px; }
 
     /* ===== RIGHT: Controlli ===== */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
@@ -187,7 +188,8 @@
       const entries = Object.entries(row.src || {});
       const dropKeys = new Set([
         'ord','numero ordine (parsed)','ora (parsed)','zona (parsed)',
-        'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario'
+        'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
+        'inserimento','timestamp','created','created at','creazione','data inserimento','insertion'
       ].map(k => norm(k)));
 
       // Heuristica AVICOLI: conserva etichetta accanto alla quantità
@@ -208,9 +210,11 @@
 
         if(isAvicoloKey(k)){
           const label = AVICOLI.find(tok => k.includes(tok)) || '';
-          lines.push(`<div class="line">${esc(val)} ${esc(label)}</div>`);
+          const up = label ? label.toUpperCase() : '';
+          lines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
         } else {
           lines.push(`<div class="line">${esc(val)}</div>`);
+        }</div>`);
         }
       }
       return lines.join('');
@@ -222,33 +226,45 @@
         if(!wrap) return;
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
+
+        // Prova a recuperare il timestamp di inserimento dall'API
+        const getInsertTS = (r)=>{
+          if(!r || !r.src) return '';
+          const prefer = ['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
+          const ks = Object.keys(r.src);
+          for(const label of prefer){
+            const k = ks.find(x => norm(x) === norm(label) || norm(x).includes(norm(label)) );
+            if(k && r.src[k]) return String(r.src[k]).trim();
+          }
+          return '';
+        };
+
         const parts = [];
-        parts.push(`<img id=\"tkt-logo\" class=\"logo\" src=\"${LOGO_URL}\" alt=\"Bottega di Casterno\">`);
+        const ts = getInsertTS(row);
+        if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div><div class='insert-ts'>${esc(ts)}</div>`); }
+        parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
-          // Nome cliente e data ritiro (grassetto in alto)
-          const customer = row.name ? `<div class=\"info-top\"><b>${esc(row.name)}</b></div>` : '';
-          const date = row.date ? `<div class=\"info-top\"><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
+          // Nome cliente e data ritiro (grassetto in alto, +10%)
+          const customer = row.name ? `<div class='info-top'><b>${esc(row.name)}</b></div>` : '';
+          const date = row.date ? `<div class='info-top'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           parts.push(customer + date);
 
-          // Resto dei contenuti (solo valori, titoli nascosti tranne avicoli → label accanto)
           const vals = buildValueLines(row);
-          parts.push(`<div class=\"vals\">${vals}</div>`);
+          parts.push(`<div class='vals'>${vals}</div>`);
           parts.push(`<hr>`);
-          parts.push(`<div class=\"holiday-msg\">Grazie e Buone Feste</div>`);
+          parts.push(`<div class='holiday-msg'>Grazie e Buone Feste</div>`);
           if(typeof row.number === 'number' && !isNaN(row.number)){
             const code39 = `*${row.number}*`;
-            parts.push(`<div class=\"barcode\">${code39}</div>`);
+            parts.push(`<div class='barcode'>${code39}</div>`);
           }
         }
-        wrap.innerHTML = `<div class=\"tkt\">${parts.join('')}</div>`;
+        wrap.innerHTML = `<div class='tkt'>${parts.join('')}</div>`;
 
-        // Fallback logo → testo, se l'immagine non carica
         const logoEl = document.getElementById('tkt-logo');
         if(logoEl){
-          logoEl.onerror = () => {
+          logoEl.onerror = function(){
             const dv = document.createElement('div');
-            dv.className = 'tkt info-top';
-            dv.style.fontWeight = '700';
+            dv.className = 'tkt center h';
             dv.textContent = 'Bottega di Casterno';
             logoEl.replaceWith(dv);
           };
