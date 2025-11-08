@@ -31,8 +31,11 @@
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
     .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
     .tkt .logo{ display:block; margin:6px auto 8px; max-width:50%; height:auto; }
-    .tkt(hr){ border:0; border-top:1px dashed #222; margin:10px 10px; }
+    .tkt hr{ border:0; border-top:1px dashed #222; margin:10px 10px; }
     .tkt .info-top{ font-weight:700; text-align:center; margin-bottom:6px; font-size:1.1em; }
+    .tkt .info-name{ font-weight:700; text-align:center; margin:6px 8px; white-space:nowrap; overflow:hidden; }
+    .tkt .info-date{ font-weight:700; }
+    .tkt .info-time{ font-weight:700; margin-top:2px; }
     .vals{ width:100%; }
     .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
@@ -192,7 +195,7 @@
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion'
       ].map(k => norm(k)));
 
-      // Heuristica AVICOLI: conserva etichetta accanto alla quantità
+      // Heuristica AVICOLI: conserva etichetta accanto alla quantità in MAIUSCOLO
       const AVICOLI = [
         'anatra','anatre','oca','oche','capone','capponi',
         'faraona','faraone','pollo','polli','gallo','galline',
@@ -214,10 +217,24 @@
           lines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
         } else {
           lines.push(`<div class="line">${esc(val)}</div>`);
-        }</div>`);
         }
       }
       return lines.join('');
+    }
+
+    // Fit text per il nome cliente (una riga, auto-shrink)
+    function fitTextToWidth(el, maxPx=28, minPx=12){
+      if(!el) return;
+      const parent = el.parentElement || el;
+      let size = maxPx;
+      el.style.fontSize = size + 'px';
+      el.style.whiteSpace = 'nowrap';
+      el.style.overflow = 'hidden';
+      for(let i=0;i<24;i++){
+        if(el.scrollWidth <= parent.clientWidth - 16 || size<=minPx) break;
+        size -= 1;
+        el.style.fontSize = size + 'px';
+      }
     }
 
     function renderTicket(){
@@ -244,10 +261,11 @@
         if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div><div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
-          // Nome cliente e data ritiro (grassetto in alto, +10%)
-          const customer = row.name ? `<div class='info-top'><b>${esc(row.name)}</b></div>` : '';
-          const date = row.date ? `<div class='info-top'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
-          parts.push(customer + date);
+          // Nome (auto-shrink) e ritiro + orario sotto
+          const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
+          const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
+          const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
+          parts.push(nameLine + dateLine + timeLine);
 
           const vals = buildValueLines(row);
           parts.push(`<div class='vals'>${vals}</div>`);
@@ -260,6 +278,7 @@
         }
         wrap.innerHTML = `<div class='tkt'>${parts.join('')}</div>`;
 
+        // Fallback logo → testo
         const logoEl = document.getElementById('tkt-logo');
         if(logoEl){
           logoEl.onerror = function(){
@@ -269,6 +288,10 @@
             logoEl.replaceWith(dv);
           };
         }
+
+        // Fit del nome
+        const nameEl = document.getElementById('tkt-name');
+        if(nameEl){ fitTextToWidth(nameEl, 28, 12); }
       }catch(_e){
         const wrap = $('#tkt-body');
         if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b></div>'; }
@@ -470,14 +493,25 @@
       return { id:(num != null ? num : null), number:(num != null ? num : null), name, date: dateISO, time:t, printed, src:r, __normKeys };
     }
 
-    /* ===================== Caricamento dati ===================== */
+    /* ===================== Caricamento dati (robusto a risposte HTML) ===================== */
     async function loadData(){
       try{
         const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
+        const ct = (res.headers && res.headers.get('content-type')) || '';
+        const raw = await res.text();
+        if(!res.ok){
+          throw new Error(`HTTP ${res.status}: ${raw.slice(0,200)}`);
+        }
         let data;
-        try { data = await res.json(); }
-        catch(parseErr){ throw new Error('Parse JSON fallita: ' + parseErr.message); }
+        try{
+          const looksJson = ct.toLowerCase().includes('json') || raw.trim().startsWith('{') || raw.trim().startsWith('[');
+          if(looksJson){
+            data = JSON.parse(raw);
+          } else {
+            throw new Error('API non JSON (content-type: ' + ct + '): ' + raw.slice(0,200));
+          }
+        }catch(parseErr){ throw new Error('Parse JSON fallita: ' + (parseErr && parseErr.message ? parseErr.message : parseErr)); }
+
         const rows = Array.isArray(data.rows)? data.rows : [];
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
@@ -490,8 +524,11 @@
         console.warn('API load error', e);
         ORDERS = [];
         recomputeStats();
-        renderList([]);
-        renderTicket();
+        // Feedback visivo ma senza crash
+        const el = $('#orders-list');
+        if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
+        const wrap = $('#tkt-body');
+        if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>'; }
       }
     }
 
@@ -512,8 +549,13 @@
       $('#btn-next').addEventListener('click', next);
       $('#btn-prev').addEventListener('click', prev);
       $('#btn-print').addEventListener('click', doPrint);
+      window.addEventListener('resize', ()=>{
+        const nameEl = document.getElementById('tkt-name');
+        if(nameEl){ fitTextToWidth(nameEl, 28, 12); }
+      });
       loadData();
     })();
   </script>
 </body>
 </html>
+
