@@ -258,7 +258,7 @@
 
         const parts = [];
         const ts = getInsertTS(row);
-        if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div><div class='insert-ts'>${esc(ts)}</div>`); }
+        if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
           // Nome (auto-shrink) e ritiro + orario sotto
@@ -558,4 +558,3 @@
   </script>
 </body>
 </html>
-
