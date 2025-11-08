@@ -31,15 +31,17 @@
     #tkt-body{width:100%; max-height:var(--ticket-max-h); background:#fff; color:#000; border:0; border-radius:0; overflow:auto; box-shadow:none;}
     .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
     .tkt .logo{ display:block; margin:6px auto 8px; max-width:50%; height:auto; }
-    .tkt hr{ border:0; border-top:1px dashed #222; margin:10px 10px; }
+    .tkt hr{ display:none; }
     .tkt .info-top{ font-weight:700; text-align:center; margin-bottom:6px; font-size:1.1em; }
     .tkt .info-name{ font-weight:700; text-align:center; margin:6px 8px; white-space:nowrap; overflow:hidden; max-width:calc(100% - 16px); }
+    .tkt .info-name #tkt-name{ font-size:24px; line-height:1.15; display:inline-block; max-width:100%; white-space:nowrap; }
     .tkt .info-date{ font-weight:700; }
     .tkt .info-time{ font-weight:700; margin-top:2px; }
     .vals{ width:100%; }
-    .vals .line{ padding:8px 10px; border-bottom:1px dashed #e2e2e2; word-break:break-word; }
+    .vals .line{ padding:8px 10px; word-break:break-word; }
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
+    .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
     .insert-ts{ text-align:center; font-size:12px; margin:4px 0 2px; }
 
     /* ===== RIGHT: Controlli ===== */
@@ -284,8 +286,9 @@
           parts.push(nameLine + phoneLine + dateLine + timeLine);
 
           const vals = buildValueLines(row);
+          parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='vals'>${vals}</div>`);
-          parts.push(`<hr>`);
+          parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='holiday-msg'>Grazie e Buone Feste</div>`);
           if(typeof row.number === 'number' && !isNaN(row.number)){
             const code39 = `*${row.number}*`;
@@ -307,7 +310,10 @@
 
         // Fit del nome
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){ fitTextToWidth(nameEl, 32, 10); }
+        if(nameEl){
+          // Partenza più bassa (~-10%) e auto-shrink fino a 10px
+          fitTextToWidth(nameEl, 26, 10);
+        }
       }catch(_e){
         const wrap = $('#tkt-body');
         if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b></div>'; }
@@ -512,7 +518,7 @@
     /* ===================== Caricamento dati (robusto a risposte HTML) ===================== */
     async function loadData(){
       try{
-        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store'});
+        const res = await fetch(API_URL + '?&_ts=' + Date.now(), {cache:'no-store', mode:'cors', headers:{ 'Accept':'application/json, text/plain, */*' }});
         const ct = (res.headers && res.headers.get('content-type')) || '';
         const raw = await res.text();
         if(!res.ok){
@@ -526,9 +532,35 @@
           } else {
             throw new Error('API non JSON (content-type: ' + ct + '): ' + raw.slice(0,200));
           }
-        }catch(parseErr){ throw new Error('Parse JSON fallita: ' + (parseErr && parseErr.message ? parseErr.message : parseErr)); }
+        }
+        catch(parseErr){
+          try{
+            const start = raw.search(/[\[{]/);
+            const endB  = raw.lastIndexOf('}');
+            const endA  = raw.lastIndexOf(']');
+            const end   = Math.max(endB, endA);
+            if(start !== -1 && end > start){
+              const slice = raw.slice(start, end+1);
+              data = JSON.parse(slice);
+            } else {
+              throw new Error('Nessun blocco JSON trovato nel corpo HTML');
+            }
+          }catch(e2){
+            throw new Error('Parse JSON fallita: ' + (e2 && e2.message ? e2.message : (parseErr && parseErr.message ? parseErr.message : e2)));
+          }
+        }
 
-        const rows = Array.isArray(data.rows)? data.rows : [];
+        let rows = [];
+        if (Array.isArray(data)) rows = data; // caso: API ritorna direttamente un array di righe
+        else if (Array.isArray(data.rows)) rows = data.rows;
+        else if (Array.isArray(data.data)) rows = data.data;
+        else if (data && typeof data === 'object') {
+          // fallback: prendi il primo campo che sia un array di oggetti
+          const k = Object.keys(data).find(x => Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
+          if (k) rows = data[k];
+        }
+        if (!Array.isArray(rows)) rows = [];
+
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
         // preseleziona "Totale ordini"
@@ -567,7 +599,10 @@
       $('#btn-print').addEventListener('click', doPrint);
       window.addEventListener('resize', ()=>{
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){ fitTextToWidth(nameEl, 32, 10); }
+        if(nameEl){
+          // Partenza più bassa (~-10%) e auto-shrink fino a 10px
+          fitTextToWidth(nameEl, 26, 10);
+        }
       });
       loadData();
     })();
