@@ -189,11 +189,12 @@
     /* ===================== Ticket: contenuti ===================== */
     function buildValueLines(row){
       const entries = Object.entries(row.src || {});
-      const dropKeys = new Set([
-        'ord','numero ordine (parsed)','ora (parsed)','zona (parsed)',
-        'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
-        'inserimento','timestamp','created','created at','creazione','data inserimento','insertion'
-      ].map(k => norm(k)));
+      const DROP_TOKENS = [
+          'ord','numero ordine','ora (parsed)','zona (parsed)',
+          'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
+          'inserimento','timestamp','created','created at','creazione','data inserimento','insertion',
+          'stoccaggio'
+        ].map(norm);
 
       // Heuristica AVICOLI: conserva etichetta accanto alla quantità in MAIUSCOLO
       const AVICOLI = [
@@ -206,7 +207,7 @@
       const lines = [];
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
-        if(dropKeys.has(k)) continue; // meta off
+        if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
         const val = (vRaw==null? '' : String(vRaw)).trim();
         if(!hasValue(val)) continue;  // vuoti off
         if(/^\s*\d+\)\s*$/i.test(val)) continue; // titoli tipo "1)" off
@@ -263,9 +264,18 @@
         if(row){
           // Nome (auto-shrink) e ritiro + orario sotto
           const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
+          // Telefono tra nome e ritiro
+          const phoneKeys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
+          const ks = (row && row.src) ? Object.keys(row.src) : [];
+          let phone='';
+          for(const label of phoneKeys){
+            const k = ks.find(x => norm(x)===norm(label) || norm(x).includes(norm(label)) );
+            if(k && row.src[k]){ phone = String(row.src[k]).trim(); break; }
+          }
+          const phoneLine = phone ? `<div class='info-top'><b>${esc(phone)}</b></div>` : '';
           const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
-          parts.push(nameLine + dateLine + timeLine);
+          parts.push(nameLine + phoneLine + dateLine + timeLine);
 
           const vals = buildValueLines(row);
           parts.push(`<div class='vals'>${vals}</div>`);
