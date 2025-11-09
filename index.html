@@ -6,16 +6,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&family=Chewy&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
-    :root{--main:#770505;--fg:#0b0b0b;--card:#fff;--ink:#111;--r:22px;--e:0 10px 24px rgba(0,0,0,.15);--g:14px;--pad:16px;--pw:18%;--sw:82%;--tmax:960px}
+    :root{
+      --main:#770505; --fg:#0b0b0b; --card:#fff; --ink:#111;
+      --r:22px; --e:0 10px 24px rgba(0,0,0,.15);
+      --g:14px; --pad:16px; --pw:18%; --sw:82%; --tmax:960px;
+    }
     html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.45 Verdana, Geneva, sans-serif}
     .app{display:grid;grid-template-columns:minmax(240px,var(--pw)) minmax(520px,var(--sw));gap:var(--g);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box}
+
+    /* Pannelli */
     .panel{background:var(--card);color:var(--ink);border-radius:var(--r);box-shadow:var(--e);overflow:hidden;border:1px solid rgba(0,0,0,.08)}
 
     /* LEFT: Anteprima scontrino */
     .left{display:flex;flex-direction:column}
     .ticket-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:#fafafa;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--main);border-radius:999px;height:44px;padding:0 18px;background:#fff;color:var(--main);font-weight:800;cursor:pointer;transition:transform .06s ease,background .15s,color .15s}
-    .btn:active{transform:scale(.985)}.btn.primary{background:var(--main);color:#fff;border-color:var(--main)}.btn.icon{width:44px;padding:0}
+    .btn:active{transform:scale(.985)}
+    .btn.primary{background:var(--main);color:#fff;border-color:var(--main)}
+    .btn.icon{width:44px;padding:0}
 
     #tkt-body{width:100%;max-height:var(--tmax);background:#fff;color:#000;border:0;border-radius:0;overflow:auto;box-shadow:none}
     .tkt{font:15px/1.45 Verdana, Geneva, sans-serif;text-align:center;padding:10px 0 12px}
@@ -29,8 +37,10 @@
     .status-text{font-weight:700}
     .dept-line{margin:6px 8px 2px;font-weight:700}
 
-    .vals{width:100%}.vals .line{padding:8px 10px;word-break:break-word} /* intra-reparto compatto */
-    .dept-sep{height:14px} /* inter-reparto più arioso */
+    /* Core valori: intra-reparto compatto, inter-reparto arioso, centrato verticalmente */
+    .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center}
+    .vals .line{padding:8px 10px;word-break:break-word}
+    .dept-sep{height:14px}
 
     .holiday-msg{font-family:'Chewy',cursive;color:var(--main);font-size:22px;margin-top:8px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
@@ -42,10 +52,14 @@
     .controls{padding:var(--pad)}
     .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-    .card .k{font-size:12px;opacity:.7}.card .v{font-size:56px;font-weight:900;margin-top:4px}.card.active{outline:2px solid var(--main)}
+    .card .k{font-size:12px;opacity:.7}
+    .card .v{font-size:56px;font-weight:900;margin-top:4px}
+    .card.active{outline:2px solid var(--main)}
+
     .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
 
+    /* Chip filtro stile Stoccaggio */
     .chipbar{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid rgba(0,0,0,.06);background:#f7f7f8;border-radius:999px;box-sizing:border-box}
     #chipbar-filter{cursor:pointer}
     #chipbar-filter .chip-inner{display:inline-flex;align-items:center;gap:8px;min-height:40px;max-height:40px;border-radius:999px}
@@ -55,26 +69,29 @@
     #chipbar-filter.active{display:inline-flex;background:#f7f7f8;border-color:rgba(0,0,0,.06)}
     #chipbar-filter.active .chip-inner{background:#000;color:#fff;border:1px solid #000;padding:0 8px;gap:4px;justify-content:center;align-items:center}
     #chipbar-filter.active .chip-inner svg{width:18px;height:18px;color:#ffd60a;margin-right:3px}
-    #sso-filter-label{display:none!important}.count-badge{display:none;align-items:center;justify-content:center;padding:0 12px;height:28px;background:#ffd60a;color:#000;border-radius:999px;font-weight:900;font-size:14px;gap:8px}
+    #sso-filter-label{display:none!important}
+    .count-badge{display:none;align-items:center;justify-content:center;padding:0 12px;height:28px;background:#ffd60a;color:#000;border-radius:999px;font-weight:900;font-size:14px;gap:8px}
     .count-badge .sep{color:rgba(0,0,0,.55)}
     #chipbar-filter.active #sso-filter-badge{display:inline-flex}
 
     .list{padding:10px;border-top:1px solid #eee;max-height:calc(100vh - 280px);overflow:auto}
     .order{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #eee;cursor:pointer;background:#fff}
-    .order+.order{margin-top:8px}.order:hover{background:#f9f9fb}.order.selected{outline:2px solid var(--main)}
+    .order+.order{margin-top:8px}
+    .order:hover{background:#f9f9fb}
+    .order.selected{outline:2px solid var(--main)}
     .order-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-    .btn.smol{height:32px;padding:0 12px;font-size:13px;border-radius:999px}.btn.icon.smol{width:32px;height:32px;padding:0}
+    .btn.smol{height:32px;padding:0 12px;font-size:13px;border-radius:999px}
+    .btn.icon.smol{width:32px;height:32px;padding:0}
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Modale filtro */
+    /* Modale (nascosta di default) */
     .modal{position:fixed;inset:0;display:none;z-index:2147483647;pointer-events:none}
     .modal.open{display:block;pointer-events:auto}
     .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:saturate(1.2) blur(6px);z-index:1}
     .modal .sheet{position:absolute;inset:0;background:#fff;color:#111;display:flex;flex-direction:column;z-index:2}
-    #sso-filter-modal .sheet{position:relative;inset:auto;margin:10vh auto;width:min(560px,92vw);max-height:80vh;border-radius:var(--r);overflow:hidden;border:1px solid rgba(0,0,0,.08);box-shadow:var(--e);display:flex;flex-direction:column}
+    #sso-filter-modal .sheet{position:relative;inset:auto;margin:10vh auto;width:min(560px,92vw);max-height:80vh;background:#fff;color:#111;border-radius:var(--r);overflow:hidden;border:1px solid rgba(0,0,0,.08);box-shadow:var(--e);display:flex;flex-direction:column}
     #sso-filter-modal header{position:sticky;top:0;z-index:1;background:#fff;border-bottom:1px solid #ececec;padding:14px 16px 10px}
-    #sso-filter-modal header .h{font-size:18px;font-weight:800;color:#111;margin:0}
     #sso-filter-modal .close{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px;font-weight:800;cursor:pointer}
     #sso-filter-modal .content{padding:14px 16px 18px;font-size:15px}
     .filter-options{display:flex;flex-direction:column;gap:10px;padding-top:4px}
@@ -88,7 +105,17 @@
     @media (max-width:860px){.app{grid-template-columns:1fr}.ticket-bar{position:static}.list{max-height:none}.searchbar{grid-template-columns:1fr}}
 
     /* Stampa */
-    @media print{@page{size:auto;margin:0}body{background:#fff}.app>.right,.ticket-bar{display:none!important}.app{display:block;padding:0}.panel{border:0;box-shadow:none;border-radius:0}#tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}.tkt{font:16px/1.5 Verdana, Geneva, sans-serif;text-align:center;padding:0}.barcode{font-size:92px}.holiday-msg{font-size:22px;color:var(--main)}}
+    @media print{
+      @page{size:auto;margin:0}
+      body{background:#fff}
+      .app>.right,.ticket-bar{display:none!important}
+      .app{display:block;padding:0}
+      .panel{border:0;box-shadow:none;border-radius:0}
+      #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
+      .tkt{font:16px/1.5 Verdana, Geneva, sans-serif;text-align:center;padding:0}
+      .barcode{font-size:92px}
+      .holiday-msg{font-size:22px;color:var(--main)}
+    }
   </style>
 </head>
 <body>
@@ -149,21 +176,21 @@
   </div>
 
   <script>
-    /* Utils */
-    const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))},
-          pad=n=>String(n).padStart(2,'0'),
-          today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`},
-          // Giorno-settimana + DD/MM/YY (senza accenti, per richiesta esplicita)
-          giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'],
-          fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; },
-          norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim(),
-          esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m])),
-          hasV=v=>{const t=String(v||'').trim();return t!==''&&t!=='0'&&t!=='-'&&t.toLowerCase()!=='n/d'},
-          isYes=v=>['si','sì','y','yes','true','1'].includes(norm(v));
+    /* ===================== Utils ===================== */
+    const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))};
+    const pad=n=>String(n).padStart(2,'0');
+    const today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+    // Giorno-settimana + DD/MM/YY (senza accenti)
+    const giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+    const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
+    const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+    const esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+    const hasV=v=>{const t=String(v||'').trim();return t!==''&&t!=='0'&&t!=='-'&&t.toLowerCase()!=='n/d'};
+    const isYes=v=>['si','sì','y','yes','true','1'].includes(norm(v));
 
     let ORDERS=[],view=[],index=0,active='all';
 
-    /* Core builder (senza duplicare reparti/avicoli già mostrati sopra; aggiunge descrizione preparazione avicolo sotto) */
+    /* ===================== Ticket: contenuti ===================== */
     function buildValueLines(row){
       const entries=Object.entries(row.src||{}),DROP=[
         'ord','numero ordine','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
@@ -173,13 +200,13 @@
       const isAvKey=k=>AV.some(t=>k.includes(t));
       const HEAD=[norm('1) PANE E PRODOTTI DA FORNO'),norm('2) BANCO GASTRONOMIA'),norm('3) FRUTTA E VERDURA'),norm('4) CARNE'),norm('5) ALTRO')];
       const out=[]; let seen=false; let lastAviIndex=-1; let avicoloDesc='';
-      const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(s=>s.trim()).filter(hasV).forEach(s=>{ out.push(`<div class="line">${esc(s)}</div>`) }) };
+      const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(s=>s.trim()).filter(hasV).forEach(s=>{ out.push(`<div class=\"line\">${esc(s)}</div>`) }) };
 
       for(const [kr,vr] of entries){
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header di reparto: non stampo la label, ma il contenuto sì
+        // Header di reparto: non stampo la label, ma stampo il contenuto se c'è (titoli core rimossi)
         if(HEAD.includes(k)){
           if(seen) out.push('<div class="dept-sep"></div>');
           seen=true;
@@ -190,7 +217,7 @@
         // Cattura descrizione/preparazione avicolo (gestione refusi/varianti)
         if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){
           if(hasV(val)) avicoloDesc = val;
-          continue; // la inseriremo dopo le righe avicolo
+          continue; // la inseriremo subito sotto gli avicoli
         }
 
         // Scarta meta e chiavi servizio già mostrate
@@ -207,7 +234,7 @@
         }
       }
 
-      // Inserisci la descrizione subito sotto l’ultimo avicolo, se presente
+      // Inserisci la descrizione sotto l’ultimo avicolo, se presente
       if(hasV(avicoloDesc)){
         const descHtml = `<div class="line">${esc(avicoloDesc)}</div>`;
         if(lastAviIndex>=0) out.splice(lastAviIndex+1,0,descHtml); else out.push(descHtml);
@@ -216,20 +243,18 @@
       return out.join('');
     }
 
-    /* Fit del nome cliente */
     function fitText(el,max=26,min=10){if(!el) return;const p=el.parentElement||el;el.style.display='inline-block';el.style.whiteSpace='nowrap';el.style.maxWidth='100%';el.style.overflow='hidden';let s=max,g=80;el.style.fontSize=s+'px';while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){s-=.5;el.style.fontSize=s+'px'}}
 
-    /* Pickers */
     function pickTS(r){if(!r||!r.src) return '';const pref=['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];const ks=Object.keys(r.src);for(const l of pref){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
     function pickPhone(r){const keys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];const ks=Object.keys(r.src||{});for(const l of keys){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
 
     function deptList(r){
       const map={
-        [norm('1) PANE E PRODOTTI DA FORNO')]: 'PANE E PRODOTTI DA FORNO',
-        [norm('2) BANCO GASTRONOMIA')]       : 'BANCO GASTRONOMIA',
-        [norm('3) FRUTTA E VERDURA')]        : 'FRUTTA E VERDURA',
-        [norm('4) CARNE')]                   : 'CARNE',
-        [norm('5) ALTRO')]                   : 'ALTRO'
+        [norm('1) PANE E PRODOTTI DA FORNO')]: 'PANE',
+        [norm('2) BANCO GASTRONOMIA')]: 'BANCO',
+        [norm('3) FRUTTA E VERDURA')]: 'FRUTTA E VERDURA',
+        [norm('4) CARNE')]: 'CARNE',
+        [norm('5) ALTRO')]: 'ALTRO'
       };
       const out=[];
       for(const [k,v] of Object.entries(r.src||{})){
@@ -237,11 +262,10 @@
         if(map[nk]&&hasV(v)) out.push(map[nk]);
         if(nk.includes('avicol')&&isYes(v)&&!out.includes('CARNE')) out.push('CARNE');
       }
-      return out.join(' • ');
+      return out.join(', ');
     }
     const avicoloYN=r=>{for(const k of Object.keys(r.src||{})) if(norm(k).includes('avicol')) return isYes(r.src[k])?'SI':'NO'; return 'NO'}
 
-    /* Render ticket */
     function renderTicket(){
       const wrap=D.q('#tkt-body'); if(!wrap) return; const row=view[index]||ORDERS[0]||null;
       const LOGO=(window.BOTTEGA_LOGO_URL||'svg-bottega%20black.png');
@@ -249,12 +273,12 @@
       parts.push(`<img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>`);
       if(row){
         const ph=pickPhone(row);
-        // Data nel formato richiesto: "Venerdi 10/12/25"
+        // Data nel formato richiesto: solo giorno-settimana + data, senza la parola "Ritiro"
         parts.push(
-          `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`
-          + `${ph?`<div class='info-top'>${esc(ph)}</div>`:''}`
-          + `${row.date?`<div class='info-top info-date'><b>Ritiro: ${fmtIT(row.date)}</b></div>`:''}`
-          + `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
+          `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
+          `${ph?`<div class='info-top'>${esc(ph)}</div>`:''}`+
+          `${row.date?`<div class='info-top info-date'><b>${fmtIT(row.date)}</b></div>`:''}`+
+          `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
         );
 
         const dtxt=deptList(row); if(dtxt) parts.push(`<div class='dept-line'>${esc(dtxt)}</div>`);
@@ -268,7 +292,7 @@
       const nameEl=document.getElementById('tkt-name'); if(nameEl) fitText(nameEl);
     }
 
-    /* Filtri reparti */
+    /* ===================== Reparti / Filtri ===================== */
     const DEPTS=[
       {id:'pane', k:norm('1) PANE E PRODOTTI DA FORNO'), icon:'🥖'},
       {id:'banco',k:norm('2) BANCO GASTRONOMIA'), icon:'🧀'},
@@ -291,7 +315,7 @@
       }
     }
 
-    /* Stats */
+    /* ===================== Stat / Flashcards ===================== */
     function recompute(){
       const t=ORDERS.length,tdy=today();let ins=0,q=0,pT=0,pF=0,max=0;
       for(const o of ORDERS){ if(o.date===tdy) ins++; if(!o.printed) q++; if(o.date===tdy) pT++; if(o.date>tdy) pF++; if(typeof o.number==='number'&&!isNaN(o.number)) max=Math.max(max,o.number) }
@@ -299,7 +323,7 @@
       D.q('#fc-total').textContent=total; D.q('#fc-today').textContent=ins; D.q('#fc-queue').textContent=q; D.q('#fc-pickup-today').textContent=pT; D.q('#fc-pickup-future').textContent=pF;
     }
 
-    /* Lista */
+    /* ===================== Lista ordini ===================== */
     function sortDesc(a,b){
       const an=typeof a.number==='number'&&!isNaN(a.number)?a.number:null,
             bn=typeof b.number==='number'&&!isNaN(b.number)?b.number:null;
@@ -316,7 +340,7 @@
       view=s; index=Math.min(index,view.length-1); highlight(); renderTicket();
     }
 
-    /* Filtri + ricerca */
+    /* ===================== Ricerca/Filtri ===================== */
     function select(i){if(i<0||i>=view.length) return; index=i; highlight(); renderTicket()}
     function apply(){
       const q=(D.q('#q').value||'').trim().toLowerCase(),tdy=today();
@@ -330,14 +354,14 @@
     }
     function setFilter(k){active=(k==='all')?'all':(active===k?'all':k); D.qa('#flashcards .card').forEach(c=>c.classList.toggle('active',c.dataset.filter===active)); apply()}
 
-    /* Modale */
+    /* ===================== Modale FILTRO ===================== */
     const modal=document.getElementById('sso-filter-modal'),optsEl=document.getElementById('sso-filter-options'),
           applyBtn=document.getElementById('sso-filter-apply'),toggleAllBtn=document.getElementById('sso-filter-toggle-all'),
           closeBtn=document.getElementById('sso-filter-close');
     const openModal=()=>{renderOpts(); modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lock(); D.q('#chipbar-filter').setAttribute('aria-expanded','true')}
     const closeModal=()=>{modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlock(); D.q('#chipbar-filter').setAttribute('aria-expanded','false'); updateFilterUI()}
     function renderOpts(){
-      const SIMPLE=[{id:'pane',label:'🥖  PANE E PRODOTTI DA FORNO'},{id:'banco',label:'🧀  BANCO GASTRONOMIA'},{id:'fruver',label:'🥦  FRUTTA E VERDURA'},{id:'carne',label:'🥩  CARNE'},{id:'altro',label:'📦  ALTRO'}];
+      const SIMPLE=[{id:'pane',label:'🥖  PANE'},{id:'banco',label:'🧀  BANCO'},{id:'fruver',label:'🥦  FRUTTA E VERDURA'},{id:'carne',label:'🥩  CARNE'},{id:'altro',label:'📦  ALTRO'}];
       const act=new Set(ACTIVE);
       optsEl.innerHTML=SIMPLE.map(d=>`<label class="filter-row"><input type="checkbox" data-dep="${d.id}" ${act.has(d.id)?'checked':''}/><span class="label">${d.label}</span></label>`).join('');
       optsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply() }));
@@ -348,11 +372,11 @@
     const updToggle=()=>{const tot=5,sel=countSel(); toggleAllBtn.textContent=(sel===tot)?'Deseleziona tutti':'Seleziona tutti'}
     const updApply=()=>{applyBtn.disabled=(countSel()===0)}
 
-    /* Scroll lock */
+    /* ===================== Scroll lock per modale ===================== */
     function lock(){const y=window.scrollY||window.pageYOffset;document.body.dataset.scrollY=y;document.body.style.position='fixed';document.body.style.top=`-${y}px`;document.body.style.left='0';document.body.style.right='0';document.body.style.width='100%'}
     function unlock(){const y=+(document.body.dataset.scrollY||0);document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.scrollTo(0,y);delete document.body.dataset.scrollY}
 
-    /* Azioni */
+    /* ===================== Azioni UI ===================== */
     function search(){apply()} function next(){if(index<view.length-1) select(index+1)} function prev(){if(index>0) select(index-1)} function doPrint(){window.print()}
 
     if(D.q('#chipbar-filter')) D.q('#chipbar-filter').addEventListener('click',openModal);
@@ -366,7 +390,7 @@
       if(k==='ArrowDown'){e.preventDefault();next()} else if(k==='ArrowUp'){e.preventDefault();prev()} else if(k==='Enter'){e.preventDefault();doPrint()}
     });
 
-    /* API */
+    /* ===================== API ===================== */
     const API='https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
     function parseDate(s){
       if(!s) return null; const str=String(s).trim();
@@ -389,8 +413,11 @@
             printedK=pickKey(r,['STAMPATO','STAMPA','PRINTED']);
       const name=nameK?String(r[nameK]||'').trim():'';
       if(!name) return null;
-      const d=dateK?parseDate(r[dateK]):null, t=timeK?String(r[timeK]||'').trim():'', num=ordK?Number(r[ordK]):null,
-            pv=printedK?String(r[printedK]||'').trim().toLowerCase():'', printed=(pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1'),
+      const d=dateK?parseDate(r[dateK]):null,
+            t=timeK?String(r[timeK]||'').trim():'',
+            num=ordK?Number(r[ordK]):null,
+            pv=printedK?String(r[printedK]||'').trim().toLowerCase():'',
+            printed=(pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1'),
             dateISO=d?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`:today();
       const __normKeys=Object.fromEntries(Object.keys(r).map(k=>[k,norm(k)]));
       return {id:(num!=null?num:null),number:(num!=null?num:null),name,date:dateISO,time:t,printed,src:r,__normKeys}
@@ -438,7 +465,7 @@
       }
     }
 
-    /* Init */
+    /* ===================== Init ===================== */
     (function init(){
       renderTicket();
       D.q('#flashcards').addEventListener('click',e=>{const card=e.target.closest('.card'); if(card&&card.dataset.filter) setFilter(card.dataset.filter)});
@@ -450,7 +477,7 @@
         if(isBtn){select(i);doPrint();e.preventDefault();e.stopPropagation();return}
         select(i);
       });
-      D.q('#btn-next').addEventListener('click',prev);
+      D.q('#btn-next').addEventListener('click',prev); // invertiti apposta per tua UX
       D.q('#btn-prev').addEventListener('click',next);
       D.q('#btn-print').addEventListener('click',doPrint);
       window.addEventListener('resize',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n)});
@@ -459,3 +486,4 @@
   </script>
 </body>
 </html>
+ 
