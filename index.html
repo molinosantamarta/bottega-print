@@ -32,21 +32,27 @@
     .tkt{font-family: Verdana, Geneva, sans-serif; font-size:15px; line-height:1.45; text-align:center; padding:10px 0 12px 0;}
     .tkt .logo{ display:block; margin:6px auto 8px; max-width:50%; height:auto; }
     .tkt hr{ display:none; }
-    .tkt .info-top{ font-weight:700; text-align:center; margin-bottom:6px; font-size:1.1em; }
+    .tkt .info-top{ text-align:center; margin-bottom:6px; font-size:1.1em; }
     .tkt .info-name{ font-weight:700; text-align:center; margin:6px 8px; white-space:nowrap; overflow:hidden; max-width:calc(100% - 16px); }
     .tkt .info-name #tkt-name{ font-size:24px; line-height:1.15; display:inline-block; max-width:100%; white-space:nowrap; }
     .tkt .info-date{ font-weight:700; }
     .tkt .info-time{ font-weight:700; margin-top:2px; }
+
+    /* Riga icone (avicoli + carrello + numero) */
+    .icons-row{ display:inline-flex; align-items:center; gap:8px; justify-content:center; margin:6px 0 2px; }
+    .icons-row img{ width:44px; height:44px; object-fit:contain; image-rendering:-webkit-optimize-contrast; }
+    .icons-row .avicoli-flag{ font-weight:700; letter-spacing:0.3px; }
+    .icons-row .ord-num{ font-weight:800; }
+
+    /* Reparti inline (solo contenuti) */
+    .reparti-line{ margin:4px 0 6px; font-size:14px; opacity:.9; }
+
     .vals{ width:100%; }
     .vals .line{ padding:8px 10px; word-break:break-word; }
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
     .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
     .insert-ts{ text-align:center; font-size:12px; margin:4px 0 2px; }
-
-    /* ===== Icone PNG (avicolo & carrello) ===== */
-    .icon-48{ width:48px; height:auto; display:inline-block; vertical-align:middle; }
-    .section-icon{ display:flex; justify-content:center; align-items:center; gap:8px; margin-top:6px; }
 
     /* ===== RIGHT: Controlli ===== */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
@@ -193,16 +199,18 @@
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
     /* ===================== Ticket: contenuti ===================== */
-    function buildValueHTML(row){
+    function buildValueLines(row){
       const entries = Object.entries(row.src || {});
       const DROP_TOKENS = [
           'ord','numero ordine','ora (parsed)','zona (parsed)',
           'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
           'inserimento','timestamp','created','created at','creazione','data inserimento','insertion',
           'stoccaggio',
+          // rimuovi telefono dai contenuti (lo mostriamo già sotto al nome)
           'telefono','cellulare','tel','phone','mobile','contatto'
         ].map(norm);
 
+      // Heuristica AVICOLI: conserva etichetta accanto alla quantità in MAIUSCOLO
       const AVICOLI = [
         'anatra','anatre','oca','oche','capone','capponi',
         'faraona','faraone','pollo','polli','gallo','galline',
@@ -210,12 +218,10 @@
       ];
       const isAvicoloKey = (k) => AVICOLI.some(tok => k.includes(tok));
 
-      const avicoloLines = [];
-      const otherLines = [];
-
+      const lines = [];
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
-        if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta
+        if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
         const val = (vRaw==null? '' : String(vRaw)).trim();
         if(!hasValue(val)) continue;  // vuoti off
         if(/^\s*\d+\)\s*$/i.test(val)) continue; // titoli tipo "1)" off
@@ -223,22 +229,16 @@
         if(isAvicoloKey(k)){
           const label = AVICOLI.find(tok => k.includes(tok)) || '';
           const up = label ? label.toUpperCase() : '';
-          avicoloLines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
+          lines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
         } else {
-          otherLines.push(`<div class="line">${esc(val)}</div>`);
+          lines.push(`<div class="line">${esc(val)}</div>`);
         }
       }
-
-      let html = '';
-      if(avicoloLines.length){
-        html += `<div class="section-icon"><img class="icon-48" src="avicolo.png" alt="Avicolo"></div>` + avicoloLines.join('');
-      }
-      html += otherLines.join('');
-      return html;
+      return lines.join('');
     }
 
     // Fit text per il nome cliente (una riga, auto-shrink)
-    function fitTextToWidth(el, maxPx=26, minPx=10){
+    function fitTextToWidth(el, maxPx=32, minPx=10){
       if(!el) return;
       const parent = el.parentElement || el;
       el.style.display = 'inline-block';
@@ -254,6 +254,26 @@
       }
     }
 
+    // Flag avicoli SI/NO
+    function getAvicoloFlag(row){
+      if(!row || !row.src) return 'NO';
+      const ks = Object.keys(row.src);
+      const k = ks.find(x=> norm(x)==='avicolo' || norm(x).includes('avicol'));
+      if(!k) return 'NO';
+      return isYes(row.src[k]) ? 'SÌ' : 'NO';
+    }
+
+    // Costruisci lista reparti presenti nel singolo ordine (solo contenuti, nessun titolo)
+    function buildRepartiInline(row){
+      if(!row) return '';
+      const items = [];
+      for(const dep of DEPARTMENTS){
+        const st = getDeptStatus(row, dep.id);
+        if(st.present){ items.push(st.icon || '•'); }
+      }
+      return items.join(' ');
+    }
+
     function renderTicket(){
       try{
         const wrap = $('#tkt-body');
@@ -261,7 +281,7 @@
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
 
-        // Timestamp INSERIMENTO (se presente)
+        // Prova a recuperare il timestamp di inserimento dall'API
         const getInsertTS = (r)=>{
           if(!r || !r.src) return '';
           const prefer = ['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
@@ -278,9 +298,9 @@
         if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
+          // Nome (auto-shrink) e ritiro + orario sotto
           const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
-
-          // Telefono
+          // Telefono tra nome e ritiro (non in bold)
           const phoneKeys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
           const ks = (row && row.src) ? Object.keys(row.src) : [];
           let phone='';
@@ -288,18 +308,23 @@
             const k = ks.find(x => norm(x)===norm(label) || norm(x).includes(norm(label)) );
             if(k && row.src[k]){ phone = String(row.src[k]).trim(); break; }
           }
-          const phoneLine = phone ? `<div class='info-top'><b>${esc(phone)}</b></div>` : '';
-
-          // Carrello + numero ordine
-          const cartLine = (typeof row.number === 'number' && !isNaN(row.number))
-            ? `<div class='info-top section-icon'><img class="icon-48" src="carrello.png" alt="Ordine"> <b>#${row.number}</b></div>` : '';
+          const phoneLine = phone ? `<div class='info-top'>${esc(phone)}</div>` : '';
 
           const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
 
-          parts.push(nameLine + phoneLine + cartLine + dateLine + timeLine);
+          // Reparti (solo contenuti) subito dopo Ritiro/Ora e prima della riga
+          const repsInline = buildRepartiInline(row);
+          const repsLine = repsInline ? `<div class='reparti-line'>${repsInline}</div>` : '';
 
-          const vals = buildValueHTML(row);
+          // Riga icone avicolo + carrello + numero
+          const avFlag = getAvicoloFlag(row);
+          const ordNum = (row.number!=null? row.number:'—');
+          const iconsRow = `<div class='icons-row'><img src='avicolo.png' alt='Avicoli'><span class='avicoli-flag'>AVICOLI: ${esc(avFlag)}</span><img src='carrello.png' alt='Ordine'><span class='ord-num'>${esc(ordNum)}</span></div>`;
+
+          parts.push(nameLine + phoneLine + dateLine + timeLine + repsLine + iconsRow);
+
+          const vals = buildValueLines(row);
           parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='vals'>${vals}</div>`);
           parts.push(`<div class='hr-solid'></div>`);
@@ -324,7 +349,9 @@
 
         // Fit del nome
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){ fitTextToWidth(nameEl, 26, 10); }
+        if(nameEl){
+          fitTextToWidth(nameEl, 26, 10);
+        }
       }catch(_e){
         const wrap = $('#tkt-body');
         if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b></div>'; }
@@ -378,7 +405,7 @@
       const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
       const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
       const maxNum = ORDERS.reduce((m,o)=> (typeof o.number==='number' && !isNaN(o.number) ? Math.max(m,o.number) : m), 0);
-      const totalDisplay = Math.max(maxNum, total + 1);
+      const totalDisplay = Math.max(maxNum, total + 1); // Totale = max(numero massimo, n+1)
       $('#fc-total').textContent = totalDisplay;
       $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
@@ -390,9 +417,9 @@
     function sortLatestFirst(a,b){
       const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
       const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
-      if(an!=null && bn!=null && an!==bn) return bn - an;
-      if(a.date!==b.date) return a.date<b.date?1:-1;
-      const ta=(a.time||''), tb=(b.time||'');
+      if(an!=null && bn!=null && an!==bn) return bn - an; // per numero
+      if(a.date!==b.date) return a.date<b.date?1:-1;       // poi data
+      const ta=(a.time||''), tb=(b.time||'');              // poi ora
       return ta<tb?1:(ta>tb?-1:0);
     }
 
@@ -546,7 +573,7 @@
         }
         catch(parseErr){
           try{
-            const start = raw.search(/[\[{]/);
+            const start = raw.search(/[\\[{]/);
             const endB  = raw.lastIndexOf('}');
             const endA  = raw.lastIndexOf(']');
             const end   = Math.max(endB, endA);
@@ -562,17 +589,19 @@
         }
 
         let rows = [];
-        if (Array.isArray(data)) rows = data;
+        if (Array.isArray(data)) rows = data; // caso: API ritorna direttamente un array di righe
         else if (Array.isArray(data.rows)) rows = data.rows;
         else if (Array.isArray(data.data)) rows = data.data;
         else if (data && typeof data === 'object') {
+          // fallback: prendi il primo campo che sia un array di oggetti
           const k = Object.keys(data).find(x => Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
           if (k) rows = data[k];
         }
-        if (!Array.isArray(rows)) rows = [];
+        if (!Array.isArray(rows)) rows = []
 
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
+        // preseleziona "Totale ordini"
         activeFilter = 'all';
         $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
         updateFilterUI();
@@ -581,10 +610,11 @@
         console.warn('API load error', e);
         ORDERS = [];
         recomputeStats();
+        // Feedback visivo ma senza crash
         const el = $('#orders-list');
-        if(el){ el.innerHTML = `<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
+        if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
         const wrap = $('#tkt-body');
-        if(wrap){ wrap.innerHTML = '<div class=\"tkt info-top\"><b>Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>'; }
+        if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>'; }
       }
     }
 
@@ -607,7 +637,9 @@
       $('#btn-print').addEventListener('click', doPrint);
       window.addEventListener('resize', ()=>{
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){ fitTextToWidth(nameEl, 26, 10); }
+        if(nameEl){
+          fitTextToWidth(nameEl, 26, 10);
+        }
       });
       loadData();
     })();
