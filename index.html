@@ -44,6 +44,10 @@
     .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
     .insert-ts{ text-align:center; font-size:12px; margin:4px 0 2px; }
 
+    /* ===== Icone PNG (avicolo & carrello) ===== */
+    .icon-48{ width:48px; height:auto; display:inline-block; vertical-align:middle; }
+    .section-icon{ display:flex; justify-content:center; align-items:center; margin-top:6px; }
+
     /* ===== RIGHT: Controlli ===== */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
     .controls{padding:var(--pane-pad)}
@@ -189,18 +193,16 @@
     let ORDERS = []; let view = []; let index = 0; let activeFilter = 'all';
 
     /* ===================== Ticket: contenuti ===================== */
-    function buildValueLines(row){
+    function buildValueHTML(row){
       const entries = Object.entries(row.src || {});
       const DROP_TOKENS = [
           'ord','numero ordine','ora (parsed)','zona (parsed)',
           'nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
           'inserimento','timestamp','created','created at','creazione','data inserimento','insertion',
           'stoccaggio',
-          // rimuovi telefono dai contenuti (lo mostriamo già sotto al nome)
           'telefono','cellulare','tel','phone','mobile','contatto'
         ].map(norm);
 
-      // Heuristica AVICOLI: conserva etichetta accanto alla quantità in MAIUSCOLO
       const AVICOLI = [
         'anatra','anatre','oca','oche','capone','capponi',
         'faraona','faraone','pollo','polli','gallo','galline',
@@ -208,10 +210,12 @@
       ];
       const isAvicoloKey = (k) => AVICOLI.some(tok => k.includes(tok));
 
-      const lines = [];
+      const avicoloLines = [];
+      const otherLines = [];
+
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
-        if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
+        if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta
         const val = (vRaw==null? '' : String(vRaw)).trim();
         if(!hasValue(val)) continue;  // vuoti off
         if(/^\s*\d+\)\s*$/i.test(val)) continue; // titoli tipo "1)" off
@@ -219,27 +223,31 @@
         if(isAvicoloKey(k)){
           const label = AVICOLI.find(tok => k.includes(tok)) || '';
           const up = label ? label.toUpperCase() : '';
-          lines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
+          avicoloLines.push(`<div class="line">${esc(val)} ${esc(up)}</div>`);
         } else {
-          lines.push(`<div class="line">${esc(val)}</div>`);
+          otherLines.push(`<div class="line">${esc(val)}</div>`);
         }
       }
-      return lines.join('');
+
+      let html = '';
+      if(avicoloLines.length){
+        html += `<div class="section-icon"><img class="icon-48" src="avicolo.png" alt="Avicolo"></div>` + avicoloLines.join('');
+      }
+      html += otherLines.join('');
+      return html;
     }
 
     // Fit text per il nome cliente (una riga, auto-shrink)
     function fitTextToWidth(el, maxPx=32, minPx=10){
       if(!el) return;
       const parent = el.parentElement || el;
-      // assicurati che lo span occupi davvero tutta la larghezza disponibile
       el.style.display = 'inline-block';
       el.style.whiteSpace = 'nowrap';
       el.style.maxWidth = '100%';
       el.style.overflow = 'hidden';
       let size = maxPx;
       el.style.fontSize = size + 'px';
-      // riduci finché non entra oppure raggiungi il minimo
-      let guard = 80; // più iterazioni per nomi molto lunghi
+      let guard = 80;
       while(guard-- > 0 && size > minPx && el.scrollWidth > parent.clientWidth - 4){
         size -= 0.5;
         el.style.fontSize = size + 'px';
@@ -253,7 +261,7 @@
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
 
-        // Prova a recuperare il timestamp di inserimento dall'API
+        // Timestamp INSERIMENTO (se presente)
         const getInsertTS = (r)=>{
           if(!r || !r.src) return '';
           const prefer = ['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
@@ -270,9 +278,10 @@
         if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
-          // Nome (auto-shrink) e ritiro + orario sotto
+          // Nome (auto-shrink) e info sotto
           const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
-          // Telefono tra nome e ritiro
+
+          // Telefono
           const phoneKeys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
           const ks = (row && row.src) ? Object.keys(row.src) : [];
           let phone='';
@@ -281,11 +290,19 @@
             if(k && row.src[k]){ phone = String(row.src[k]).trim(); break; }
           }
           const phoneLine = phone ? `<div class='info-top'><b>${esc(phone)}</b></div>` : '';
+
+          // Carrello + numero ordine (non influisce sul barcode sotto)
+          const cartLine = (typeof row.number === 'number' && !isNaN(row.number))
+            ? `<div class='info-top'><img class="icon-48" src="carrello.png" alt="Ordine"> <b>#${row.number}</b></div>` : '';
+
+          // Ritiro + Ora
           const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
-          parts.push(nameLine + phoneLine + dateLine + timeLine);
 
-          const vals = buildValueLines(row);
+          parts.push(nameLine + phoneLine + cartLine + dateLine + timeLine);
+
+          // Contenuti
+          const vals = buildValueHTML(row);
           parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='vals'>${vals}</div>`);
           parts.push(`<div class='hr-solid'></div>`);
@@ -310,10 +327,7 @@
 
         // Fit del nome
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){
-          // Partenza più bassa (~-10%) e auto-shrink fino a 10px
-          fitTextToWidth(nameEl, 26, 10);
-        }
+        if(nameEl){ fitTextToWidth(nameEl, 26, 10); }
       }catch(_e){
         const wrap = $('#tkt-body');
         if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b></div>'; }
@@ -535,7 +549,7 @@
         }
         catch(parseErr){
           try{
-            const start = raw.search(/[\[{]/);
+            const start = raw.search(/[\\[{]/);
             const endB  = raw.lastIndexOf('}');
             const endA  = raw.lastIndexOf(']');
             const end   = Math.max(endB, endA);
@@ -551,11 +565,10 @@
         }
 
         let rows = [];
-        if (Array.isArray(data)) rows = data; // caso: API ritorna direttamente un array di righe
+        if (Array.isArray(data)) rows = data;
         else if (Array.isArray(data.rows)) rows = data.rows;
         else if (Array.isArray(data.data)) rows = data.data;
         else if (data && typeof data === 'object') {
-          // fallback: prendi il primo campo che sia un array di oggetti
           const k = Object.keys(data).find(x => Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
           if (k) rows = data[k];
         }
@@ -563,7 +576,6 @@
 
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
-        // preseleziona "Totale ordini"
         activeFilter = 'all';
         $$('#flashcards .card').forEach(c=> c.classList.toggle('active', c.dataset.filter===activeFilter));
         updateFilterUI();
@@ -572,7 +584,6 @@
         console.warn('API load error', e);
         ORDERS = [];
         recomputeStats();
-        // Feedback visivo ma senza crash
         const el = $('#orders-list');
         if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
         const wrap = $('#tkt-body');
@@ -599,10 +610,7 @@
       $('#btn-print').addEventListener('click', doPrint);
       window.addEventListener('resize', ()=>{
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){
-          // Partenza più bassa (~-10%) e auto-shrink fino a 10px
-          fitTextToWidth(nameEl, 26, 10);
-        }
+        if(nameEl){ fitTextToWidth(nameEl, 26, 10); }
       });
       loadData();
     })();
