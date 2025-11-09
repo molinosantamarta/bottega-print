@@ -58,8 +58,8 @@
     /* Separatore per ogni reparto: nero pieno per termica */
     .dept-sep{border-top:1px solid #000;margin:6px 12px;width:calc(100% - 24px);height:0}
 
-    /* Messaggio finale con The Nautigal */
-    .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:28px;margin-top:10px;letter-spacing:.5px}
+    /* Messaggio finale con The Nautigal (più grande e bold) */
+    .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:36px;font-weight:700;margin-top:12px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
     .hr-solid{border-top:2px solid #111;margin:10px 12px}
     .insert-ts{text-align:center;font-size:12px;margin:4px 0 2px}
@@ -133,10 +133,12 @@
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
       /* Logo in stampa: +10% rispetto anteprima */
       .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.1);transform-origin:center}
+      /* Nome cliente: riduci ulteriormente in stampa per evitare tagli */
+      #tkt-name{font-size:22px !important}
       /* Separatori reparto neri anche in stampa */
       .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
-      .holiday-msg{font-size:28px;color:var(--main)}
+      .holiday-msg{font-size:36px;font-weight:700;color:var(--main)}
     }
   </style>
 </head>
@@ -222,15 +224,23 @@
       const isAvKey=k=>AV.some(t=>k.includes(t));
       const HEAD=[norm('1) PANE E PRODOTTI DA FORNO'),norm('2) BANCO GASTRONOMIA'),norm('3) FRUTTA E VERDURA'),norm('4) CARNE'),norm('5) ALTRO')];
       const out=[]; let hadAnyDept=false; let pendingSep=false; let lastAviIndex=-1; let avicoloDesc='';
-      const pushOne=(s)=>{ if(!hasV(s)) return; if(pendingSep&&hadAnyDept){ out.push('<div class="dept-sep"></div>'); pendingSep=false; } out.push(`<div class=\"line\">${esc(s)}</div>`); hadAnyDept=true; };
+      const pushSep=()=>{ if(hadAnyDept) out.push('<div class="dept-sep"></div>') };
+      const pushOne=(s)=>{ if(!hasV(s)) return; if(pendingSep){ pushSep(); pendingSep=false; } out.push(`<div class=\"line\">${esc(s)}</div>`); hadAnyDept=true; };
       const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV).forEach(pushOne) };
 
       for(const [kr,vr] of entries){
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header reparto: attiva separatore SOLO se poi arriverà contenuto
-        if(HEAD.includes(k)){ pendingSep=true; continue; }
+        // Header reparto: se la cella header contiene contenuto, stampalo (senza titolo) e prepara il separatore per il prossimo reparto
+        if(HEAD.includes(k)){
+          if(hasV(val)){
+            if(hadAnyDept) out.push('<div class="dept-sep"></div>');
+            pushLines(val);
+          }
+          pendingSep=true; // il prossimo contenuto (di un altro reparto) inizierà con separatore
+          continue;
+        }
 
         // Descrizione/preparazione avicolo
         if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){ if(hasV(val)) avicoloDesc = val; continue; }
@@ -241,7 +251,6 @@
         if(isAvKey(k)){
           const lab=AV.find(t=>k.includes(t))||''; pushOne(`${val} ${lab.toUpperCase()}`); lastAviIndex = out.length - 1;
         } else {
-          // Se il contenuto è direttamente nella cella header (alcuni sheet lo fanno), splitta e pusha
           pushLines(val);
         }
       }
@@ -255,7 +264,7 @@
       return out.join('');
     }
 
-    function fitText(el,max=26,min=10){if(!el) return;const p=el.parentElement||el;el.style.display='inline-block';el.style.whiteSpace='nowrap';el.style.maxWidth='100%';el.style.overflow='hidden';let s=max,g=80;el.style.fontSize=s+'px';while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){s-=.5;el.style.fontSize=s+'px'}}
+    function fitText(el,max=26,min=10){if(!el) return;const p=el.parentElement||el;el.style.display='inline-block';el.style.whiteSpace='nowrap';el.style.maxWidth='100%';el.style.overflow='hidden';let s=max,g=100;el.style.fontSize=s+'px';while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){s-=.5;el.style.fontSize=s+'px'}}
 
     function pickTS(r){if(!r||!r.src) return '';const pref=['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];const ks=Object.keys(r.src);for(const l of pref){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
     function pickPhone(r){const keys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];const ks=Object.keys(r.src||{});for(const l of keys){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
@@ -513,6 +522,9 @@
       D.q('#btn-prev').addEventListener('click',next);
       D.q('#btn-print').addEventListener('click',doPrint);
       window.addEventListener('resize',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n)});
+      // Riduzione extra del nome in stampa reale
+      window.addEventListener('beforeprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,22,9)});
+      window.addEventListener('afterprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,26,10)});
       load();
     })();
   </script>
