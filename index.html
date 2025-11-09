@@ -32,19 +32,22 @@
     #tkt-name{font-size:24px;line-height:1.15;display:inline-block;max-width:100%;white-space:nowrap}
     /* Data più grande */
     .tkt .info-date b{font-size:1.28em}
+    /* Distanze: telefono più vicino al nome */
+    .tkt .info-phone{margin-top:2px}
+    .tkt .info-time{margin-top:6px}
 
     /* Header con logo centrale e icone laterali */
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
     .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
-    /* PNG più piccole (dimensione precedente) */
+    /* PNG dimensione ripristinata (più piccole) */
     .tkt-header .icon{height:46px;width:auto;object-fit:contain}
     /* Testo sotto alle icone: "SI" più piccolo (dimensione precedente) */
     .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.1em;line-height:1}
-    /* Carrello leggermente più in basso, numero ordine riallineato al SI */
-    .tkt-header .right .icon{transform:translateY(4px)}
-    .tkt-header .right .label{transform:translateY(-2px)}
+    /* Carrello più in basso, numero più in alto per allineo orizzontale al "SI" */
+    .tkt-header .right .icon{transform:translateY(6px)}
+    .tkt-header .right .label{transform:translateY(-4px)}
 
-    /* Logo leggermente più grande */
+    /* Logo: leggermente più grande e coerente anche in stampa */
     .tkt .logo{display:block;margin:0 auto;max-width:97%;height:auto}
 
     .dept-line{margin:6px 8px 2px;font-weight:700;font-size:0.95em}
@@ -52,8 +55,8 @@
     /* Core valori: compatto e centrato verticalmente */
     .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center;line-height:1.15}
     .vals .line{padding:6px 8px;word-break:break-word}
-    /* Separatore sottile per ogni reparto (più sottile della hr principale) */
-    .dept-sep{border-top:1px solid #cfcfd4;margin:6px 12px;width:calc(100% - 24px);height:0}
+    /* Separatore per ogni reparto: stesso spessore, nero pieno per termica */
+    .dept-sep{border-top:1px solid #000;margin:6px 12px;width:calc(100% - 24px);height:0}
 
     .holiday-msg{font-family:'Chewy',cursive;color:var(--main);font-size:22px;margin-top:8px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
@@ -127,6 +130,10 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
+      /* Logo in stampa: stesso ingombro dell'anteprima */
+      .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important}
+      /* Separatori reparto neri anche in stampa */
+      .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
       .holiday-msg{font-size:22px;color:var(--main)}
     }
@@ -220,7 +227,7 @@
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header di reparto: separatore sottile e contenuti
+        // Header di reparto: separatore nero e contenuti
         if(HEAD.includes(k)){
           if(first) out.push('<div class="dept-sep"></div>');
           first=true;
@@ -290,7 +297,7 @@
         const ph=pickPhone(row);
         parts.push(
           `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
-          `${ph?`<div class='info-top'>${esc(ph)}</div>`:''}`+
+          `${ph?`<div class='info-top info-phone'>${esc(ph)}</div>`:''}`+
           `${row.date?`<div class='info-top info-date'><b>${fmtIT(row.date)}</b></div>`:''}`+
           `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
         );
