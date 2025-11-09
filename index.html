@@ -50,9 +50,6 @@
     .vals .line{ padding:16px 10px; word-break:break-word; } /* raddoppio spacing core reparti */
     .dept-sep{ height:8px; } /* separatore tra gruppi reparti */
 
-    .dept-title{ margin:12px 8px 4px; font-weight:900; font-size:16px; }
-
-
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
     .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
@@ -112,7 +109,7 @@
     .filter-actions{ display:flex; gap:10px; margin-top:16px; }
 
     /* ===== Responsive ===== */
-    @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);} .searchbar{grid-template-columns:1fr auto; grid-auto-flow:row;}} 
+    @media (max-width:1200px){ .flashcards{grid-template-columns:repeat(3,1fr);}.searchbar{grid-template-columns:1fr auto; grid-auto-flow:row;}} 
     @media (max-width:1100px){ :root{ --preview-w:35%; --sidebar-w:65%; } }
     @media (max-width:860px){ .app{grid-template-columns:1fr;}.ticket-bar{position:static}.list{max-height:none} .searchbar{grid-template-columns:1fr;}}
 
@@ -231,23 +228,14 @@
         norm('5) ALTRO')
       ];
 
-      const DEPT_TITLES = {
-        [norm('1) PANE E PRODOTTI DA FORNO')]: 'PANE E PRODOTTI DA FORNO',
-        [norm('2) BANCO GASTRONOMIA')]       : 'BANCO GASTRONOMIA',
-        [norm('3) FRUTTA E VERDURA')]        : 'FRUTTA E VERDURA',
-        [norm('4) CARNE')]                   : 'CARNE',
-        [norm('5) ALTRO')]                   : 'ALTRO'
-      };
-
       const lines = [];
       let firstDeptSeen = false;
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
-        if (DEPT_HEADERS.includes(k)) {
-          if (firstDeptSeen) { lines.push('<div class="dept-sep"></div>'); }
+        if(DEPT_HEADERS.includes(k)){
+          if(firstDeptSeen){ lines.push('<div class="dept-sep"></div>'); }
           firstDeptSeen = true;
-          lines.push(`<div class="dept-title">${esc(DEPT_TITLES[k] || kRaw)}</div>`);
-          continue;
+          continue; // non stampare il titolo reparto
         }
         if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
         const val = (vRaw==null? '' : String(vRaw)).trim();
@@ -652,9 +640,9 @@
         ORDERS = [];
         recomputeStats();
         const el = $('#orders-list');
-        if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
+        if(el){ el.innerHTML = `<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
         const wrap = $('#tkt-body');
-        if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>'; }
+        if(wrap){ wrap.innerHTML = '<div class=\"tkt info-top\"><b>Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>'; }
       }
     }
 
