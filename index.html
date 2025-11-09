@@ -40,9 +40,10 @@
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
     .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
     .tkt-header .icon{height:46px;width:auto;object-fit:contain}
-    .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.1em;line-height:1}
+    /* Numero ordine e SI devono avere la stessa dimensione */
+    .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.25em;line-height:1}
     .tkt-header .right .icon{transform:translateY(6px)}
-    .tkt-header .right .label{transform:translateY(-4px)}
+    .tkt-header .right .label{transform:translateY(-6px)} /* alzato di più per allineare a "SI" */
 
     /* Logo */
     .tkt .logo{display:block;margin:0 auto;max-width:97%;height:auto}
@@ -56,7 +57,7 @@
     .dept-sep{border-top:1px solid #000;margin:6px 12px;width:calc(100% - 24px);height:0}
 
     /* Messaggio finale con The Nautigal (più grande e bold) */
-    .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:36px;font-weight:700;margin-top:12px;letter-spacing:.5px}
+    .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:40px;font-weight:700;margin-top:12px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
     .hr-solid{border-top:2px solid #111;margin:10px 12px}
     .insert-ts{text-align:center;font-size:12px;margin:4px 0 2px}
@@ -128,17 +129,19 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
-      /* Logo in stampa: +10% */
-      .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.1);transform-origin:center}
+      /* Logo in stampa: +20% e priorità di spazio */
+      .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.2);transform-origin:center;z-index:2}
       /* Nome cliente: riduci ulteriormente in stampa per evitare tagli */
       #tkt-name{font-size:22px !important}
       /* PNG avicolo/carrello ridotte del 10% in stampa */
       .tkt-header .icon{transform:scale(0.9)}
       .tkt-header .right .icon{transform:translateY(6px) scale(0.9)}
+      /* Numero ordine leggermente più in alto in stampa per allineamento con "SI" */
+      .tkt-header .right .label{transform:translateY(-8px)}
       /* Separatori reparto neri anche in stampa */
       .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
-      .holiday-msg{font-size:36px;font-weight:700;color:var(--main)}
+      .holiday-msg{font-size:40px;font-weight:700;color:var(--main)}
     }
   </style>
 </head>
@@ -219,7 +222,7 @@
       const DROP=[
         'ord','numero ordine','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion','stoccaggio','telefono','cellulare','tel','phone','mobile','contatto',
-        'reparto','reparti','avicoli','avicolo'
+        'reparto','reparti'
       ].map(norm);
       const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
@@ -241,11 +244,12 @@
         const k=norm(kr); const val=(vr==null?'':String(vr)).trim();
         if(!hasV(val)) continue;
 
+        // intercetta sempre la descrizione preparazione avicolo, PRIMA dei drop
+        if( (k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))) || k.includes('descrizione preparazione avicolo') ){ avicoloDesc=val; continue; }
+
         if(HEAD_MAP[k]){ current=HEAD_MAP[k]; pushLines(groups[current], val); continue; }
 
         if(DROP.some(t=>k.includes(t))) continue;
-
-        if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){ avicoloDesc=val; continue; }
 
         if(isAvKey(k)){
           const lab=AV.find(t=>k.includes(t))||''; groups.carne.push(`<div class=\"line\">${esc(val)} ${lab.toUpperCase()}</div>`); lastAviIdx=groups.carne.length-1; continue;
@@ -255,12 +259,13 @@
         else { pushLines(groups.altro, val); }
       }
 
+      // Inserisci descrizione preparazione subito DOPO l'ultimo avicolo (se presente) o alla fine della sezione carne
       if(hasV(avicoloDesc)){
         const html=`<div class=\"line\">${esc(avicoloDesc)}</div>`;
         if(lastAviIdx>=0) groups.carne.splice(lastAviIdx+1,0,html); else groups.carne.push(html);
       }
 
-      // Compose with single separators only between non-empty groups, none after last.
+      // Compose con separatori singoli tra gruppi non vuoti, senza coda finale
       const order=['pane','banco','fruver','carne','altro'];
       const pieces=[];
       for(const id of order){
@@ -307,7 +312,7 @@
           `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
           `${ph?`<div class='info-top info-phone'>${esc(ph)}</div>`:''}`+
           `${row.date?`<div class='info-top info-date'><b>${fmtIT(row.date)}</b></div>`:''}`+
-          `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
+          `${row.time?`<div class='info-top info-time'><b>Ore: ${esc(row.time)}</b></div>`:''}`
         );
 
         const av=avicoloYN(row);
