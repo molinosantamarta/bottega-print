@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&family=Chewy&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=The+Nautigal:wght@400;700&display=swap" rel="stylesheet">
   <title>Bottega – Stampa Ordini</title>
   <style>
-    :root{
-      --main:#770505; --fg:#0b0b0b; --card:#fff; --ink:#111;
-      --r:22px; --e:0 10px 24px rgba(0,0,0,.15);
-      --g:14px; --pad:16px; --pw:18%; --sw:82%; --tmax:960px;
-    }
+    :root{--main:#770505;--fg:#0b0b0b;--card:#fff;--ink:#111;--r:22px;--e:0 10px 24px rgba(0,0,0,.15);--g:14px;--pad:16px;--pw:18%;--sw:82%;--tmax:960px}
     html,body{height:100%;margin:0;background:#f5f5f7;color:var(--fg);font:16px/1.45 Verdana, Geneva, sans-serif}
     .app{display:grid;grid-template-columns:minmax(240px,var(--pw)) minmax(520px,var(--sw));gap:var(--g);height:100%;padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));box-sizing:border-box}
 
@@ -32,22 +32,22 @@
     #tkt-name{font-size:24px;line-height:1.15;display:inline-block;max-width:100%;white-space:nowrap}
     /* Data più grande */
     .tkt .info-date b{font-size:1.28em}
-    /* Distanze: telefono più vicino al nome */
-    .tkt .info-phone{margin-top:2px}
+    /* Telefono: stessa dimensione del core e più vicino al nome */
+    .tkt .info-phone{margin-top:2px;font-size:1em !important;line-height:1.15}
     .tkt .info-time{margin-top:6px}
 
     /* Header con logo centrale e icone laterali */
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
     .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
-    /* PNG dimensione ripristinata (più piccole) */
+    /* PNG dimensione (ridotte rispetto alla versione grande) */
     .tkt-header .icon{height:46px;width:auto;object-fit:contain}
-    /* Testo sotto alle icone: "SI" più piccolo (dimensione precedente) */
+    /* Testo sotto alle icone: "SI" più piccolo */
     .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.1em;line-height:1}
-    /* Carrello più in basso, numero più in alto per allineo orizzontale al "SI" */
+    /* Carrello più in basso, numero più in alto per allineo al "SI" */
     .tkt-header .right .icon{transform:translateY(6px)}
     .tkt-header .right .label{transform:translateY(-4px)}
 
-    /* Logo: leggermente più grande e coerente anche in stampa */
+    /* Logo: grande e coerente in anteprima e stampa (in stampa +10%) */
     .tkt .logo{display:block;margin:0 auto;max-width:97%;height:auto}
 
     .dept-line{margin:6px 8px 2px;font-weight:700;font-size:0.95em}
@@ -55,10 +55,11 @@
     /* Core valori: compatto e centrato verticalmente */
     .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center;line-height:1.15}
     .vals .line{padding:6px 8px;word-break:break-word}
-    /* Separatore per ogni reparto: stesso spessore, nero pieno per termica */
+    /* Separatore per ogni reparto: nero pieno per termica */
     .dept-sep{border-top:1px solid #000;margin:6px 12px;width:calc(100% - 24px);height:0}
 
-    .holiday-msg{font-family:'Chewy',cursive;color:var(--main);font-size:22px;margin-top:8px;letter-spacing:.5px}
+    /* Messaggio finale con The Nautigal */
+    .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:28px;margin-top:10px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
     .hr-solid{border-top:2px solid #111;margin:10px 12px}
     .insert-ts{text-align:center;font-size:12px;margin:4px 0 2px}
@@ -130,12 +131,12 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
-      /* Logo in stampa: stesso ingombro dell'anteprima */
-      .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important}
+      /* Logo in stampa: +10% rispetto anteprima */
+      .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.1);transform-origin:center}
       /* Separatori reparto neri anche in stampa */
       .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
-      .holiday-msg{font-size:22px;color:var(--main)}
+      .holiday-msg{font-size:28px;color:var(--main)}
     }
   </style>
 </head>
@@ -220,44 +221,35 @@
       ].map(norm),AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
       const HEAD=[norm('1) PANE E PRODOTTI DA FORNO'),norm('2) BANCO GASTRONOMIA'),norm('3) FRUTTA E VERDURA'),norm('4) CARNE'),norm('5) ALTRO')];
-      const out=[]; let first=false; let lastAviIndex=-1; let avicoloDesc='';
-      const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(s=>s.trim()).filter(hasV).forEach(s=>{ out.push(`<div class=\"line\">${esc(s)}</div>`) }) };
+      const out=[]; let hadAnyDept=false; let pendingSep=false; let lastAviIndex=-1; let avicoloDesc='';
+      const pushOne=(s)=>{ if(!hasV(s)) return; if(pendingSep&&hadAnyDept){ out.push('<div class="dept-sep"></div>'); pendingSep=false; } out.push(`<div class=\"line\">${esc(s)}</div>`); hadAnyDept=true; };
+      const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV).forEach(pushOne) };
 
       for(const [kr,vr] of entries){
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header di reparto: separatore nero e contenuti
-        if(HEAD.includes(k)){
-          if(first) out.push('<div class="dept-sep"></div>');
-          first=true;
-          if(hasV(val)) pushLines(val);
-          continue;
-        }
+        // Header reparto: attiva separatore SOLO se poi arriverà contenuto
+        if(HEAD.includes(k)){ pendingSep=true; continue; }
 
         // Descrizione/preparazione avicolo
-        if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){
-          if(hasV(val)) avicoloDesc = val;
-          continue;
-        }
+        if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){ if(hasV(val)) avicoloDesc = val; continue; }
 
-        // Scarta meta
-        if(DROP.some(t=>k.includes(t))) continue;
-        if(!hasV(val)) continue;
-        if(/^\s*\d+\)\s*$/i.test(val)) continue;
+        // Scarta meta e vuoti
+        if(DROP.some(t=>k.includes(t))) continue; if(!hasV(val)) continue; if(/^\s*\d+\)\s*$/i.test(val)) continue;
 
         if(isAvKey(k)){
-          const lab=AV.find(t=>k.includes(t))||'';
-          out.push(`<div class="line">${esc(val)} ${esc(lab.toUpperCase())}</div>`);
-          lastAviIndex = out.length - 1;
+          const lab=AV.find(t=>k.includes(t))||''; pushOne(`${val} ${lab.toUpperCase()}`); lastAviIndex = out.length - 1;
         } else {
-          out.push(`<div class="line">${esc(val)}</div>`);
+          // Se il contenuto è direttamente nella cella header (alcuni sheet lo fanno), splitta e pusha
+          pushLines(val);
         }
       }
 
       if(hasV(avicoloDesc)){
-        const descHtml = `<div class="line">${esc(avicoloDesc)}</div>`;
-        if(lastAviIndex>=0) out.splice(lastAviIndex+1,0,descHtml); else out.push(descHtml);
+        const descHtml = `<div class=\"line\">${esc(avicoloDesc)}</div>`;
+        if(pendingSep&&hadAnyDept){ out.push('<div class="dept-sep"></div>'); pendingSep=false; }
+        if(lastAviIndex>=0) out.splice(lastAviIndex+1,0,descHtml); else { out.push(descHtml); hadAnyDept=true; }
       }
 
       return out.join('');
