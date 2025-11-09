@@ -50,6 +50,9 @@
     .vals .line{ padding:16px 10px; word-break:break-word; } /* raddoppio spacing core reparti */
     .dept-sep{ height:8px; } /* separatore tra gruppi reparti */
 
+    .dept-title{ margin:12px 8px 4px; font-weight:900; font-size:16px; }
+
+
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
     .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
@@ -228,14 +231,23 @@
         norm('5) ALTRO')
       ];
 
+      const DEPT_TITLES = {
+        [norm('1) PANE E PRODOTTI DA FORNO')]: 'PANE E PRODOTTI DA FORNO',
+        [norm('2) BANCO GASTRONOMIA')]       : 'BANCO GASTRONOMIA',
+        [norm('3) FRUTTA E VERDURA')]        : 'FRUTTA E VERDURA',
+        [norm('4) CARNE')]                   : 'CARNE',
+        [norm('5) ALTRO')]                   : 'ALTRO'
+      };
+
       const lines = [];
       let firstDeptSeen = false;
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
-        if(DEPT_HEADERS.includes(k)){
-          if(firstDeptSeen){ lines.push('<div class="dept-sep"></div>'); }
+        if (DEPT_HEADERS.includes(k)) {
+          if (firstDeptSeen) { lines.push('<div class="dept-sep"></div>'); }
           firstDeptSeen = true;
-          continue; // non stampare il titolo reparto
+          lines.push(`<div class="dept-title">${esc(DEPT_TITLES[k] || kRaw)}</div>`);
+          continue;
         }
         if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
         const val = (vRaw==null? '' : String(vRaw)).trim();
