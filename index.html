@@ -26,24 +26,26 @@
     .btn.icon{width:44px;padding:0}
 
     #tkt-body{width:100%;max-height:var(--tmax);background:#fff;color:#000;border:0;border-radius:0;overflow:auto;box-shadow:none}
-    .tkt{font:15px/1.45 Verdana, Geneva, sans-serif;text-align:center;padding:10px 0 12px}
-    .tkt .logo{display:block;margin:0 auto 6px;max-width:55%;height:auto} /* +10% */
+    .tkt{font:15px/1.35 Verdana, Geneva, sans-serif;text-align:center;padding:10px 0 12px}
     .tkt .info-top{margin-bottom:6px;font-size:1.1em}
     .tkt .info-name{font-weight:700;margin:6px 8px;white-space:nowrap;overflow:hidden;max-width:calc(100% - 16px)}
     #tkt-name{font-size:24px;line-height:1.15;display:inline-block;max-width:100%;white-space:nowrap}
 
-    /* Nuovo header a 3 colonne: sinistra avicolo, centro logo, destra carrello */
+    /* Header con logo centrale e icone laterali */
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
-    .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:48px}
-    .tkt-header .icon{height:40px;width:auto;object-fit:contain}
-    .tkt-header .label{font-weight:800;margin-top:4px}
+    .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
+    .tkt-header .icon{height:48px;width:auto;object-fit:contain}
+    .tkt-header .label{font-weight:900;margin-top:4px;font-size:1.2em}
+    .tkt-header .right .icon{transform:translateY(4px)} /* carrello leggermente più in basso */
 
-    .dept-line{margin:6px 8px 2px;font-weight:700}
+    .tkt .logo{display:block;margin:0 auto;max-width:95%;height:auto} /* logo molto grande: occupa quasi tutto lo spazio centrale */
 
-    /* Core valori: intra-reparto compatto, inter-reparto arioso, centrato verticalmente */
-    .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center}
-    .vals .line{padding:8px 10px;word-break:break-word}
-    .dept-sep{height:14px}
+    .dept-line{margin:6px 8px 2px;font-weight:700;font-size:0.95em}
+
+    /* Core valori: compatto e centrato verticalmente */
+    .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center;line-height:1.15}
+    .vals .line{padding:6px 8px;word-break:break-word}
+    .dept-sep{height:12px}
 
     .holiday-msg{font-family:'Chewy',cursive;color:var(--main);font-size:22px;margin-top:8px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
@@ -88,13 +90,14 @@
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
 
-    /* Modale (nascosta di default) */
+    /* Modale FILTRO (nascosta di default) */
     .modal{position:fixed;inset:0;display:none;z-index:2147483647;pointer-events:none}
     .modal.open{display:block;pointer-events:auto}
     .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:saturate(1.2) blur(6px);z-index:1}
     .modal .sheet{position:absolute;inset:0;background:#fff;color:#111;display:flex;flex-direction:column;z-index:2}
     #sso-filter-modal .sheet{position:relative;inset:auto;margin:10vh auto;width:min(560px,92vw);max-height:80vh;background:#fff;color:#111;border-radius:var(--r);overflow:hidden;border:1px solid rgba(0,0,0,.08);box-shadow:var(--e);display:flex;flex-direction:column}
     #sso-filter-modal header{position:sticky;top:0;z-index:1;background:#fff;border-bottom:1px solid #ececec;padding:14px 16px 10px}
+    #sso-filter-modal .h{font-size:18px;font-weight:800;color:#111;margin:0}
     #sso-filter-modal .close{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px;font-weight:800;cursor:pointer}
     #sso-filter-modal .content{padding:14px 16px 18px;font-size:15px}
     .filter-options{display:flex;flex-direction:column;gap:10px;padding-top:4px}
@@ -115,7 +118,7 @@
       .app{display:block;padding:0}
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
-      .tkt{font:16px/1.5 Verdana, Geneva, sans-serif;text-align:center;padding:0}
+      .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
       .barcode{font-size:92px}
       .holiday-msg{font-size:22px;color:var(--main)}
     }
@@ -123,17 +126,17 @@
 </head>
 <body>
   <div class="app">
-    <!-- LEFT -->
+    <!-- LEFT: Anteprima scontrino (18%) -->
     <section class="panel left">
       <div class="ticket-bar">
         <button id="btn-prev" class="btn icon" aria-label="Ordine precedente" title="Ordine precedente">◀︎</button>
         <button id="btn-print" class="btn primary" aria-label="Stampa" title="Stampa">Stampa</button>
         <button id="btn-next" class="btn icon" aria-label="Ordine successivo" title="Ordine successivo">▶︎</button>
       </div>
-      <div class="tkt" id="tkt-body"></div>
+      <div class="tkt" id="tkt-body"><!-- render dinamico --></div>
     </section>
 
-    <!-- RIGHT -->
+    <!-- RIGHT: Controlli (82%) -->
     <aside class="panel right">
       <div class="controls">
         <div class="flashcards" id="flashcards">
@@ -159,7 +162,7 @@
     </aside>
   </div>
 
-  <!-- MODAL FILTRO -->
+  <!-- MODAL FILTRO (unica modale) -->
   <div id="sso-filter-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -183,7 +186,7 @@
     const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))};
     const pad=n=>String(n).padStart(2,'0');
     const today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
-    // Giorno-settimana + DD/MM/YY (senza accenti)
+    // Giorni settimana senza accenti per compatibilità stampanti
     const giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
     const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
     const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
@@ -209,7 +212,7 @@
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header di reparto: non stampo la label, ma stampo il contenuto se c'è (titoli core rimossi)
+        // Header di reparto: non stampo la label, ma stampo il contenuto
         if(HEAD.includes(k)){
           if(seen) out.push('<div class="dept-sep"></div>');
           seen=true;
@@ -217,16 +220,16 @@
           continue;
         }
 
-        // Cattura descrizione/preparazione avicolo (gestione refusi/varianti)
+        // Descrizione/preparazione avicolo
         if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){
           if(hasV(val)) avicoloDesc = val;
-          continue; // la inseriremo subito sotto gli avicoli
+          continue;
         }
 
-        // Scarta meta e chiavi servizio già mostrate
+        // Scarta meta
         if(DROP.some(t=>k.includes(t))) continue;
         if(!hasV(val)) continue;
-        if(/^\s*\d+\)\s*$/i.test(val)) continue; // esclude righe tipo "1)"
+        if(/^\s*\d+\)\s*$/i.test(val)) continue;
 
         if(isAvKey(k)){
           const lab=AV.find(t=>k.includes(t))||'';
@@ -237,7 +240,6 @@
         }
       }
 
-      // Inserisci la descrizione sotto l’ultimo avicolo, se presente
       if(hasV(avicoloDesc)){
         const descHtml = `<div class="line">${esc(avicoloDesc)}</div>`;
         if(lastAviIndex>=0) out.splice(lastAviIndex+1,0,descHtml); else out.push(descHtml);
@@ -267,6 +269,7 @@
       }
       return out.join(', ');
     }
+
     const avicoloYN=r=>{for(const k of Object.keys(r.src||{})) if(norm(k).includes('avicol')) return isYes(r.src[k])?'SI':'NO'; return 'NO'}
 
     function renderTicket(){
@@ -277,7 +280,6 @@
       const parts=[]; const ts=pickTS(row); if(ts) parts.push(`<div class='insert-ts'>${esc(ts)}</div>`);
       if(row){
         const ph=pickPhone(row);
-        // blocco info testo sopra
         parts.push(
           `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
           `${ph?`<div class='info-top'>${esc(ph)}</div>`:''}`+
@@ -285,7 +287,6 @@
           `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
         );
 
-        // Nuovo header: sinistra avicolo (icon sopra, testo sotto), centro logo, destra carrello (icon sopra, numero sotto)
         const av=avicoloYN(row);
         const num=(typeof row.number==='number'&&!isNaN(row.number))?row.number:'—';
         parts.push(`
@@ -400,7 +401,7 @@
     function lock(){const y=window.scrollY||window.pageYOffset;document.body.dataset.scrollY=y;document.body.style.position='fixed';document.body.style.top=`-${y}px`;document.body.style.left='0';document.body.style.right='0';document.body.style.width='100%'}
     function unlock(){const y=+(document.body.dataset.scrollY||0);document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.scrollTo(0,y);delete document.body.dataset.scrollY}
 
-    /* ===================== Azioni UI ===================== */
+    /* ===================== Azioni UI / tastiera ===================== */
     function search(){apply()} function next(){if(index<view.length-1) select(index+1)} function prev(){if(index>0) select(index-1)} function doPrint(){window.print()}
 
     if(D.q('#chipbar-filter')) D.q('#chipbar-filter').addEventListener('click',openModal);
@@ -414,7 +415,7 @@
       if(k==='ArrowDown'){e.preventDefault();next()} else if(k==='ArrowUp'){e.preventDefault();prev()} else if(k==='Enter'){e.preventDefault();doPrint()}
     });
 
-    /* ===================== API ===================== */
+    /* ===================== API / Mapping ===================== */
     const API='https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
     function parseDate(s){
       if(!s) return null; const str=String(s).trim();
@@ -483,9 +484,9 @@
         ORDERS=[];
         recompute();
         const el=D.q('#orders-list');
-        if(el) el.innerHTML=`<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`;
+        if(el) el.innerHTML=`<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`;
         const wrap=D.q('#tkt-body');
-        if(wrap) wrap.innerHTML='<div class="tkt info-top"><b>Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>';
+        if(wrap) wrap.innerHTML='<div class=\"tkt info-top\"><b>Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>';
       }
     }
 
@@ -501,7 +502,7 @@
         if(isBtn){select(i);doPrint();e.preventDefault();e.stopPropagation();return}
         select(i);
       });
-      D.q('#btn-next').addEventListener('click',prev); // invertiti apposta per tua UX
+      D.q('#btn-next').addEventListener('click',prev); // invertiti per UX destra->sinistra
       D.q('#btn-prev').addEventListener('click',next);
       D.q('#btn-print').addEventListener('click',doPrint);
       window.addEventListener('resize',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n)});
