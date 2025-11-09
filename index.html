@@ -222,8 +222,7 @@
       const DROP=[
         'ord','numero ordine','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion','stoccaggio','telefono','cellulare','tel','phone','mobile','contatto',
-        'reparto','reparti'
-      ].map(norm);
+        'reparto','reparti','avicolo'].map(norm);
       const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
 
@@ -343,7 +342,7 @@
       }
 
       wrap.innerHTML=`<div class='tkt'>${parts.join('')}</div>`;
-      const logoEl=document.getElementById('tkt-logo'); if(logoEl){logoEl.onerror=()=>{const dv=document.createElement('div');dv.className='tkt center h';dv.textContent='Bottega di Casterno';logoEl.replaceWith(dv)}}
+      const logoEl=document.getElementById('tkt-logo'); if(logoEl){logoEl.onerror=()=>{const dv=document.createElement('div');dv.className='tkt center h';dv.textContent = 'La Bottega di Casterno';logoEl.replaceWith(dv)}}
       const nameEl=document.getElementById('tkt-name'); if(nameEl) fitText(nameEl);
     }
 
@@ -516,7 +515,7 @@
         const el=D.q('#orders-list');
         if(el) el.innerHTML=`<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`;
         const wrap=D.q('#tkt-body');
-        if(wrap) wrap.innerHTML='<div class=\"tkt info-top\"><b>Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>';
+        if(wrap) wrap.innerHTML='<div class=\"tkt info-top\"><b>La Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>';
       }
     }
 
