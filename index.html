@@ -38,17 +38,18 @@
     .tkt .info-date{ font-weight:700; }
     .tkt .info-time{ font-weight:700; margin-top:2px; }
 
-    /* Riga icone (avicoli + carrello + numero) */
-    .icons-row{ display:inline-flex; align-items:center; gap:8px; justify-content:center; margin:6px 0 2px; }
-    .icons-row img{ width:44px; height:44px; object-fit:contain; image-rendering:-webkit-optimize-contrast; }
-    .icons-row .avicoli-flag{ font-weight:700; letter-spacing:0.3px; }
-    .icons-row .ord-num{ font-weight:800; }
+    /* Riga status: avicolo + carrello + numero */
+    .order-status-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 10px 2px; }
+    .icon-ord{ height:40px; width:auto; display:inline-block; object-fit:contain; }
+    .status-text{ font-weight:700; }
 
-    /* Reparti inline (solo contenuti) */
-    .reparti-line{ margin:4px 0 6px; font-size:14px; opacity:.9; }
+    /* DEPARTMENTS (sopra la riga) */
+    .dept-line{ margin:6px 8px 2px; font-weight:700; }
 
     .vals{ width:100%; }
-    .vals .line{ padding:8px 10px; word-break:break-word; }
+    .vals .line{ padding:16px 10px; word-break:break-word; } /* raddoppio spacing core reparti */
+    .dept-sep{ height:8px; } /* separatore tra gruppi reparti */
+
     .holiday-msg{ font-family:'Chewy', cursive; color:var(--main); font-size:22px; margin-top:8px; text-align:center; letter-spacing:0.5px; }
     .barcode{ font-family:'Libre Barcode 39', cursive; font-size:92px; line-height:1; letter-spacing:1px; margin-top:8px; text-align:center; }
     .hr-solid{ border-top:2px solid #111; margin:10px 12px; }
@@ -191,7 +192,7 @@
     const todayYMD = ()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
     const fmtDateIT = iso => { if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; };
     const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
-    const esc = s => String(s==null? '': s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    const esc = s => String(s==null? '': s).replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
     const hasValue = v => { const t = String(v || '').trim(); return t!=='' && t!=='0' && t!=='-' && t.toLowerCase()!=='n/d'; };
     const isYes = v => { const t = norm(String(v || '')); return t==='si'||t==='sì'||t==='y'||t==='yes'||t==='true'||t==='1'; };
 
@@ -218,9 +219,24 @@
       ];
       const isAvicoloKey = (k) => AVICOLI.some(tok => k.includes(tok));
 
+      // gestione gruppi reparti tramite intestazioni "1) ..." ecc.
+      const DEPT_HEADERS = [
+        norm('1) PANE E PRODOTTI DA FORNO'),
+        norm('2) BANCO GASTRONOMIA'),
+        norm('3) FRUTTA E VERDURA'),
+        norm('4) CARNE'),
+        norm('5) ALTRO')
+      ];
+
       const lines = [];
+      let firstDeptSeen = false;
       for(const [kRaw,vRaw] of entries){
         const k = norm(kRaw);
+        if(DEPT_HEADERS.includes(k)){
+          if(firstDeptSeen){ lines.push('<div class="dept-sep"></div>'); }
+          firstDeptSeen = true;
+          continue; // non stampare il titolo reparto
+        }
         if(DROP_TOKENS.some(tok => k.includes(tok))) continue; // meta off
         const val = (vRaw==null? '' : String(vRaw)).trim();
         if(!hasValue(val)) continue;  // vuoti off
@@ -254,24 +270,50 @@
       }
     }
 
-    // Flag avicoli SI/NO
-    function getAvicoloFlag(row){
-      if(!row || !row.src) return 'NO';
-      const ks = Object.keys(row.src);
-      const k = ks.find(x=> norm(x)==='avicolo' || norm(x).includes('avicol'));
-      if(!k) return 'NO';
-      return isYes(row.src[k]) ? 'SÌ' : 'NO';
+    function getInsertTS(r){
+      if(!r || !r.src) return '';
+      const prefer = ['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
+      const ks = Object.keys(r.src);
+      for(const label of prefer){
+        const k = ks.find(x => norm(x) === norm(label) || norm(x).includes(norm(label)) );
+        if(k && r.src[k]) return String(r.src[k]).trim();
+      }
+      return '';
     }
 
-    // Costruisci lista reparti presenti nel singolo ordine (solo contenuti, nessun titolo)
-    function buildRepartiInline(row){
-      if(!row) return '';
-      const items = [];
-      for(const dep of DEPARTMENTS){
-        const st = getDeptStatus(row, dep.id);
-        if(st.present){ items.push(st.icon || '•'); }
+    function getPhone(r){
+      const phoneKeys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
+      const ks = (r && r.src) ? Object.keys(r.src) : [];
+      for(const label of phoneKeys){
+        const k = ks.find(x => norm(x)===norm(label) || norm(x).includes(norm(label)) );
+        if(k && r.src[k]){ return String(r.src[k]).trim(); }
       }
-      return items.join(' ');
+      return '';
+    }
+
+    function getDeptListText(r){
+      // usa gli header presenti, restituisci label concatenate
+      const map = {
+        [norm('1) PANE E PRODOTTI DA FORNO')]: 'PANE E PRODOTTI DA FORNO',
+        [norm('2) BANCO GASTRONOMIA')]       : 'BANCO GASTRONOMIA',
+        [norm('3) FRUTTA E VERDURA')]        : 'FRUTTA E VERDURA',
+        [norm('4) CARNE')]                   : 'CARNE',
+        [norm('5) ALTRO')]                   : 'ALTRO'
+      };
+      const out=[];
+      for(const [k,v] of Object.entries(r.src||{})){
+        const nk = norm(k);
+        if(map[nk] && hasValue(v)) out.push(map[nk]);
+        // gestione avicolo come reparto carne
+        if(nk.includes('avicol') && isYes(v) && !out.includes('CARNE')) out.push('CARNE');
+      }
+      return out.join(' • ');
+    }
+
+    function getAvicoloYesNo(r){
+      const ks = Object.keys(r.src||{});
+      for(const k of ks){ if(norm(k).includes('avicol')){ return isYes(r.src[k]) ? 'SI' : 'NO'; } }
+      return 'NO';
     }
 
     function renderTicket(){
@@ -280,52 +322,40 @@
         if(!wrap) return;
         const row = view[index] || ORDERS[0] || null;
         const LOGO_URL = (window.BOTTEGA_LOGO_URL || 'svg-bottega%20black.png');
-
-        // Prova a recuperare il timestamp di inserimento dall'API
-        const getInsertTS = (r)=>{
-          if(!r || !r.src) return '';
-          const prefer = ['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
-          const ks = Object.keys(r.src);
-          for(const label of prefer){
-            const k = ks.find(x => norm(x) === norm(label) || norm(x).includes(norm(label)) );
-            if(k && r.src[k]) return String(r.src[k]).trim();
-          }
-          return '';
-        };
+        const AVICOLO_ICON = 'avicolo.png';
+        const CART_ICON    = 'carrello.png';
 
         const parts = [];
         const ts = getInsertTS(row);
         if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
-          // Nome (auto-shrink) e ritiro + orario sotto
+          // Nome (auto-shrink), Telefono (testo normale), Ritiro, Ora
           const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
-          // Telefono tra nome e ritiro (non in bold)
-          const phoneKeys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
-          const ks = (row && row.src) ? Object.keys(row.src) : [];
-          let phone='';
-          for(const label of phoneKeys){
-            const k = ks.find(x => norm(x)===norm(label) || norm(x).includes(norm(label)) );
-            if(k && row.src[k]){ phone = String(row.src[k]).trim(); break; }
-          }
-          const phoneLine = phone ? `<div class='info-top'>${esc(phone)}</div>` : '';
-
+          const phone    = getPhone(row);
+          const phoneLine= phone ? `<div class='info-top'>${esc(phone)}</div>` : '';
           const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
+          parts.push(nameLine + phoneLine + dateLine + timeLine);
 
-          // Reparti (solo contenuti) subito dopo Ritiro/Ora e prima della riga
-          const repsInline = buildRepartiInline(row);
-          const repsLine = repsInline ? `<div class='reparti-line'>${repsInline}</div>` : '';
+          // Reparti (solo testo) POSIZIONATI SOPRA LA PRIMA RIGA
+          const deptTxt = getDeptListText(row);
+          if(deptTxt){ parts.push(`<div class='dept-line'>${esc(deptTxt)}</div>`); }
 
-          // Riga icone avicolo + carrello + numero
-          const avFlag = getAvicoloFlag(row);
-          const ordNum = (row.number!=null? row.number:'—');
-          const iconsRow = `<div class='icons-row'><img src='avicolo.png' alt='Avicoli'><span class='avicoli-flag'>AVICOLI: ${esc(avFlag)}</span><img src='carrello.png' alt='Ordine'><span class='ord-num'>${esc(ordNum)}</span></div>`;
+          // Riga: avicolo.png + SI/NO + carrello.png + numero ordine
+          const avic = getAvicoloYesNo(row);
+          const orderNo = (typeof row.number==='number' && !isNaN(row.number)) ? row.number : '—';
+          parts.push(`
+            <div class="order-status-row">
+              <img class="icon-ord" src="${AVICOLO_ICON}" alt="Avicoli" onerror="this.style.display='none'" />
+              <span class="status-text">${esc(avic)}</span>
+              <img class="icon-ord" src="${CART_ICON}" alt="Ordine" onerror="this.style.display='none'" />
+              <span class="status-text">${esc(orderNo)}</span>
+            </div>
+          `);
 
-          parts.push(nameLine + phoneLine + dateLine + timeLine + repsLine + iconsRow);
-
-          const vals = buildValueLines(row);
           parts.push(`<div class='hr-solid'></div>`);
+          const vals = buildValueLines(row);
           parts.push(`<div class='vals'>${vals}</div>`);
           parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='holiday-msg'>Grazie e Buone Feste</div>`);
@@ -573,7 +603,7 @@
         }
         catch(parseErr){
           try{
-            const start = raw.search(/[\\[{]/);
+            const start = raw.search(/[\[{]/);
             const endB  = raw.lastIndexOf('}');
             const endA  = raw.lastIndexOf(']');
             const end   = Math.max(endB, endA);
@@ -593,11 +623,10 @@
         else if (Array.isArray(data.rows)) rows = data.rows;
         else if (Array.isArray(data.data)) rows = data.data;
         else if (data && typeof data === 'object') {
-          // fallback: prendi il primo campo che sia un array di oggetti
           const k = Object.keys(data).find(x => Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
           if (k) rows = data[k];
         }
-        if (!Array.isArray(rows)) rows = []
+        if (!Array.isArray(rows)) rows = [];
 
         ORDERS = rows.map(rowToOrder).filter(Boolean);
         recomputeStats();
@@ -610,7 +639,6 @@
         console.warn('API load error', e);
         ORDERS = [];
         recomputeStats();
-        // Feedback visivo ma senza crash
         const el = $('#orders-list');
         if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
         const wrap = $('#tkt-body');
@@ -632,14 +660,12 @@
         if(isPrintBtn){ select(i); doPrint(); e.preventDefault(); e.stopPropagation(); return; }
         select(i);
       });
-      $('#btn-next').addEventListener('click', next);
-      $('#btn-prev').addEventListener('click', prev);
+      $('#btn-next').addEventListener('click', prev); // invertiti apposta per flusso a destra -> sinistra
+      $('#btn-prev').addEventListener('click', next);
       $('#btn-print').addEventListener('click', doPrint);
       window.addEventListener('resize', ()=>{
         const nameEl = document.getElementById('tkt-name');
-        if(nameEl){
-          fitTextToWidth(nameEl, 26, 10);
-        }
+        if(nameEl){ fitTextToWidth(nameEl, 26, 10); }
       });
       loadData();
     })();
