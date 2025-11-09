@@ -30,22 +30,30 @@
     .tkt .info-top{margin-bottom:6px;font-size:1.1em}
     .tkt .info-name{font-weight:700;margin:6px 8px;white-space:nowrap;overflow:hidden;max-width:calc(100% - 16px)}
     #tkt-name{font-size:24px;line-height:1.15;display:inline-block;max-width:100%;white-space:nowrap}
+    /* Data più grande */
+    .tkt .info-date b{font-size:1.28em}
 
     /* Header con logo centrale e icone laterali */
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
     .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
-    .tkt-header .icon{height:48px;width:auto;object-fit:contain}
-    .tkt-header .label{font-weight:900;margin-top:4px;font-size:1.2em}
-    .tkt-header .right .icon{transform:translateY(4px)} /* carrello leggermente più in basso */
+    /* PNG più piccole (dimensione precedente) */
+    .tkt-header .icon{height:46px;width:auto;object-fit:contain}
+    /* Testo sotto alle icone: "SI" più piccolo (dimensione precedente) */
+    .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.1em;line-height:1}
+    /* Carrello leggermente più in basso, numero ordine riallineato al SI */
+    .tkt-header .right .icon{transform:translateY(4px)}
+    .tkt-header .right .label{transform:translateY(-2px)}
 
-    .tkt .logo{display:block;margin:0 auto;max-width:95%;height:auto} /* logo molto grande: occupa quasi tutto lo spazio centrale */
+    /* Logo leggermente più grande */
+    .tkt .logo{display:block;margin:0 auto;max-width:97%;height:auto}
 
     .dept-line{margin:6px 8px 2px;font-weight:700;font-size:0.95em}
 
     /* Core valori: compatto e centrato verticalmente */
     .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center;line-height:1.15}
     .vals .line{padding:6px 8px;word-break:break-word}
-    .dept-sep{height:12px}
+    /* Separatore sottile per ogni reparto (più sottile della hr principale) */
+    .dept-sep{border-top:1px solid #cfcfd4;margin:6px 12px;width:calc(100% - 24px);height:0}
 
     .holiday-msg{font-family:'Chewy',cursive;color:var(--main);font-size:22px;margin-top:8px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
@@ -188,7 +196,7 @@
     const today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
     // Giorni settimana senza accenti per compatibilità stampanti
     const giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
-    const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
+    const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
     const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
     const esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
     const hasV=v=>{const t=String(v||'').trim();return t!==''&&t!=='0'&&t!=='-'&&t.toLowerCase()!=='n/d'};
@@ -205,17 +213,17 @@
       ].map(norm),AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
       const HEAD=[norm('1) PANE E PRODOTTI DA FORNO'),norm('2) BANCO GASTRONOMIA'),norm('3) FRUTTA E VERDURA'),norm('4) CARNE'),norm('5) ALTRO')];
-      const out=[]; let seen=false; let lastAviIndex=-1; let avicoloDesc='';
+      const out=[]; let first=false; let lastAviIndex=-1; let avicoloDesc='';
       const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(s=>s.trim()).filter(hasV).forEach(s=>{ out.push(`<div class=\"line\">${esc(s)}</div>`) }) };
 
       for(const [kr,vr] of entries){
         const k=norm(kr);
         const val=(vr==null?'':String(vr)).trim();
 
-        // Header di reparto: non stampo la label, ma stampo il contenuto
+        // Header di reparto: separatore sottile e contenuti
         if(HEAD.includes(k)){
-          if(seen) out.push('<div class="dept-sep"></div>');
-          seen=true;
+          if(first) out.push('<div class="dept-sep"></div>');
+          first=true;
           if(hasV(val)) pushLines(val);
           continue;
         }
@@ -361,7 +369,7 @@
     function renderList(list){
       const s=[...list].sort(sortDesc),el=D.q('#orders-list');
       if(!s.length){el.innerHTML='<div class="card">Nessun ordine</div>';view=[];index=0;renderTicket();return}
-      el.innerHTML=s.map((o,i)=>`<div class="order" data-i="${i}"><span class="badge">${(o.number!=null?o.number:'—')}</span><div><div style="font-weight:800">${esc(o.name)}</div><div class="meta">${fmtIT(o.date)} • ${o.time||''} ${o.printed?'• già stampato':''}</div></div><div class="order-actions"><button class="btn smol primary btn-row-print" type="button">Stampa</button></div></div>`).join('');
+      el.innerHTML=s.map((o,i)=>`<div class=\"order\" data-i=\"${i}\"><span class=\"badge\">${(o.number!=null?o.number:'—')}</span><div><div style=\"font-weight:800\">${esc(o.name)}</div><div class=\"meta\">${fmtIT(o.date)} • ${o.time||''} ${o.printed?'• già stampato':''}</div></div><div class=\"order-actions\"><button class=\"btn smol primary btn-row-print\" type=\"button\">Stampa</button></div></div>`).join('');
       view=s; index=Math.min(index,view.length-1); highlight(); renderTicket();
     }
 
@@ -388,8 +396,8 @@
     function renderOpts(){
       const SIMPLE=[{id:'pane',label:'🥖  PANE'},{id:'banco',label:'🧀  BANCO'},{id:'fruver',label:'🥦  FRUTTA E VERDURA'},{id:'carne',label:'🥩  CARNE'},{id:'altro',label:'📦  ALTRO'}];
       const act=new Set(ACTIVE);
-      optsEl.innerHTML=SIMPLE.map(d=>`<label class="filter-row"><input type="checkbox" data-dep="${d.id}" ${act.has(d.id)?'checked':''}/><span class="label">${d.label}</span></label>`).join('');
-      optsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply() }));
+      optsEl.innerHTML=SIMPLE.map(d=>`<label class=\"filter-row\"><input type=\"checkbox\" data-dep=\"${d.id}\" ${act.has(d.id)?'checked':''}/><span class=\"label\">${d.label}</span></label>`).join('');
+      optsEl.querySelectorAll('input[type=\"checkbox\"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply() }));
       updToggle(); updApply();
     }
     const countSel=()=>{let c=0; optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{if(i.checked) c++}); return c}
