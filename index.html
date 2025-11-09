@@ -46,7 +46,7 @@
 
     /* ===== Icone PNG (avicolo & carrello) ===== */
     .icon-48{ width:48px; height:auto; display:inline-block; vertical-align:middle; }
-    .section-icon{ display:flex; justify-content:center; align-items:center; margin-top:6px; }
+    .section-icon{ display:flex; justify-content:center; align-items:center; gap:8px; margin-top:6px; }
 
     /* ===== RIGHT: Controlli ===== */
     .right{display:flex;flex-direction:column;gap:var(--gap)}
@@ -238,7 +238,7 @@
     }
 
     // Fit text per il nome cliente (una riga, auto-shrink)
-    function fitTextToWidth(el, maxPx=32, minPx=10){
+    function fitTextToWidth(el, maxPx=26, minPx=10){
       if(!el) return;
       const parent = el.parentElement || el;
       el.style.display = 'inline-block';
@@ -278,7 +278,6 @@
         if(ts){ parts.push(`<div class='insert-ts'>${esc(ts)}</div>`); }
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO_URL}' alt='Bottega di Casterno'>`);
         if(row){
-          // Nome (auto-shrink) e info sotto
           const nameLine = row.name ? `<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>` : '';
 
           // Telefono
@@ -291,17 +290,15 @@
           }
           const phoneLine = phone ? `<div class='info-top'><b>${esc(phone)}</b></div>` : '';
 
-          // Carrello + numero ordine (non influisce sul barcode sotto)
+          // Carrello + numero ordine
           const cartLine = (typeof row.number === 'number' && !isNaN(row.number))
-            ? `<div class='info-top'><img class="icon-48" src="carrello.png" alt="Ordine"> <b>#${row.number}</b></div>` : '';
+            ? `<div class='info-top section-icon'><img class="icon-48" src="carrello.png" alt="Ordine"> <b>#${row.number}</b></div>` : '';
 
-          // Ritiro + Ora
           const dateLine = row.date ? `<div class='info-top info-date'><b>Ritiro: ${fmtDateIT(row.date)}</b></div>` : '';
           const timeLine = row.time ? `<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>` : '';
 
           parts.push(nameLine + phoneLine + cartLine + dateLine + timeLine);
 
-          // Contenuti
           const vals = buildValueHTML(row);
           parts.push(`<div class='hr-solid'></div>`);
           parts.push(`<div class='vals'>${vals}</div>`);
@@ -381,7 +378,7 @@
       const pickupToday = ORDERS.filter(o=>o.date===todayStr).length;
       const pickupFuture = ORDERS.filter(o=>o.date>todayStr).length;
       const maxNum = ORDERS.reduce((m,o)=> (typeof o.number==='number' && !isNaN(o.number) ? Math.max(m,o.number) : m), 0);
-      const totalDisplay = Math.max(maxNum, total + 1); // Totale = max(numero massimo, n+1)
+      const totalDisplay = Math.max(maxNum, total + 1);
       $('#fc-total').textContent = totalDisplay;
       $('#fc-today').textContent = insertedToday;
       $('#fc-queue').textContent = queue;
@@ -393,9 +390,9 @@
     function sortLatestFirst(a,b){
       const an = (typeof a.number==="number" && !isNaN(a.number)) ? a.number : null;
       const bn = (typeof b.number==="number" && !isNaN(b.number)) ? b.number : null;
-      if(an!=null && bn!=null && an!==bn) return bn - an; // per numero
-      if(a.date!==b.date) return a.date<b.date?1:-1;       // poi data
-      const ta=(a.time||''), tb=(b.time||'');              // poi ora
+      if(an!=null && bn!=null && an!==bn) return bn - an;
+      if(a.date!==b.date) return a.date<b.date?1:-1;
+      const ta=(a.time||''), tb=(b.time||'');
       return ta<tb?1:(ta>tb?-1:0);
     }
 
@@ -549,7 +546,7 @@
         }
         catch(parseErr){
           try{
-            const start = raw.search(/[\\[{]/);
+            const start = raw.search(/[\[{]/);
             const endB  = raw.lastIndexOf('}');
             const endA  = raw.lastIndexOf(']');
             const end   = Math.max(endB, endA);
@@ -585,9 +582,9 @@
         ORDERS = [];
         recomputeStats();
         const el = $('#orders-list');
-        if(el){ el.innerHTML = `<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
+        if(el){ el.innerHTML = `<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`; }
         const wrap = $('#tkt-body');
-        if(wrap){ wrap.innerHTML = '<div class="tkt info-top"><b>Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>'; }
+        if(wrap){ wrap.innerHTML = '<div class=\"tkt info-top\"><b>Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>'; }
       }
     }
 
