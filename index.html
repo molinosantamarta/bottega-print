@@ -39,15 +39,12 @@
     /* Header con logo centrale e icone laterali */
     .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
     .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px}
-    /* PNG dimensione (ridotte rispetto alla versione grande) */
     .tkt-header .icon{height:46px;width:auto;object-fit:contain}
-    /* Testo sotto alle icone: "SI" più piccolo */
     .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.1em;line-height:1}
-    /* Carrello più in basso, numero più in alto per allineo al "SI" */
     .tkt-header .right .icon{transform:translateY(6px)}
     .tkt-header .right .label{transform:translateY(-4px)}
 
-    /* Logo: grande e coerente in anteprima e stampa (in stampa +10%) */
+    /* Logo */
     .tkt .logo{display:block;margin:0 auto;max-width:97%;height:auto}
 
     .dept-line{margin:6px 8px 2px;font-weight:700;font-size:0.95em}
@@ -131,10 +128,13 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
-      /* Logo in stampa: +10% rispetto anteprima */
+      /* Logo in stampa: +10% */
       .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.1);transform-origin:center}
       /* Nome cliente: riduci ulteriormente in stampa per evitare tagli */
       #tkt-name{font-size:22px !important}
+      /* PNG avicolo/carrello ridotte del 10% in stampa */
+      .tkt-header .icon{transform:scale(0.9)}
+      .tkt-header .right .icon{transform:translateY(6px) scale(0.9)}
       /* Separatori reparto neri anche in stampa */
       .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
@@ -204,7 +204,6 @@
     const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))};
     const pad=n=>String(n).padStart(2,'0');
     const today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
-    // Giorni settimana senza accenti per compatibilità stampanti
     const giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
     const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
     const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
@@ -216,52 +215,60 @@
 
     /* ===================== Ticket: contenuti ===================== */
     function buildValueLines(row){
-      const entries=Object.entries(row.src||{}),DROP=[
+      const entries=Object.entries(row.src||{});
+      const DROP=[
         'ord','numero ordine','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion','stoccaggio','telefono','cellulare','tel','phone','mobile','contatto',
         'reparto','reparti','avicoli','avicolo'
-      ].map(norm),AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
+      ].map(norm);
+      const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
-      const HEAD=[norm('1) PANE E PRODOTTI DA FORNO'),norm('2) BANCO GASTRONOMIA'),norm('3) FRUTTA E VERDURA'),norm('4) CARNE'),norm('5) ALTRO')];
-      const out=[]; let hadAnyDept=false; let pendingSep=false; let lastAviIndex=-1; let avicoloDesc='';
-      const pushSep=()=>{ if(hadAnyDept) out.push('<div class="dept-sep"></div>') };
-      const pushOne=(s)=>{ if(!hasV(s)) return; if(pendingSep){ pushSep(); pendingSep=false; } out.push(`<div class=\"line\">${esc(s)}</div>`); hadAnyDept=true; };
-      const pushLines=(text)=>{ String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV).forEach(pushOne) };
+
+      const HEAD_MAP={
+        [norm('1) PANE E PRODOTTI DA FORNO')]: 'pane',
+        [norm('2) BANCO GASTRONOMIA')]: 'banco',
+        [norm('3) FRUTTA E VERDURA')]: 'fruver',
+        [norm('4) CARNE')]: 'carne',
+        [norm('5) ALTRO')]: 'altro'
+      };
+
+      const groups={pane:[],banco:[],fruver:[],carne:[],altro:[]};
+      let current=null; let avicoloDesc=''; let lastAviIdx=-1;
+
+      const pushLines=(arr,text)=>{ String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV).forEach(s=>arr.push(`<div class=\"line\">${esc(s)}</div>`)) };
 
       for(const [kr,vr] of entries){
-        const k=norm(kr);
-        const val=(vr==null?'':String(vr)).trim();
+        const k=norm(kr); const val=(vr==null?'':String(vr)).trim();
+        if(!hasV(val)) continue;
 
-        // Header reparto: se la cella header contiene contenuto, stampalo (senza titolo) e prepara il separatore per il prossimo reparto
-        if(HEAD.includes(k)){
-          if(hasV(val)){
-            if(hadAnyDept) out.push('<div class="dept-sep"></div>');
-            pushLines(val);
-          }
-          pendingSep=true; // il prossimo contenuto (di un altro reparto) inizierà con separatore
-          continue;
-        }
+        if(HEAD_MAP[k]){ current=HEAD_MAP[k]; pushLines(groups[current], val); continue; }
 
-        // Descrizione/preparazione avicolo
-        if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){ if(hasV(val)) avicoloDesc = val; continue; }
+        if(DROP.some(t=>k.includes(t))) continue;
 
-        // Scarta meta e vuoti
-        if(DROP.some(t=>k.includes(t))) continue; if(!hasV(val)) continue; if(/^\s*\d+\)\s*$/i.test(val)) continue;
+        if(k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))){ avicoloDesc=val; continue; }
 
         if(isAvKey(k)){
-          const lab=AV.find(t=>k.includes(t))||''; pushOne(`${val} ${lab.toUpperCase()}`); lastAviIndex = out.length - 1;
-        } else {
-          pushLines(val);
+          const lab=AV.find(t=>k.includes(t))||''; groups.carne.push(`<div class=\"line\">${esc(val)} ${lab.toUpperCase()}</div>`); lastAviIdx=groups.carne.length-1; continue;
         }
+
+        if(current){ pushLines(groups[current], val); }
+        else { pushLines(groups.altro, val); }
       }
 
       if(hasV(avicoloDesc)){
-        const descHtml = `<div class=\"line\">${esc(avicoloDesc)}</div>`;
-        if(pendingSep&&hadAnyDept){ out.push('<div class="dept-sep"></div>'); pendingSep=false; }
-        if(lastAviIndex>=0) out.splice(lastAviIndex+1,0,descHtml); else { out.push(descHtml); hadAnyDept=true; }
+        const html=`<div class=\"line\">${esc(avicoloDesc)}</div>`;
+        if(lastAviIdx>=0) groups.carne.splice(lastAviIdx+1,0,html); else groups.carne.push(html);
       }
 
-      return out.join('');
+      // Compose with single separators only between non-empty groups, none after last.
+      const order=['pane','banco','fruver','carne','altro'];
+      const pieces=[];
+      for(const id of order){
+        const arr=groups[id]; if(arr.length===0) continue;
+        if(pieces.length>0) pieces.push('<div class="dept-sep"></div>');
+        pieces.push(...arr);
+      }
+      return pieces.join('');
     }
 
     function fitText(el,max=26,min=10){if(!el) return;const p=el.parentElement||el;el.style.display='inline-block';el.style.whiteSpace='nowrap';el.style.maxWidth='100%';el.style.overflow='hidden';let s=max,g=100;el.style.fontSize=s+'px';while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){s-=.5;el.style.fontSize=s+'px'}}
@@ -322,7 +329,9 @@
         `);
 
         const dtxt=deptList(row); if(dtxt) parts.push(`<div class='dept-line'>${esc(dtxt)}</div>`);
-        parts.push(`<div class='hr-solid'></div><div class='vals'>${buildValueLines(row)}</div><div class='hr-solid'></div><div class='holiday-msg'>Grazie e Buone Feste</div>`);
+        const core=buildValueLines(row);
+        if(core){ parts.push(`<div class='hr-solid'></div><div class='vals'>${core}</div><div class='hr-solid'></div>`); }
+        parts.push(`<div class='holiday-msg'>Grazie e Buone Feste</div>`);
         if(typeof row.number==='number'&&!isNaN(row.number)) parts.push(`<div class='barcode'>*${row.number}*</div>`);
       } else {
         parts.push(`<img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>`);
