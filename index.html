@@ -27,14 +27,17 @@
 
     #tkt-body{width:100%;max-height:var(--tmax);background:#fff;color:#000;border:0;border-radius:0;overflow:auto;box-shadow:none}
     .tkt{font:15px/1.45 Verdana, Geneva, sans-serif;text-align:center;padding:10px 0 12px}
-    .tkt .logo{display:block;margin:6px auto 8px;max-width:55%;height:auto} /* +10% */
+    .tkt .logo{display:block;margin:0 auto 6px;max-width:55%;height:auto} /* +10% */
     .tkt .info-top{margin-bottom:6px;font-size:1.1em}
     .tkt .info-name{font-weight:700;margin:6px 8px;white-space:nowrap;overflow:hidden;max-width:calc(100% - 16px)}
     #tkt-name{font-size:24px;line-height:1.15;display:inline-block;max-width:100%;white-space:nowrap}
 
-    .order-status-row{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 10px 2px}
-    .icon-ord{height:40px;width:auto;object-fit:contain}
-    .status-text{font-weight:700}
+    /* Nuovo header a 3 colonne: sinistra avicolo, centro logo, destra carrello */
+    .tkt-header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:6px 10px 8px}
+    .tkt-header .side{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:48px}
+    .tkt-header .icon{height:40px;width:auto;object-fit:contain}
+    .tkt-header .label{font-weight:800;margin-top:4px}
+
     .dept-line{margin:6px 8px 2px;font-weight:700}
 
     /* Core valori: intra-reparto compatto, inter-reparto arioso, centrato verticalmente */
@@ -269,11 +272,12 @@
     function renderTicket(){
       const wrap=D.q('#tkt-body'); if(!wrap) return; const row=view[index]||ORDERS[0]||null;
       const LOGO=(window.BOTTEGA_LOGO_URL||'svg-bottega%20black.png');
+      const AVICOLO_ICON='avicolo.png';
+      const CART_ICON='carrello.png';
       const parts=[]; const ts=pickTS(row); if(ts) parts.push(`<div class='insert-ts'>${esc(ts)}</div>`);
-      parts.push(`<img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>`);
       if(row){
         const ph=pickPhone(row);
-        // Data nel formato richiesto: solo giorno-settimana + data, senza la parola "Ritiro"
+        // blocco info testo sopra
         parts.push(
           `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
           `${ph?`<div class='info-top'>${esc(ph)}</div>`:''}`+
@@ -281,12 +285,32 @@
           `${row.time?`<div class='info-top info-time'><b>Ora: ${esc(row.time)}</b></div>`:''}`
         );
 
+        // Nuovo header: sinistra avicolo (icon sopra, testo sotto), centro logo, destra carrello (icon sopra, numero sotto)
+        const av=avicoloYN(row);
+        const num=(typeof row.number==='number'&&!isNaN(row.number))?row.number:'—';
+        parts.push(`
+          <div class="tkt-header">
+            <div class="side left">
+              <img class="icon" src="${AVICOLO_ICON}" alt="Avicoli" onerror="this.style.display='none'" />
+              <div class="label">${esc(av)}</div>
+            </div>
+            <div class="center">
+              <img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>
+            </div>
+            <div class="side right">
+              <img class="icon" src="${CART_ICON}" alt="Ordine" onerror="this.style.display='none'" />
+              <div class="label">${esc(num)}</div>
+            </div>
+          </div>
+        `);
+
         const dtxt=deptList(row); if(dtxt) parts.push(`<div class='dept-line'>${esc(dtxt)}</div>`);
-        const av=avicoloYN(row); const num=(typeof row.number==='number'&&!isNaN(row.number))?row.number:'—';
-        parts.push(`<div class="order-status-row"><img class="icon-ord" src="avicolo.png" alt="Avicoli" onerror="this.style.display='none'"/><span class="status-text">${esc(av)}</span><img class="icon-ord" src="carrello.png" alt="Ordine" onerror="this.style.display='none'"/><span class="status-text">${esc(num)}</span></div>`);
         parts.push(`<div class='hr-solid'></div><div class='vals'>${buildValueLines(row)}</div><div class='hr-solid'></div><div class='holiday-msg'>Grazie e Buone Feste</div>`);
         if(typeof row.number==='number'&&!isNaN(row.number)) parts.push(`<div class='barcode'>*${row.number}*</div>`);
+      } else {
+        parts.push(`<img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>`);
       }
+
       wrap.innerHTML=`<div class='tkt'>${parts.join('')}</div>`;
       const logoEl=document.getElementById('tkt-logo'); if(logoEl){logoEl.onerror=()=>{const dv=document.createElement('div');dv.className='tkt center h';dv.textContent='Bottega di Casterno';logoEl.replaceWith(dv)}}
       const nameEl=document.getElementById('tkt-name'); if(nameEl) fitText(nameEl);
@@ -486,4 +510,3 @@
   </script>
 </body>
 </html>
- 
