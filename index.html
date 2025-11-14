@@ -65,7 +65,7 @@
     /* RIGHT: Controlli */
     .right{display:flex;flex-direction:column;gap:var(--g)}
     .controls{padding:var(--pad)}
-    .flashcards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+    .flashcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
@@ -161,11 +161,18 @@
     <aside class="panel right">
       <div class="controls">
         <div class="flashcards" id="flashcards">
-          <div class="card" data-filter="all"><div class="k">Totale ordini</div><div id="fc-total" class="v">—</div></div>
-          <div class="card" data-filter="today"><div class="k">Inseriti oggi</div><div id="fc-today" class="v">—</div></div>
-          <div class="card" data-filter="queue"><div class="k">Da stampare</div><div id="fc-queue" class="v">—</div></div>
-          <div class="card" data-filter="pickup_today"><div class="k">Ritirano oggi</div><div id="fc-pickup-today" class="v">—</div></div>
-          <div class="card" data-filter="pickup_future"><div class="k">Ritiri futuri</div><div id="fc-pickup-future" class="v">—</div></div>
+          <div class="card" data-filter="all">
+            <div class="k">Totale ordini</div>
+            <div id="fc-total" class="v">—</div>
+          </div>
+          <div class="card" data-filter="pickup_today">
+            <div class="k">Ritirano oggi</div>
+            <div id="fc-pickup-today" class="v">—</div>
+          </div>
+          <div class="card" data-filter="pickup_future">
+            <div class="k">Ritiri futuri</div>
+            <div id="fc-pickup-future" class="v">—</div>
+          </div>
         </div>
         <div class="searchbar">
           <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
@@ -371,10 +378,19 @@
 
     /* ===================== Stat / Flashcards ===================== */
     function recompute(){
-      const t=ORDERS.length,tdy=today();let ins=0,q=0,pT=0,pF=0,max=0;
-      for(const o of ORDERS){ if(o.date===tdy) ins++; if(!o.printed) q++; if(o.date===tdy) pT++; if(o.date>tdy) pF++; if(typeof o.number==='number'&&!isNaN(o.number)) max=Math.max(max,o.number) }
+      const t=ORDERS.length,tdy=today();let pT=0,pF=0,max=0;
+      for(const o of ORDERS){
+        if(o.date===tdy) pT++;
+        if(o.date>tdy) pF++;
+        if(typeof o.number==='number'&&!isNaN(o.number)) max=Math.max(max,o.number);
+      }
       const total=Math.max(max,t+1);
-      D.q('#fc-total').textContent=total; D.q('#fc-today').textContent=ins; D.q('#fc-queue').textContent=q; D.q('#fc-pickup-today').textContent=pT; D.q('#fc-pickup-future').textContent=pF;
+      const elTotal=D.q('#fc-total');
+      const elPT=D.q('#fc-pickup-today');
+      const elPF=D.q('#fc-pickup-future');
+      if(elTotal) elTotal.textContent=total;
+      if(elPT) elPT.textContent=pT;
+      if(elPF) elPF.textContent=pF;
     }
 
     /* ===================== Lista ordini ===================== */
@@ -399,8 +415,7 @@
     function apply(){
       const q=(D.q('#q').value||'').trim().toLowerCase(),tdy=today();
       let base=[...ORDERS];
-      if(active==='today'||active==='pickup_today') base=base.filter(o=>o.date===tdy);
-      else if(active==='queue') base=base.filter(o=>!o.printed);
+      if(active==='pickup_today') base=base.filter(o=>o.date===tdy);
       else if(active==='pickup_future') base=base.filter(o=>o.date>tdy);
       base=base.filter(matchesActive);
       if(q) base=base.filter(o=>norm(o.name).includes(norm(q)));
@@ -540,6 +555,12 @@
       window.addEventListener('afterprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,26,10)});
       load();
     })();
+
+    // Test cases (manual, per debug):
+    // 1) Nessun ordine dall'API: lista mostra "Nessun ordine", ticket placeholder, flashcard Totale ordini >= 1.
+    // 2) Un ordine con data oggi: "Ritirano oggi" = 1, "Ritiri futuri" = 0, filtro "Ritirano oggi" mostra solo quell'ordine.
+    // 3) Ordini con date future: "Ritiri futuri" conteggia solo date > oggi, filtro corrispondente li mostra tutti.
+    // 4) Filtri reparti: selezionare solo CARNE nel filtro modale deve lasciare visibili solo ordini con voce carne/avicolo.
   </script>
 </body>
 </html>
