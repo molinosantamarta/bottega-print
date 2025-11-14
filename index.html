@@ -43,7 +43,7 @@
     /* Numero ordine e SI devono avere la stessa dimensione */
     .tkt-header .label{font-weight:800;margin-top:4px;font-size:1.25em;line-height:1}
     .tkt-header .right .icon{transform:translateY(6px)}
-    .tkt-header .right .label{transform:translateY(-6px)} /* alzato di più per allineare a "SI" */
+    .tkt-header .right .label{transform:translateY(-6px)}
 
     /* Logo */
     .tkt .logo{display:block;margin:0 auto;max-width:100%;height:auto}
@@ -53,10 +53,8 @@
     /* Core valori: compatto e centrato verticalmente */
     .vals{width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px;text-align:center;line-height:1.15}
     .vals .line{padding:6px 8px;word-break:break-word}
-    /* Separatore per ogni reparto: nero pieno per termica */
     .dept-sep{border-top:1px solid #000;margin:6px 12px;width:calc(100% - 24px);height:0}
 
-    /* Messaggio finale con The Nautigal (più grande e bold) */
     .holiday-msg{font-family:'The Nautigal',cursive;color:var(--main);font-size:40px;font-weight:700;margin-top:12px;letter-spacing:.5px}
     .barcode{font-family:'Libre Barcode 39',cursive;font-size:92px;line-height:1;letter-spacing:1px;margin-top:8px}
     .hr-solid{border-top:2px solid #111;margin:10px 12px}
@@ -74,7 +72,7 @@
     .searchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:24px;align-items:center}
     .input{flex:1;padding:12px 16px;border-radius:999px;border:1px solid #ddd;font-size:16px}
 
-    /* Chip filtro stile Stoccaggio */
+    /* Chip filtro stile Stòc */
     .chipbar{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid rgba(0,0,0,.06);background:#f7f7f8;border-radius:999px;box-sizing:border-box}
     #chipbar-filter{cursor:pointer}
     #chipbar-filter .chip-inner{display:inline-flex;align-items:center;gap:8px;min-height:40px;max-height:40px;border-radius:999px}
@@ -99,6 +97,20 @@
     .btn.icon.smol{width:32px;height:32px;padding:0}
     .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
     .meta{font-size:12px;opacity:.75}
+    /* Bolla stoccaggio stile Stòc */
+    .meta-zone{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:2px 8px;
+      margin-left:6px;
+      border-radius:999px;
+      background:#22c55e;
+      color:#fff;
+      font-size:11px;
+      font-weight:700;
+      white-space:nowrap;
+    }
 
     /* Modale FILTRO (nascosta di default) */
     .modal{position:fixed;inset:0;display:none;z-index:2147483647;pointer-events:none}
@@ -129,16 +141,11 @@
       .panel{border:0;box-shadow:none;border-radius:0}
       #tkt-body{border:0;box-shadow:none;border-radius:0;width:100%;max-height:none}
       .tkt{font:16px/1.4 Verdana, Geneva, sans-serif;text-align:center;padding:0}
-      /* Logo in stampa: +20% e priorità di spazio */
       .tkt .logo{max-width:97% !important;height:auto !important;margin:0 auto !important;transform:scale(1.2);transform-origin:center;z-index:2}
-      /* Nome cliente: riduci ulteriormente in stampa per evitare tagli */
       #tkt-name{font-size:22px !important}
-      /* PNG avicolo/carrello ridotte del 10% in stampa */
       .tkt-header .icon{transform:scale(0.9)}
       .tkt-header .right .icon{transform:translateY(6px) scale(0.9)}
-      /* Numero ordine leggermente più in alto in stampa per allineamento con "SI" */
       .tkt-header .right .label{transform:translateY(-8px)}
-      /* Separatori reparto neri anche in stampa */
       .dept-sep{border-top-color:#000 !important}
       .barcode{font-size:92px}
       .holiday-msg{font-size:40px;font-weight:700;color:var(--main)}
@@ -190,7 +197,7 @@
     </aside>
   </div>
 
-  <!-- MODAL FILTRO (unica modale) -->
+  <!-- MODAL FILTRO -->
   <div id="sso-filter-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop"></div>
     <div class="sheet">
@@ -223,13 +230,14 @@
 
     let ORDERS=[],view=[],index=0,active='all';
 
-    /* ===================== Ticket: contenuti ===================== */
+    /* ===================== Ticket ===================== */
     function buildValueLines(row){
       const entries=Object.entries(row.src||{});
       const DROP=[
         'ord','numero ordine','ora (parsed)','zona (parsed)','nome','nome cliente','cliente','data','giorno','data ordine','ora','orario',
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion','stoccaggio','telefono','cellulare','tel','phone','mobile','contatto',
-        'reparto','reparti','avicolo'].map(norm);
+        'reparto','reparti','avicolo'
+      ].map(norm);
       const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
 
@@ -244,34 +252,40 @@
       const groups={pane:[],banco:[],fruver:[],carne:[],altro:[]};
       let current=null; let avicoloDesc=''; let lastAviIdx=-1;
 
-      const pushLines=(arr,text)=>{ String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV).forEach(s=>arr.push(`<div class=\"line\">${esc(s)}</div>`)) };
+      const pushLines=(arr,text)=>{
+        String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV)
+          .forEach(s=>arr.push(`<div class="line">${esc(s)}</div>`));
+      };
 
       for(const [kr,vr] of entries){
         const k=norm(kr); const val=(vr==null?'':String(vr)).trim();
         if(!hasV(val)) continue;
 
-        // intercetta sempre la descrizione preparazione avicolo, PRIMA dei drop
-        if( (k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))) || k.includes('descrizione preparazione avicolo') ){ avicoloDesc=val; continue; }
+        if( (k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))) || k.includes('descrizione preparazione avicolo') ){
+          avicoloDesc=val; continue;
+        }
 
         if(HEAD_MAP[k]){ current=HEAD_MAP[k]; pushLines(groups[current], val); continue; }
 
         if(DROP.some(t=>k.includes(t))) continue;
 
         if(isAvKey(k)){
-          const lab=AV.find(t=>k.includes(t))||''; groups.carne.push(`<div class=\"line\">${esc(val)} ${lab.toUpperCase()}</div>`); lastAviIdx=groups.carne.length-1; continue;
+          const lab=AV.find(t=>k.includes(t))||'';
+          groups.carne.push(`<div class="line">${esc(val)} ${lab.toUpperCase()}</div>`);
+          lastAviIdx=groups.carne.length-1;
+          continue;
         }
 
         if(current){ pushLines(groups[current], val); }
         else { pushLines(groups.altro, val); }
       }
 
-      // Inserisci descrizione preparazione subito DOPO l'ultimo avicolo (se presente) o alla fine della sezione carne
       if(hasV(avicoloDesc)){
-        const html=`<div class=\"line\">${esc(avicoloDesc)}</div>`;
-        if(lastAviIdx>=0) groups.carne.splice(lastAviIdx+1,0,html); else groups.carne.push(html);
+        const html=`<div class="line">${esc(avicoloDesc)}</div>`;
+        if(lastAviIdx>=0) groups.carne.splice(lastAviIdx+1,0,html);
+        else groups.carne.push(html);
       }
 
-      // Compose con separatori singoli tra gruppi non vuoti, senza coda finale
       const order=['pane','banco','fruver','carne','altro'];
       const pieces=[];
       for(const id of order){
@@ -282,10 +296,39 @@
       return pieces.join('');
     }
 
-    function fitText(el,max=26,min=10){if(!el) return;const p=el.parentElement||el;el.style.display='inline-block';el.style.whiteSpace='nowrap';el.style.maxWidth='100%';el.style.overflow='hidden';let s=max,g=100;el.style.fontSize=s+'px';while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){s-=.5;el.style.fontSize=s+'px'}}
+    function fitText(el,max=26,min=10){
+      if(!el) return;
+      const p=el.parentElement||el;
+      el.style.display='inline-block';
+      el.style.whiteSpace='nowrap';
+      el.style.maxWidth='100%';
+      el.style.overflow='hidden';
+      let s=max,g=100;
+      el.style.fontSize=s+'px';
+      while(g--&&s>min&&el.scrollWidth>p.clientWidth-4){
+        s-=.5;el.style.fontSize=s+'px';
+      }
+    }
 
-    function pickTS(r){if(!r||!r.src) return '';const pref=['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];const ks=Object.keys(r.src);for(const l of pref){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
-    function pickPhone(r){const keys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];const ks=Object.keys(r.src||{});for(const l of keys){const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));if(k&&r.src[k]) return String(r.src[k]).trim()}return ''}
+    function pickTS(r){
+      if(!r||!r.src) return '';
+      const pref=['INSERIMENTO','TIMESTAMP','CREATED','CREATED AT','CREAZIONE','DATA INSERIMENTO','INSERTION'];
+      const ks=Object.keys(r.src);
+      for(const l of pref){
+        const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));
+        if(k&&r.src[k]) return String(r.src[k]).trim();
+      }
+      return '';
+    }
+    function pickPhone(r){
+      const keys=['TELEFONO','CELLULARE','TEL','PHONE','MOBILE','CONTATTO'];
+      const ks=Object.keys(r.src||{});
+      for(const l of keys){
+        const k=ks.find(x=>norm(x)===norm(l)||norm(x).includes(norm(l)));
+        if(k&&r.src[k]) return String(r.src[k]).trim();
+      }
+      return '';
+    }
 
     function deptList(r){
       const map={
@@ -304,14 +347,20 @@
       return out.join(', ');
     }
 
-    const avicoloYN=r=>{for(const k of Object.keys(r.src||{})) if(norm(k).includes('avicol')) return isYes(r.src[k])?'SI':'NO'; return 'NO'}
+    const avicoloYN=r=>{
+      for(const k of Object.keys(r.src||{}))
+        if(norm(k).includes('avicol')) return isYes(r.src[k])?'SI':'NO';
+      return 'NO';
+    };
 
     function renderTicket(){
-      const wrap=D.q('#tkt-body'); if(!wrap) return; const row=view[index]||ORDERS[0]||null;
+      const wrap=D.q('#tkt-body'); if(!wrap) return;
+      const row=view[index]||ORDERS[0]||null;
       const LOGO=(window.BOTTEGA_LOGO_URL||'svg-bottega%20black.png');
       const AVICOLO_ICON='avicolo.png';
       const CART_ICON='carrello.png';
-      const parts=[]; const ts=pickTS(row); if(ts) parts.push(`<div class='insert-ts'>${esc(ts)}</div>`);
+      const parts=[];
+      const ts=pickTS(row); if(ts) parts.push(`<div class="insert-ts">${esc(ts)}</div>`);
       if(row){
         const ph=pickPhone(row);
         parts.push(
@@ -330,7 +379,7 @@
               <div class="label">${esc(av)}</div>
             </div>
             <div class="center">
-              <img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>
+              <img id="tkt-logo" class="logo" src="${LOGO}" alt="Bottega di Casterno">
             </div>
             <div class="side right">
               <img class="icon" src="${CART_ICON}" alt="Ordine" onerror="this.style.display='none'" />
@@ -339,17 +388,27 @@
           </div>
         `);
 
-        const dtxt=deptList(row); if(dtxt) parts.push(`<div class='dept-line'>${esc(dtxt)}</div>`);
+        const dtxt=deptList(row); if(dtxt) parts.push(`<div class="dept-line">${esc(dtxt)}</div>`);
         const core=buildValueLines(row);
-        if(core){ parts.push(`<div class='hr-solid'></div><div class='vals'>${core}</div><div class='hr-solid'></div>`); }
-        parts.push(`<div class='holiday-msg'>Grazie e Buone Feste</div>`);
-        if(typeof row.number==='number'&&!isNaN(row.number)) parts.push(`<div class='barcode'>*${row.number}*</div>`);
+        if(core){
+          parts.push(`<div class="hr-solid"></div><div class="vals">${core}</div><div class="hr-solid"></div>`);
+        }
+        parts.push(`<div class="holiday-msg">Grazie e Buone Feste</div>`);
+        if(typeof row.number==='number'&&!isNaN(row.number)) parts.push(`<div class="barcode">*${row.number}*</div>`);
       } else {
-        parts.push(`<img id='tkt-logo' class='logo' src='${LOGO}' alt='Bottega di Casterno'>`);
+        parts.push(`<img id="tkt-logo" class="logo" src="${LOGO}" alt="Bottega di Casterno">`);
       }
 
-      wrap.innerHTML=`<div class='tkt'>${parts.join('')}</div>`;
-      const logoEl=document.getElementById('tkt-logo'); if(logoEl){logoEl.onerror=()=>{const dv=document.createElement('div');dv.className='tkt center h';dv.textContent = 'La Bottega di Casterno';logoEl.replaceWith(dv)}}
+      wrap.innerHTML=`<div class="tkt">${parts.join('')}</div>`;
+      const logoEl=document.getElementById('tkt-logo');
+      if(logoEl){
+        logoEl.onerror=()=>{
+          const dv=document.createElement('div');
+          dv.className='tkt center h';
+          dv.textContent='La Bottega di Casterno';
+          logoEl.replaceWith(dv);
+        };
+      }
       const nameEl=document.getElementById('tkt-name'); if(nameEl) fitText(nameEl);
     }
 
@@ -362,17 +421,45 @@
       {id:'altro',k:norm('5) ALTRO'), icon:'📦'}
     ];
     const ALL_IDS=DEPTS.map(d=>d.id);
-    let ACTIVE=new Set(JSON.parse(localStorage.getItem('sso_active_depts')||'[]')); if(!ACTIVE.size){ACTIVE=new Set(ALL_IDS);localStorage.setItem('sso_active_depts',JSON.stringify([...ACTIVE]))}
-    const rowHas=(row,id)=>{const d=DEPTS.find(x=>x.id===id);if(!d) return false;let head=false;for(const [k,v] of Object.entries(row.src||{})){const nk=row.__normKeys[k]||norm(k);if(nk===d.k){head=hasV(v);break}} if(id==='carne'){let avi=false;for(const [k,v] of Object.entries(row.src||{})){const nk=row.__normKeys[k]||norm(k);if(nk==='avicolo'||nk.includes('avicol')){avi=isYes(v);break}} return head||avi} return head};
-    const matchesActive=row=>{if(!ACTIVE.size) return false;for(const id of ACTIVE){if(rowHas(row,id)) return true}return false}
+    let ACTIVE=new Set(JSON.parse(localStorage.getItem('sso_active_depts')||'[]'));
+    if(!ACTIVE.size){
+      ACTIVE=new Set(ALL_IDS);
+      localStorage.setItem('sso_active_depts',JSON.stringify([...ACTIVE]));
+    }
+    const rowHas=(row,id)=>{
+      const d=DEPTS.find(x=>x.id===id); if(!d) return false;
+      let head=false;
+      for(const [k,v] of Object.entries(row.src||{})){
+        const nk=row.__normKeys[k]||norm(k);
+        if(nk===d.k){head=hasV(v);break}
+      }
+      if(id==='carne'){
+        let avi=false;
+        for(const [k,v] of Object.entries(row.src||{})){
+          const nk=row.__normKeys[k]||norm(k);
+          if(nk==='avicolo'||nk.includes('avicol')){avi=isYes(v);break}
+        }
+        return head||avi;
+      }
+      return head;
+    };
+    const matchesActive=row=>{
+      if(!ACTIVE.size) return false;
+      for(const id of ACTIVE){ if(rowHas(row,id)) return true; }
+      return false;
+    };
 
     function updateFilterUI(){
-      const badge=D.q('#sso-filter-badge'),chip=D.q('#chipbar-filter'); if(!badge||!chip) return;
-      if(ACTIVE.size===ALL_IDS.length){badge.style.display='none';badge.innerHTML='';chip.classList.remove('active');chip.classList.add('compact')}
-      else{
+      const badge=D.q('#sso-filter-badge'),chip=D.q('#chipbar-filter');
+      if(!badge||!chip) return;
+      if(ACTIVE.size===ALL_IDS.length){
+        badge.style.display='none';badge.innerHTML='';
+        chip.classList.remove('active');chip.classList.add('compact');
+      }else{
         const all=[{id:'pane',icon:'🥖'},{id:'banco',icon:'🧀'},{id:'fruver',icon:'🥦'},{id:'carne',icon:'🥩'},{id:'altro',icon:'📦'}];
-        badge.style.display='inline-flex';badge.innerHTML=all.filter(d=>ACTIVE.has(d.id)).map(d=>d.icon).join(' <span class="sep">+</span> ');
-        chip.classList.remove('compact');chip.classList.add('active')
+        badge.style.display='inline-flex';
+        badge.innerHTML=all.filter(d=>ACTIVE.has(d.id)).map(d=>d.icon).join(' <span class="sep">+</span> ');
+        chip.classList.remove('compact');chip.classList.add('active');
       }
     }
 
@@ -405,13 +492,31 @@
     function highlight(){D.qa('#orders-list .order').forEach((n,i)=>n.classList.toggle('selected',i===index))}
     function renderList(list){
       const s=[...list].sort(sortDesc),el=D.q('#orders-list');
-      if(!s.length){el.innerHTML='<div class="card">Nessun ordine</div>';view=[];index=0;renderTicket();return}
-      el.innerHTML=s.map((o,i)=>`<div class=\"order\" data-i=\"${i}\"><span class=\"badge\">${(o.number!=null?o.number:'—')}</span><div><div style=\"font-weight:800\">${esc(o.name)}</div><div class=\"meta\">${fmtIT(o.date)} • ${o.time||''} ${o.printed?'• già stampato':''}</div></div><div class=\"order-actions\"><button class=\"btn smol primary btn-row-print\" type=\"button\">Stampa</button></div></div>`).join('');
+      if(!s.length){
+        el.innerHTML='<div class="card">Nessun ordine</div>';
+        view=[];index=0;renderTicket();return;
+      }
+      el.innerHTML = s.map((o,i)=>{
+        const timeTxt = o.time ? `, ${esc(o.time)}` : '';
+        const zoneTxt = (o.zone && String(o.zone).trim()!=='')
+          ? `<span class="meta-zone">${esc(o.zone)}</span>`
+          : '';
+        return `<div class="order" data-i="${i}">
+          <span class="badge">${(o.number!=null?o.number:'—')}</span>
+          <div>
+            <div style="font-weight:800">${esc(o.name)}</div>
+            <div class="meta">${esc(fmtIT(o.date))}${timeTxt}${zoneTxt}</div>
+          </div>
+          <div class="order-actions">
+            <button class="btn smol primary btn-row-print" type="button">Stampa</button>
+          </div>
+        </div>`;
+      }).join('');
       view=s; index=Math.min(index,view.length-1); highlight(); renderTicket();
     }
 
     /* ===================== Ricerca/Filtri ===================== */
-    function select(i){if(i<0||i>=view.length) return; index=i; highlight(); renderTicket()}
+    function select(i){if(i<0||i>=view.length) return; index=i; highlight(); renderTicket();}
     function apply(){
       const q=(D.q('#q').value||'').trim().toLowerCase(),tdy=today();
       let base=[...ORDERS];
@@ -421,42 +526,88 @@
       if(q) base=base.filter(o=>norm(o.name).includes(norm(q)));
       renderList(base); select(0);
     }
-    function setFilter(k){active=(k==='all')?'all':(active===k?'all':k); D.qa('#flashcards .card').forEach(c=>c.classList.toggle('active',c.dataset.filter===active)); apply()}
+    function setFilter(k){
+      active=(k==='all')?'all':(active===k?'all':k);
+      D.qa('#flashcards .card').forEach(c=>c.classList.toggle('active',c.dataset.filter===active));
+      apply();
+    }
 
     /* ===================== Modale FILTRO ===================== */
-    const modal=document.getElementById('sso-filter-modal'),optsEl=document.getElementById('sso-filter-options'),
-          applyBtn=document.getElementById('sso-filter-apply'),toggleAllBtn=document.getElementById('sso-filter-toggle-all'),
+    const modal=document.getElementById('sso-filter-modal'),
+          optsEl=document.getElementById('sso-filter-options'),
+          applyBtn=document.getElementById('sso-filter-apply'),
+          toggleAllBtn=document.getElementById('sso-filter-toggle-all'),
           closeBtn=document.getElementById('sso-filter-close');
-    const openModal=()=>{renderOpts(); modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); lock(); D.q('#chipbar-filter').setAttribute('aria-expanded','true')}
-    const closeModal=()=>{modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); unlock(); D.q('#chipbar-filter').setAttribute('aria-expanded','false'); updateFilterUI()}
+    const openModal=()=>{
+      renderOpts(); modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+      lock(); D.q('#chipbar-filter').setAttribute('aria-expanded','true');
+    };
+    const closeModal=()=>{
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+      unlock(); D.q('#chipbar-filter').setAttribute('aria-expanded','false');
+      updateFilterUI();
+    };
     function renderOpts(){
-      const SIMPLE=[{id:'pane',label:'🥖  PANE'},{id:'banco',label:'🧀  BANCO'},{id:'fruver',label:'🥦  FRUTTA E VERDURA'},{id:'carne',label:'🥩  CARNE'},{id:'altro',label:'📦  ALTRO'}];
+      const SIMPLE=[
+        {id:'pane',label:'🥖  PANE'},
+        {id:'banco',label:'🧀  BANCO'},
+        {id:'fruver',label:'🥦  FRUTTA E VERDURA'},
+        {id:'carne',label:'🥩  CARNE'},
+        {id:'altro',label:'📦  ALTRO'}
+      ];
       const act=new Set(ACTIVE);
-      optsEl.innerHTML=SIMPLE.map(d=>`<label class=\"filter-row\"><input type=\"checkbox\" data-dep=\"${d.id}\" ${act.has(d.id)?'checked':''}/><span class=\"label\">${d.label}</span></label>`).join('');
-      optsEl.querySelectorAll('input[type=\"checkbox\"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply() }));
+      optsEl.innerHTML=SIMPLE.map(d=>`<label class="filter-row"><input type="checkbox" data-dep="${d.id}" ${act.has(d.id)?'checked':''}/><span class="label">${d.label}</span></label>`).join('');
+      optsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply(); }));
       updToggle(); updApply();
     }
-    const countSel=()=>{let c=0; optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{if(i.checked) c++}); return c}
-    const setAll=b=>{optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>i.checked=b); updToggle(); updApply()}
-    const updToggle=()=>{const tot=5,sel=countSel(); toggleAllBtn.textContent=(sel===tot)?'Deseleziona tutti':'Seleziona tutti'}
-    const updApply=()=>{applyBtn.disabled=(countSel()===0)}
+    const countSel=()=>{let c=0; optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{if(i.checked) c++}); return c;}
+    const setAll=b=>{optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>i.checked=b); updToggle(); updApply();}
+    const updToggle=()=>{const tot=5,sel=countSel(); toggleAllBtn.textContent=(sel===tot)?'Deseleziona tutti':'Seleziona tutti';}
+    const updApply=()=>{applyBtn.disabled=(countSel()===0);}
 
     /* ===================== Scroll lock per modale ===================== */
-    function lock(){const y=window.scrollY||window.pageYOffset;document.body.dataset.scrollY=y;document.body.style.position='fixed';document.body.style.top=`-${y}px`;document.body.style.left='0';document.body.style.right='0';document.body.style.width='100%'}
-    function unlock(){const y=+(document.body.dataset.scrollY||0);document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.scrollTo(0,y);delete document.body.dataset.scrollY}
+    function lock(){
+      const y=window.scrollY||window.pageYOffset;
+      document.body.dataset.scrollY=y;
+      document.body.style.position='fixed';
+      document.body.style.top=`-${y}px`;
+      document.body.style.left='0';
+      document.body.style.right='0';
+      document.body.style.width='100%';
+    }
+    function unlock(){
+      const y=+(document.body.dataset.scrollY||0);
+      document.body.style.position='';
+      document.body.style.top='';
+      document.body.style.left='';
+      document.body.style.right='';
+      document.body.style.width='';
+      window.scrollTo(0,y);
+      delete document.body.dataset.scrollY;
+    }
 
     /* ===================== Azioni UI / tastiera ===================== */
-    function search(){apply()} function next(){if(index<view.length-1) select(index+1)} function prev(){if(index>0) select(index-1)} function doPrint(){window.print()}
+    function search(){apply();}
+    function next(){if(index<view.length-1) select(index+1);}
+    function prev(){if(index>0) select(index-1);}
+    function doPrint(){window.print();}
 
     if(D.q('#chipbar-filter')) D.q('#chipbar-filter').addEventListener('click',openModal);
     if(closeBtn) closeBtn.addEventListener('click',closeModal);
-    if(modal) modal.addEventListener('click',e=>{if(e.target.classList&&e.target.classList.contains('backdrop')) closeModal()});
+    if(modal) modal.addEventListener('click',e=>{if(e.target.classList&&e.target.classList.contains('backdrop')) closeModal();});
 
     document.addEventListener('keydown',e=>{
       const k=e.key,typing=/input|textarea/i.test(e.target.tagName)||e.target.isContentEditable;
-      if(modal&&modal.classList.contains('open')){ if(k==='Escape'||k==='q'||k==='Q'){e.preventDefault();closeModal()} return }
+      if(modal&&modal.classList.contains('open')){
+        if(k==='Escape'||k==='q'||k==='Q'){e.preventDefault();closeModal();}
+        return;
+      }
       if(typing) return;
-      if(k==='ArrowDown'){e.preventDefault();next()} else if(k==='ArrowUp'){e.preventDefault();prev()} else if(k==='Enter'){e.preventDefault();doPrint()}
+      if(k==='ArrowDown'){e.preventDefault();next();}
+      else if(k==='ArrowUp'){e.preventDefault();prev();}
+      else if(k==='Enter'){e.preventDefault();doPrint();}
     });
 
     /* ===================== API / Mapping ===================== */
@@ -464,47 +615,61 @@
     function parseDate(s){
       if(!s) return null; const str=String(s).trim();
       let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-      if(m){const dd=+m[1],mm=+m[2]-1,yy=+m[3];return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0)}
-      m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+      if(m){
+        const dd=+m[1],mm=+m[2]-1,yy=+m[3];
+        return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0);
+      }
+      m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
       const d=new Date(str); return isNaN(d.getTime())?null:d;
     }
     function pickKey(obj,cands){
       const ks=Object.keys(obj||{});
-      for(const c of cands){const k=ks.find(x=>norm(x)===norm(c)); if(k) return k}
-      for(const c of cands){const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k}
+      for(const c of cands){
+        const k=ks.find(x=>norm(x)===norm(c)); if(k) return k;
+      }
+      for(const c of cands){
+        const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k;
+      }
       return null;
     }
     function rowToOrder(r){
       const nameK=pickKey(r,['NOME CLIENTE','NOME','CLIENTE']),
             dateK=pickKey(r,['DATA ORDINE','DATA','GIORNO']),
             timeK=pickKey(r,['ORA','ORARIO']),
-            ordK =pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']),
-            printedK=pickKey(r,['STAMPATO','STAMPA','PRINTED']);
+            zoneK=pickKey(r,['ZONA STOCCAGGIO','ZONA','STOCCAGGIO','UBICAZIONE']),
+            ordK =pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
       const name=nameK?String(r[nameK]||'').trim():'';
       if(!name) return null;
       const d=dateK?parseDate(r[dateK]):null,
             t=timeK?String(r[timeK]||'').trim():'',
+            zone=zoneK?String(r[zoneK]||'').trim():'',
             num=ordK?Number(r[ordK]):null,
-            pv=printedK?String(r[printedK]||'').trim().toLowerCase():'',
-            printed=(pv==='si'||pv==='sì'||pv==='y'||pv==='yes'||pv==='true'||pv==='1'),
             dateISO=d?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`:today();
       const __normKeys=Object.fromEntries(Object.keys(r).map(k=>[k,norm(k)]));
-      return {id:(num!=null?num:null),number:(num!=null?num:null),name,date:dateISO,time:t,printed,src:r,__normKeys}
+      return {id:(num!=null?num:null),number:(num!=null?num:null),name,date:dateISO,time:t,zone,src:r,__normKeys};
     }
 
     async function load(){
       try{
-        const res=await fetch(API+'?&_ts='+Date.now(),{cache:'no-store',mode:'cors',headers:{Accept:'application/json, text/plain, */*'}});
-        const ct=(res.headers&&res.headers.get('content-type'))||''; const raw=await res.text();
+        const res=await fetch(API+'?&_ts='+Date.now(),{
+          cache:'no-store',
+          mode:'cors',
+          headers:{Accept:'application/json, text/plain, */*'}
+        });
+        const ct=(res.headers&&res.headers.get('content-type'))||'';
+        const raw=await res.text();
         if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,200)}`);
 
         let data;
         try{
           const looksJson=ct.toLowerCase().includes('json')||raw.trim().startsWith('{')||raw.trim().startsWith('[');
-          if(looksJson) data=JSON.parse(raw); else throw new Error('API non JSON ('+ct+')');
+          if(looksJson) data=JSON.parse(raw);
+          else throw new Error('API non JSON ('+ct+')');
         }catch(_){
           const s=raw.search(/[\[{]/),eB=raw.lastIndexOf('}'),eA=raw.lastIndexOf(']'),e=Math.max(eB,eA);
-          if(s!==-1&&e>s) data=JSON.parse(raw.slice(s,e+1)); else throw new Error('Parse JSON fallita');
+          if(s!==-1&&e>s) data=JSON.parse(raw.slice(s,e+1));
+          else throw new Error('Parse JSON fallita');
         }
 
         let rows=[];
@@ -528,39 +693,41 @@
         ORDERS=[];
         recompute();
         const el=D.q('#orders-list');
-        if(el) el.innerHTML=`<div class=\"card\">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`;
+        if(el) el.innerHTML=`<div class="card">Errore caricamento dati API<br><small>${esc(String(e.message||e)).slice(0,180)}</small></div>`;
         const wrap=D.q('#tkt-body');
-        if(wrap) wrap.innerHTML='<div class=\"tkt info-top\"><b>La Bottega di Casterno</b><div style=\"font-weight:400;margin-top:6px\">Nessun dato disponibile</div></div>';
+        if(wrap) wrap.innerHTML='<div class="tkt info-top"><b>La Bottega di Casterno</b><div style="font-weight:400;margin-top:6px">Nessun dato disponibile</div></div>';
       }
     }
 
     /* ===================== Init ===================== */
     (function init(){
       renderTicket();
-      D.q('#flashcards').addEventListener('click',e=>{const card=e.target.closest('.card'); if(card&&card.dataset.filter) setFilter(card.dataset.filter)});
+      D.q('#flashcards').addEventListener('click',e=>{
+        const card=e.target.closest('.card');
+        if(card&&card.dataset.filter) setFilter(card.dataset.filter);
+      });
       D.q('#btn-search').addEventListener('click',search);
-      D.q('#q').addEventListener('keydown',e=>{if(e.key==='Enter') search()});
+      D.q('#q').addEventListener('keydown',e=>{if(e.key==='Enter') search();});
       D.q('#orders-list').addEventListener('click',e=>{
         const row=e.target.closest('.order'); if(!row) return;
-        const i=+row.dataset.i; const isBtn=e.target.closest('.btn-row-print');
-        if(isBtn){select(i);doPrint();e.preventDefault();e.stopPropagation();return}
+        const i=+row.dataset.i;
+        const isBtn=e.target.closest('.btn-row-print');
+        if(isBtn){select(i);doPrint();e.preventDefault();e.stopPropagation();return;}
         select(i);
       });
       D.q('#btn-next').addEventListener('click',prev); // invertiti per UX destra->sinistra
       D.q('#btn-prev').addEventListener('click',next);
       D.q('#btn-print').addEventListener('click',doPrint);
-      window.addEventListener('resize',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n)});
-      // Riduzione extra del nome in stampa reale
-      window.addEventListener('beforeprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,22,9)});
-      window.addEventListener('afterprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,26,10)});
+      window.addEventListener('resize',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n);});
+      window.addEventListener('beforeprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,22,9);});
+      window.addEventListener('afterprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,26,10);});
       load();
     })();
 
-    // Test cases (manual, per debug):
-    // 1) Nessun ordine dall'API: lista mostra "Nessun ordine", ticket placeholder, flashcard Totale ordini >= 1.
-    // 2) Un ordine con data oggi: "Ritirano oggi" = 1, "Ritiri futuri" = 0, filtro "Ritirano oggi" mostra solo quell'ordine.
-    // 3) Ordini con date future: "Ritiri futuri" conteggia solo date > oggi, filtro corrispondente li mostra tutti.
-    // 4) Filtri reparti: selezionare solo CARNE nel filtro modale deve lasciare visibili solo ordini con voce carne/avicolo.
+    // Test manuali:
+    // - Se l’API torna vuoto: mostra messaggio “Nessun ordine”.
+    // - Se esiste colonna ZONA/ZONA STOCCAGGIO: appare la bolla verde accanto alla data.
+    // - Se l’ora è vuota: nessuna virgola, solo data.
   </script>
 </body>
 </html>
