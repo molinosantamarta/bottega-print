@@ -64,7 +64,7 @@
     .right{display:flex;flex-direction:column;gap:var(--g)}
     .controls{padding:var(--pad)}
     .flashcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+    .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
     .card.active{outline:2px solid var(--main)}
@@ -95,19 +95,21 @@
     .order-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
     .btn.smol{height:32px;padding:0 12px;font-size:13px;border-radius:999px}
     .btn.icon.smol{width:32px;height:32px;padding:0}
-    .badge{min-width:42px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
-    .meta{font-size:12px;opacity:.75}
+    .badge{min-width:42px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#ffd60a;color:#000;font-weight:900}
+    .meta{font-size:15px;opacity:1}
+    .dept-icons{display:inline-flex;align-items:center;gap:4px;font-size:16px;margin:0 4px;}
     /* Bolla stoccaggio stile Stòc */
+.order-name{font-weight:900;font-size: 19px;}
     .meta-zone{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      padding:2px 8px;
+      padding:4px 10px;
       margin-left:6px;
       border-radius:999px;
       background:#22c55e;
       color:#fff;
-      font-size:11px;
+      font-size:12px;
       font-weight:700;
       white-space:nowrap;
     }
@@ -150,6 +152,12 @@
       .barcode{font-size:92px}
       .holiday-msg{font-size:40px;font-weight:700;color:var(--main)}
     }
+    .order-main {
+  display: flex;
+  align-items: center;
+  gap: 28px; /* distanza più ampia tra badge, nome, data, icone e pillola */
+  flex-wrap: wrap;
+}
   </style>
 </head>
 <body>
@@ -227,6 +235,27 @@
     const esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
     const hasV=v=>{const t=String(v||'').trim();return t!==''&&t!=='0'&&t!=='-'&&t.toLowerCase()!=='n/d'};
     const isYes=v=>['si','sì','y','yes','true','1'].includes(norm(v));
+    const fmtLong = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso + "T12:00:00");
+
+  const giorniSettimana = [
+    "domenica","lunedì","martedì","mercoledì",
+    "giovedì","venerdì","sabato"
+  ];
+
+  const mesi = [
+    "gennaio","febbraio","marzo","aprile","maggio","giugno",
+    "luglio","agosto","settembre","ottobre","novembre","dicembre"
+  ];
+
+  const g = giorniSettimana[d.getDay()];
+  const giorno = d.getDate();
+  const mese = mesi[d.getMonth()];
+  const anno = d.getFullYear();
+
+  return `${g}, ${giorno} ${mese} ${anno}`;
+};
 
     let ORDERS=[],view=[],index=0,active='all';
 
@@ -346,6 +375,32 @@
       }
       return out.join(', ');
     }
+
+    function deptIcons(row){
+      const src=row.src||{};
+      const nkMap=row.__normKeys||{};
+      const hasHead=(normKey)=>{
+        for(const [k,v] of Object.entries(src)){
+          const nk=nkMap[k]||norm(k);
+          if(nk===normKey && hasV(v)) return true;
+        }
+        return false;
+      };
+      const icons=[];
+      if(hasHead(DEPTS[0].k)) icons.push('🥖');
+      if(hasHead(DEPTS[1].k)) icons.push('🧀');
+      if(hasHead(DEPTS[2].k)) icons.push('🥦');
+      if(hasHead(DEPTS[3].k)) icons.push('🥩');
+      if(hasHead(DEPTS[4].k)) icons.push('📦');
+      let hasAvicolo=false;
+      for(const [k,v] of Object.entries(src)){
+        const nk=nkMap[k]||norm(k);
+        if(nk.includes('avicol') && hasV(v)) {hasAvicolo=true;break;}
+      }
+      if(hasAvicolo) icons.push('🐔');
+      return icons.length ? `<span class=\"dept-icons\">${icons.join(' ')}</span>` : '';
+    }
+    
 
     const avicoloYN=r=>{
       for(const k of Object.keys(r.src||{}))
@@ -491,28 +546,48 @@
     }
     function highlight(){D.qa('#orders-list .order').forEach((n,i)=>n.classList.toggle('selected',i===index))}
     function renderList(list){
-      const s=[...list].sort(sortDesc),el=D.q('#orders-list');
-      if(!s.length){
-        el.innerHTML='<div class="card">Nessun ordine</div>';
-        view=[];index=0;renderTicket();return;
+      const sorted = [...list].sort(sortDesc);
+      const el     = D.q('#orders-list');
+
+      if(!sorted.length){
+        el.innerHTML = '<div class="card">Nessun ordine</div>';
+        view  = [];
+        index = 0;
+        renderTicket();
+        return;
       }
-      el.innerHTML = s.map((o,i)=>{
-        const timeTxt = o.time ? `, ${esc(o.time)}` : '';
-        const zoneTxt = (o.zone && String(o.zone).trim()!=='')
-          ? `<span class="meta-zone">${esc(o.zone)}</span>`
+
+      el.innerHTML = sorted.map((o,i) => {
+        const hasTime   = !!(o.time && String(o.time).trim() !== '');
+        const dateLabel = fmtLong(o.date);
+        const whenText  = dateLabel && dateLabel !== '—'
+          ? `ritira ${esc(dateLabel)}${hasTime ? ` alle ${esc(o.time)}` : ''}`
           : '';
-        return `<div class="order" data-i="${i}">
-          <span class="badge">${(o.number!=null?o.number:'—')}</span>
-          <div>
-            <div style="font-weight:800">${esc(o.name)}</div>
-            <div class="meta">${esc(fmtIT(o.date))}${timeTxt}${zoneTxt}</div>
+        const zoneTxt   = (o.zone && String(o.zone).trim() !== '')
+          ? `<span class="meta-zone">stoccata in: ${esc(o.zone)}</span>`
+          : '';
+        const iconsHTML = deptIcons(o);
+
+        return `
+          <div class="order" data-i="${i}">
+            <span class="badge">${o.number != null ? o.number : '—'}</span>
+            <div class="order-main">
+              <span class="order-name">${esc(o.name)}</span>
+              ${whenText ? `<span class="meta">${whenText}</span>` : ''}
+              ${iconsHTML}
+              ${zoneTxt}
+            </div>
+            <div class="order-actions">
+              <button class="btn smol primary btn-row-print" type="button">Stampa</button>
+            </div>
           </div>
-          <div class="order-actions">
-            <button class="btn smol primary btn-row-print" type="button">Stampa</button>
-          </div>
-        </div>`;
+        `;
       }).join('');
-      view=s; index=Math.min(index,view.length-1); highlight(); renderTicket();
+
+      view  = sorted;
+      index = Math.min(index, view.length - 1);
+      highlight();
+      renderTicket();
     }
 
     /* ===================== Ricerca/Filtri ===================== */
