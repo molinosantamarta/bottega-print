@@ -234,9 +234,27 @@ function drawChart(data) {
    MAIN LOAD + POLLING
 ============================= */
 async function load() {
-  const rows = await fetchData();
-  updateAvicoli(computeTotals(rows));
-  drawChart(extractFuture(rows));
+  try {
+    const rows = await fetchData();
+    updateAvicoli(computeTotals(rows));
+    drawChart(extractFuture(rows));
+  } catch (e) {
+    console.error(e);
+    const c = document.getElementById("chart");
+    const ctx = c.getContext("2d");
+    const w = c.clientWidth, h = c.clientHeight;
+    c.width = w; c.height = h;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = "#ffd60a";
+    ctx.font = "14px Verdana";
+    ctx.textAlign = "center";
+    ctx.fillText("Errore: dati non disponibili", w/2, h/2);
+
+    document.getElementById("oche").textContent = "—";
+    document.getElementById("anatre").textContent = "—";
+    document.getElementById("caponi").textContent = "—";
+    document.getElementById("polli").textContent = "—";
+  }
 }
 
 window.addEventListener("load", load);
