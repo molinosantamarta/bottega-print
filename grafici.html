@@ -263,7 +263,7 @@
 
       ctx.clearRect(0,0,width,height);
 
-      const padding = {top:10,right:10,bottom:26,left:32};
+      const padding = {top:8,right:10,bottom:20,left:12};
       const w = Math.max(10,width  - padding.left - padding.right);
       const h = Math.max(10,height - padding.top  - padding.bottom);
 
@@ -274,7 +274,7 @@
       if(!data.length) return;
 
       const maxCount = Math.max(1,...data.map(d=>d.count));
-      const steps = Math.min(maxCount,4);
+      const steps = 4;
 
       // griglia orizzontale
       ctx.strokeStyle='rgba(255,255,255,0.14)';
@@ -286,17 +286,6 @@
         ctx.lineTo(padding.left + w, y+0.5);
       }
       ctx.stroke();
-
-      // label Y
-      ctx.fillStyle='rgba(255,255,255,0.75)';
-      ctx.font='10px Verdana, sans-serif';
-      ctx.textAlign='right';
-      ctx.textBaseline='middle';
-      for(let i=0;i<=steps;i++){
-        const value=Math.round(maxCount*i/steps);
-        const y=padding.top + h - (h*i/steps);
-        ctx.fillText(String(value), padding.left - 5, y);
-      }
 
       const n=data.length;
       const gap=4;
@@ -323,6 +312,13 @@
         ctx.lineTo(x, y+barH);
         ctx.closePath();
         ctx.fill();
+
+        // valore numerico sulla barra
+        ctx.fillStyle='rgba(0,0,0,0.85)';
+        ctx.font='9px Verdana, sans-serif';
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        ctx.fillText(String(d.count), x + barWidth/2, y - 2);
       });
 
       // label X (gg/mm)
