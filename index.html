@@ -431,29 +431,39 @@
     }
 
     function deptIcons(row){
-      const src=row.src||{};
-      const nkMap=row.__normKeys||{};
-      const hasHead=(normKey)=>{
-        for(const [k,v] of Object.entries(src)){
-          const nk=nkMap[k]||norm(k);
-          if(nk===normKey && hasV(v)) return true;
-        }
-        return false;
-      };
-      const icons=[];
-      if(hasHead(DEPTS[0].k)) icons.push('🥖');
-      if(hasHead(DEPTS[1].k)) icons.push('🧀');
-      if(hasHead(DEPTS[2].k)) icons.push('🥦');
-      if(hasHead(DEPTS[3].k)) icons.push('🥩');
-      if(hasHead(DEPTS[4].k)) icons.push('📦');
-      let hasAvicolo=false;
-      for(const [k,v] of Object.entries(src)){
-        const nk=nkMap[k]||norm(k);
-        if(nk.includes('avicol') && hasV(v)) {hasAvicolo=true;break;}
-      }
-      if(hasAvicolo) icons.push('🐔');
-      return icons.length ? `<span class=\"dept-icons\">${icons.join(' ')}</span>` : '';
+  const src = row.src || {};
+  const nkMap = row.__normKeys || {};
+
+  const hasHead = (normKey) => {
+    for (const [k, v] of Object.entries(src)) {
+      const nk = nkMap[k] || norm(k);
+      if (nk === normKey && hasV(v)) return true;
     }
+    return false;
+  };
+
+  const icons = [];
+  if (hasHead(DEPTS[0].k)) icons.push('🥖');
+  if (hasHead(DEPTS[1].k)) icons.push('🧀');
+  if (hasHead(DEPTS[2].k)) icons.push('🥦');
+  if (hasHead(DEPTS[3].k)) icons.push('🥩');
+  if (hasHead(DEPTS[4].k)) icons.push('📦');
+
+  // 🐔 Solo se il campo avicoli è "SI"
+  let hasAvicolo = false;
+  for (const [k, v] of Object.entries(src)) {
+    const nk = nkMap[k] || norm(k);
+    if (nk.includes('avicol') && isYes(v)) {
+      hasAvicolo = true;
+      break;
+    }
+  }
+  if (hasAvicolo) icons.push('🐔');
+
+  return icons.length
+    ? `<span class="dept-icons">${icons.join(' ')}</span>`
+    : '';
+}
     
 
     const avicoloYN=r=>{
