@@ -580,25 +580,27 @@
     {id:'altro',  icon:'📦'}
   ];
 
-  // Quando TUTTI i reparti sono selezionati:
-  // - il chip ha lo stesso aspetto “attivo”
-  // - il badge mostra il testo fisso
+  // ➤ Caso: TUTTI i reparti sono selezionati → filtro NON attivo
   if (ACTIVE.size === ALL_IDS.length) {
-    chip.classList.add('active');
-    chip.classList.remove('compact');
-    badge.style.display = 'inline-flex';
-    badge.innerHTML = 'FILTRO TUTTI I REPARTI';
-  } else {
-    // Quando si sta filtrando davvero: icone dei reparti selezionati
-    badge.style.display = 'inline-flex';
-    badge.innerHTML = all
-      .filter(d => ACTIVE.has(d.id))
-      .map(d => d.icon)
-      .join(' <span class="sep">+</span> ');
+    chip.classList.add('compact');
+    chip.classList.remove('active');
 
-    chip.classList.add('active');
-    chip.classList.remove('compact');
+    // Nessun badge, nessun testo
+    badge.style.display = 'none';
+    badge.innerHTML = '';
+    return;
   }
+
+  // ➤ Caso: filtro attivo (almeno un reparto deselezionato)
+  chip.classList.remove('compact');
+  chip.classList.add('active');
+
+  // Badge visibile con le icone dei reparti selezionati
+  badge.style.display = 'inline-flex';
+  badge.innerHTML = all
+    .filter(d => ACTIVE.has(d.id))
+    .map(d => d.icon)
+    .join(' <span class="sep">+</span> ');
 }
 
     /* ===================== Stat / Flashcards ===================== */
