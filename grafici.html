@@ -63,27 +63,17 @@
       display:flex;
       flex-direction:column;
       justify-content:flex-start;
-      gap:6px;
-      padding:8px 10px;
-      border-radius:16px;
-      background:rgba(0,0,0,0.7);
-      border:1px solid rgba(255,255,255,0.06);
+      gap:4px;
+      padding:6px 8px;
+      border-radius:12px;
+      background:rgba(0,0,0,0.25);
+      border:1px solid rgba(255,255,255,0.04);
       color:rgba(245,245,247,0.95);
       font-size:11px;
-      line-height:1.3;
-      backdrop-filter:blur(8px);
-      -webkit-backdrop-filter:blur(8px);
-      box-shadow:0 10px 24px rgba(0,0,0,0.4);
+      line-height:1.25;
     }
 
-    .avicoli-title{
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      font-weight:600;
-      font-size:10px;
-      opacity:.8;
-      margin-bottom:2px;
-    }
+    
 
     .avicoli-row{
       display:flex;
@@ -130,23 +120,7 @@
       height:100%;
     }
 
-    .avicoli-bar{
-      position:absolute;
-      top:6px;
-      right:8px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      padding:2px 8px;
-      border-radius:999px;
-      background:rgba(0,0,0,0.55);
-      color:rgba(245,245,247,0.9);
-      font-size:10px;
-      line-height:1.2;
-      backdrop-filter:blur(6px);
-      -webkit-backdrop-filter:blur(6px);
-      pointer-events:none;
-    }
+    
     .avicoli-bar strong{
       color:#ffd60a;
       font-weight:700;
@@ -294,7 +268,7 @@
       const h = Math.max(10,height - padding.top  - padding.bottom);
 
       // background del grafico (glass dark)
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillStyle = 'transparent';
       ctx.fillRect(padding.left,padding.top,w,h);
 
       if(!data.length) return;
