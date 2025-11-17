@@ -3,264 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Grafici — Molino</title>
+  <title>LED Scroll</title>
+
   <style>
-    :root {
-      --accent: #ffd60a;
-      --bg: #050708;
-      --fg: #f5f5f7;
+    body{
+      margin:0;
+      width:100%;
+      height:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#000;
+      font-family:'Courier New', monospace;
+      overflow:hidden;
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--bg);
-      font-family: Verdana, sans-serif;
-      color: var(--fg);
-      overflow: hidden;
+    .led-container{
+      width:100%;
+      height:100%;
+      background:#050505;
+      border:2px solid #220000;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      padding-left:15px;
+      box-shadow:
+        0 0 18px #190000 inset,
+        0 0 25px #300000;
     }
 
-    .wrap {
-      display: flex;
-      gap: 10px;
-      padding: 6px;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      align-items: center;
+    .led-text{
+      white-space:nowrap;
+      font-size:70px;
+      color:#ff2a00;
+      letter-spacing:0.05em;
+      text-transform:uppercase;
+      text-shadow:
+        0 0 4px #ff2a00,
+        0 0 8px #ff2a00,
+        0 0 14px #ff3a00;
+      animation:scroll 14s linear infinite;
+      image-rendering:pixelated;
     }
 
-    /* Grafico */
-    .chart-container {
-      flex: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 0;
-    }
-
-    canvas {
-      width: 100%;
-      height: 100%;
-      border-radius: 10px;
-    }
-
-    /* Avicoli */
-    .avicoli {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 2px;
-      font-size: 11px;
-      line-height: 1.1;
-      min-width: 0;
-    }
-
-    .row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2px;
-      padding: 0;
-      margin: 0;
-    }
-
-    .row strong {
-      color: var(--accent);
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    /* Dot davanti a ogni avicolo */
-    .row span::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: inline-block;
-      margin-right: 4px;
-    }
-
-    /* Indicatore live */
-    .live-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: blink 1.4s infinite ease-in-out;
-      margin-bottom: 6px;
-      align-self: flex-start;
-    }
-
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: .2; }
-      100% { opacity: 1; }
+    @keyframes scroll{
+      0%   { transform:translateX(100%); }
+      100% { transform:translateX(-130%); }
     }
   </style>
 </head>
+
 <body>
-
-<div class="wrap">
-  <div class="chart-container">
-    <canvas id="chart"></canvas>
+  <div class="led-container">
+    <div class="led-text" id="led">...</div>
   </div>
 
-  <div class="avicoli">
-    <div class="live-indicator"></div>
-    <div class="row"><span>Oche</span><strong id="oche">0</strong></div>
-    <div class="row"><span>Anatre</span><strong id="anatre">0</strong></div>
-    <div class="row"><span>Caponi</span><strong id="caponi">0</strong></div>
-    <div class="row"><span>Polli</span><strong id="polli">0</strong></div>
-  </div>
-</div>
-
-<script>
-/* =============================
-   CONFIG & UTILITIES
-============================= */
-const API = "https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec";
-const TYPES = ["oche", "anatre", "caponi", "polli"];   
-
-function norm(s) {
-  return String(s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-}
-
-function cleanNum(v) {
-  return parseFloat(String(v).replace(",", ".")) || 0;
-}
-
-/* =============================
-   FETCH + PARSE ROBUSTO
-============================= */
-async function fetchData() {
-  try {
-    const res = await fetch(API, { cache: "no-store" });
-    const txt = await res.text();
-
-    // Estrarre solo la parte JSON valida
-    const json = JSON.parse(txt.match(/[\[{].*[\]}]/s)[0]);
-
-    return json.rows || json.data || json;
-  } catch (e) {
-    console.warn("API non raggiungibile, fallback DEMO", e);
-    return [
-      { "DATA RITIRO": "2025-11-20", oche: 1, anatre: 0, caponi: 5, polli: 2 },
-      { "DATA RITIRO": "2025-11-21", oche: 0, anatre: 1, caponi: 0, polli: 1 },
-      { "DATA RITIRO": "2025-11-22", oche: 2, anatre: 0, caponi: 0, polli: 3 }
+  <script>
+    const phrases = [
+      "Veronica non è scema: è limited edition. E pure difettata di fabbrica.",
+      "Veronica ha un talento: riesce a sbagliare anche quando non c’è niente da sbagliare.",
+      "Veronica non fa figuracce: le colleziona.",
+      "Veronica non capisce le cose al volo… le capisce in volo, ma dopo che sono già atterrate.",
+      "Veronica ha una mente brillante. La luminosità è solo su 'minimo'.",
+      "Veronica non commette errori: li produce in serie."
     ];
-  }
-}
 
-/* =============================
-   AVICOLI TOTALS
-============================= */
-function computeTotals(rows) {
-  const totals = { oche: 0, anatre: 0, caponi: 0, polli: 0 };
-  rows.forEach(r => {
-    TYPES.forEach(tp => totals[tp] += cleanNum(r[tp]));
-  });
-  return totals;
-}
+    let index = 0;
+    const led = document.getElementById("led");
 
-function updateAvicoli(t) {
-  document.getElementById("oche").textContent = Math.ceil(t.oche);
-  document.getElementById("anatre").textContent = Math.ceil(t.anatre);
-  document.getElementById("caponi").textContent = Math.ceil(t.caponi);
-  document.getElementById("polli").textContent = Math.ceil(t.polli);
-}
+    function updateText(){
+      led.textContent = phrases[index];
 
-/* =============================
-   FUTURE ORDERS BY DATE
-============================= */
-function extractFuture(rows) {
-  const output = {};
-  const today = new Date(); today.setHours(0,0,0,0);
+      // restart scrolling animation
+      led.style.animation = 'none';
+      void led.offsetWidth;
+      led.style.animation = '';
 
-  rows.forEach(r => {
-    const iso = String(r["DATA RITIRO"] || "");
-    const dt = new Date(iso);
-    if (!iso || isNaN(dt)) return;
-    if (dt >= today) output[iso] = (output[iso] || 0) + 1;
-  });
+      index = (index + 1) % phrases.length;
+    }
 
-  return Object.entries(output).map(([date, count]) => ({ date, count }));
-}
-
-/* =============================
-   DRAW CHART CANVAS
-============================= */
-function drawChart(data) {
-  const c = document.getElementById("chart");
-  const ctx = c.getContext("2d");
-  const w = c.clientWidth, h = c.clientHeight;
-  c.width = w; c.height = h;
-
-  ctx.clearRect(0,0,w,h);
-  if (!data.length) return;
-
-  const pad = 16;
-  const W = w - pad * 2;
-  const H = h - pad * 2;
-  const max = Math.max(...data.map(d => d.count));
-  const step = W / data.length;
-  const barW = step * 0.55;
-
-  ctx.font = "10px Verdana";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
-
-  data.forEach((d,i) => {
-    const x = pad + i * step + (step - barW) / 2;
-    const barH = H * (d.count / max);
-    const y = h - pad - barH;
-
-    ctx.fillStyle = "#ffd60a";
-    ctx.fillRect(x, y, barW, barH);
-
-    ctx.fillStyle = "#000";
-    ctx.fillText(d.count, x + barW/2, y - 2);
-
-    ctx.fillStyle = "#ccc";
-    ctx.fillText(d.date.slice(5), x + barW/2, h - pad + 12);
-  });
-}
-
-/* =============================
-   MAIN LOAD + POLLING
-============================= */
-async function load() {
-  try {
-    const rows = await fetchData();
-    updateAvicoli(computeTotals(rows));
-    drawChart(extractFuture(rows));
-  } catch (e) {
-    console.error(e);
-    const c = document.getElementById("chart");
-    const ctx = c.getContext("2d");
-    const w = c.clientWidth, h = c.clientHeight;
-    c.width = w; c.height = h;
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = "#ffd60a";
-    ctx.font = "14px Verdana";
-    ctx.textAlign = "center";
-    ctx.fillText("Errore: dati non disponibili", w/2, h/2);
-
-    document.getElementById("oche").textContent = "—";
-    document.getElementById("anatre").textContent = "—";
-    document.getElementById("caponi").textContent = "—";
-    document.getElementById("polli").textContent = "—";
-  }
-}
-
-window.addEventListener("load", load);
-window.addEventListener("resize", load);
-setInterval(load, 15 * 60 * 1000);
-</script>
-
+    updateText();
+    setInterval(updateText, 14000);
+  </script>
 </body>
 </html>
