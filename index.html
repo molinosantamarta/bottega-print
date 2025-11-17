@@ -83,9 +83,21 @@
     .flashcard-extra{
       flex:1;
       display:flex;
-      align-items:center;
+      align-items:stretch;
       justify-content:center;
-      /* aspetto identico a una card ma senza contenuto obbligatorio */
+      cursor:default;          /* niente mano */
+      padding:0;               /* lascia tutto spazio all'iframe */
+      overflow:hidden;
+      position:relative;
+    }
+
+    .flashcard-extra iframe{
+      width:100%;
+      height:100%;
+      border:0;
+      display:block;
+      pointer-events:none;     /* non cliccabile / non scrollabile */
+      transform-origin:top left;
     }
 
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
@@ -203,7 +215,7 @@
     <!-- RIGHT: Controlli (82%) -->
     <aside class="panel right">
       <div class="controls">
-        <!-- NUOVA RIGA: 3 flashcard + contenitore vuoto -->
+        <!-- 3 flashcard + contenitore grafici -->
         <div class="flash-row">
           <div class="flashcards" id="flashcards">
             <div class="card" data-filter="all">
@@ -220,9 +232,9 @@
             </div>
           </div>
 
-          <!-- Contenitore vuoto stile flashcard -->
+          <!-- Contenitore grafici: iframe non cliccabile -->
           <div class="card flashcard-extra" id="flashcard-extra">
-            <!-- Vuota per ora, solo aspetto grafico -->
+            <iframe src="grafici.html" title="Grafici ordini" loading="lazy"></iframe>
           </div>
         </div>
 
@@ -459,7 +471,7 @@
           `${row.name?`<div class='info-name'><span id='tkt-name'>${esc(row.name)}</span></div>`:''}`+
           `${ph?`<div class='info-top info-phone'>${esc(ph)}</div>`:''}`+
           `${row.date?`<div class='info-top info-date'><b>${fmtIT(row.date)}</b></div>`:''}`+
-          `${row.time?`<div class='info-top info-time'><b>Ore: ${esc(row.time)}</b></div>`:''}`
+          `${row.time?`<div class='info-top info-time'><b>Ore ${esc(row.time)}</b></div>`:''}`
         );
 
         const av=avicoloYN(row);
@@ -835,11 +847,6 @@
       window.addEventListener('afterprint',()=>{const n=document.getElementById('tkt-name'); if(n) fitText(n,26,10);});
       load();
     })();
-
-    // Test manuali:
-    // - Se l’API torna vuoto: mostra messaggio “Nessun ordine”.
-    // - Se esiste colonna ZONA/ZONA STOCCAGGIO: appare la bolla verde accanto alla data.
-    // - Se l’ora è vuota: nessuna virgola, solo data.
   </script>
 </body>
 </html>
