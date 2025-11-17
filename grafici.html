@@ -1,320 +1,233 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grafico ordini futuri</title>
+  <style>
+    :root{
+      --main:#770505;
+      --accent:#ffd60a;
+      --bg-deep:#0a0a0a;
+    }
 
-<!-- Chart ordini futuri: versione full-bleed per iframe, senza bordi propri -->
+    html,body{
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      font-family:Verdana, Geneva, sans-serif;
+      background:#0a0a0a;
+      color:#f5f5f7;
+    }
+    }
 
-<style>
-  :root{
-    --main:#770505;
-    --accent:#ffd60a;
-    --bg-deep:#050708;
-  }
+    .chart-root{
+      position:relative;
+      width:100%;
+      height:100%;
+      box-sizing:border-box;
+      padding:4px 0; /* un filo di respiro verticale */
+    }
 
-  html,body{
-    margin:0;
-    padding:0;
-    height:100%;
-    width:100%;
-    background:radial-gradient(circle at 0% 0%, #3b1a1a 0, #050708 45%, #000 100%);
-    font-family:Verdana, Geneva, sans-serif;
-    color:#f5f5f7;
-    overflow:hidden;
-  }
+    /* rimosso background glow per design minimal */
+      z-index:0;
+    }
 
-  .insight-root{
-    box-sizing:border-box;
-    height:100%;
-    width:100%;
-    padding:6px 8px;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-    position:relative;
-  }
+    @keyframes bgGlow{
+      0%{transform:translate3d(-4px,-3px,0) scale(1);opacity:.75}
+      50%{transform:translate3d(4px,4px,0) scale(1.03);opacity:1}
+      100%{transform:translate3d(2px,-4px,0) scale(1.01);opacity:.85}
+    }
 
-  /* Glow morbido di sfondo, a livello pagina (niente bordi) */
-  .insight-root::before{
-    content:"";
-    position:absolute;
-    inset:-40%;
-    background:
-      radial-gradient(circle at 8% 0%,rgba(255,214,10,.18) 0,transparent 55%),
-      radial-gradient(circle at 90% 110%,rgba(119,5,5,.32) 0,transparent 60%);
-    opacity:.9;
-    filter:blur(24px);
-    mix-blend-mode:screen;
-    animation:insightGlow 20s ease-in-out infinite alternate;
-    z-index:0;
-    pointer-events:none;
-  }
+    canvas{
+      position:relative;
+      z-index:1;
+      display:block;
+      width:100%;
+      height:100%;
+    }
 
-  @keyframes insightGlow{
-    0%{transform:translate3d(-4px,-3px,0) scale(1);opacity:.8}
-    50%{transform:translate3d(3px,3px,0) scale(1.03);opacity:1}
-    100%{transform:translate3d(1px,-4px,0) scale(1.01);opacity:.9}
-  }
-
-  .insight-inner{
-    position:relative;
-    z-index:1;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-    height:100%;
-    width:100%;
-  }
-
-  .insight-header{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-    min-height:20px;
-  }
-
-  .insight-header .pill{
-    padding:2px 8px;
-    border-radius:999px;
-    font-size:9px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    background:rgba(0,0,0,.55);
-    color:var(--accent);
-    border:1px solid rgba(255,214,10,.55);
-    box-shadow:0 0 0 1px rgba(0,0,0,.55);
-    white-space:nowrap;
-  }
-
-  .title-wrap{
-    display:flex;
-    flex-direction:column;
-    gap:1px;
-  }
-
-  .title{
-    font-size:12px;
-    font-weight:800;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-  }
-
-  .subtitle{
-    font-size:9px;
-    opacity:.8;
-  }
-
-  .chart-wrap{
-    flex:1;
-    width:100%;
-    height:100%;
-    margin:0;
-    background:radial-gradient(circle at 0% 0%,rgba(255,255,255,.04) 0,rgba(0,0,0,.9) 55%);
-    overflow:hidden;
-    display:flex;
-  }
-
-  /* canvas fluido, senza contenitori aggiuntivi */
-  #orders-chart{
-    width:100%;
-    height:100%;
-    display:block;
-  }
-
-  @media (max-width:480px){
-    .insight-root{padding:4px 4px;}
-    .title{font-size:11px;}
-    .subtitle{font-size:8px;}
-  }
-</style>
-
-<div class="insight-root">
-  <div class="insight-inner">
-    <div class="insight-header">
-      <div class="pill">INSIGHT</div>
-      <div class="title-wrap">
-        <div class="title">Ordini futuri per giorno</div>
-        <div class="subtitle" id="insight-sub">prossimi 10 giorni • dati demo</div>
-      </div>
-    </div>
-    <div class="chart-wrap">
-      <canvas id="orders-chart"></canvas>
-    </div>
+    @media (max-width:480px){
+      .chart-root{padding:2px 0;}
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-root">
+    <canvas id="orders-chart"></canvas>
   </div>
-</div>
 
-<script>
-// ===== Util =====
-function todayISO(){
-  const d=new Date();
-  const pad=n=>String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-// Demo: 10 giorni futuri rispetto a una data fittizia
-const demoOrdersByDay=[
-  {date:'2025-11-20',count:6},
-  {date:'2025-11-21',count:11},
-  {date:'2025-11-22',count:4},
-  {date:'2025-11-23',count:9},
-  {date:'2025-11-24',count:7},
-  {date:'2025-11-25',count:14},
-  {date:'2025-11-26',count:12},
-  {date:'2025-11-27',count:5},
-  {date:'2025-11-28',count:10},
-  {date:'2025-11-29',count:8}
-];
-
-let ordersChartData=demoOrdersByDay.slice();
-
-function getChartCanvasAndCtx(){
-  const canvas=document.getElementById('orders-chart');
-  if(!canvas) return{};
-  const ctx=canvas.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  let rect=canvas.getBoundingClientRect();
-
-  // fallback se il layout non è ancora misurabile
-  if(!rect.width||!rect.height){
-    const parent=canvas.parentElement;
-    const baseW=(parent&&parent.clientWidth)||320;
-    const baseH=(parent&&parent.clientHeight)||Math.round(baseW/3);
-    rect={width:baseW,height:baseH};
-  }
-
-  canvas.width=rect.width*dpr;
-  canvas.height=rect.height*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  return{canvas,ctx,width:rect.width,height:rect.height};
-}
-
-function drawOrdersChart(data){
-  const {ctx,width,height}=getChartCanvasAndCtx();
-  if(!ctx||!width||!height) return;
-
-  ctx.clearRect(0,0,width,height);
-
-  const padding={top:10,right:12,bottom:22,left:30};
-  const w=Math.max(10,width-padding.left-padding.right);
-  const h=Math.max(10,height-padding.top-padding.bottom);
-
-  // background "liquid" dentro l'area del grafico
-  const bgGrad=ctx.createLinearGradient(padding.left, padding.top, padding.left, padding.top+h);
-  bgGrad.addColorStop(0,'rgba(255,255,255,0.05)');
-  bgGrad.addColorStop(1,'rgba(0,0,0,0.7)');
-  ctx.fillStyle=bgGrad;
-  ctx.fillRect(padding.left,padding.top,w,h);
-
-  const maxCount=Math.max(1,...data.map(d=>d.count));
-  const steps=Math.min(maxCount,4);
-
-  // grid linee sottili
-  ctx.strokeStyle='rgba(255,255,255,0.12)';
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  for(let i=0;i<=steps;i++){
-    const y=padding.top+h-(h*i/steps);
-    ctx.moveTo(padding.left,y+0.5);
-    ctx.lineTo(padding.left+w,y+0.5);
-  }
-  ctx.stroke();
-
-  // Y labels
-  ctx.fillStyle='rgba(255,255,255,0.65)';
-  ctx.font='10px Verdana, sans-serif';
-  ctx.textAlign='right';
-  ctx.textBaseline='middle';
-  for(let i=0;i<=steps;i++){
-    const value=Math.round(maxCount*i/steps);
-    const y=padding.top+h-(h*i/steps);
-    ctx.fillText(String(value),padding.left-5,y);
-  }
-
-  const n=data.length;
-  if(!n) return;
-
-  const barGap=6;
-  const barWidth=Math.max(4,(w-barGap*(n+1))/n);
-
-  data.forEach((d,i)=>{
-    const x=padding.left+barGap+i*(barWidth+barGap);
-    const barH=d.count/maxCount*h;
-    const y=padding.top+h-barH;
-
-    const grad=ctx.createLinearGradient(0,y,0,y+barH);
-    grad.addColorStop(0,'#ffd60a');
-    grad.addColorStop(0.5,'#ffb347');
-    grad.addColorStop(1,'#770505');
-
-    ctx.fillStyle=grad;
-    ctx.beginPath();
-    const r=4;
-    ctx.moveTo(x,y+r);
-    ctx.arcTo(x,y,x+barWidth,y,r);
-    ctx.arcTo(x+barWidth,y,x+barWidth,y+barH,r);
-    ctx.lineTo(x+barWidth,y+barH);
-    ctx.lineTo(x,y+barH);
-    ctx.closePath();
-    ctx.fill();
-  });
-
-  // X labels gg/mm
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  ctx.font='9px Verdana, sans-serif';
-  ctx.textAlign='center';
-  ctx.textBaseline='top';
-
-  data.forEach((d,i)=>{
-    const xCenter=padding.left+barGap+i*(barWidth+barGap)+barWidth/2;
-    const [yyyy,mm,dd]=d.date.split('-');
-    const label=`${dd}/${mm}`;
-    ctx.fillText(label,xCenter,padding.top+h+4);
-  });
-}
-
-// Solo ordini futuri rispetto ad oggi
-function updateOrdersChart(orders){
-  const today=todayISO();
-  const map=new Map();
-  for(const o of orders||[]){
-    if(!o.date) continue;
-    if(o.date>today){
-      map.set(o.date,(map.get(o.date)||0)+1);
+  <script>
+    // ===== Utilità di base =====
+    function todayISO(){
+      const d=new Date();
+      const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     }
-  }
-  const rows=Array.from(map.entries())
-    .map(([date,count])=>({date,count}))
-    .sort((a,b)=>a.date.localeCompare(b.date))
-    .slice(-10);
 
-  ordersChartData=rows.length?rows:demoOrdersByDay.slice();
+    // Demo: verrà sovrascritto quando la pagina padre chiamerà updateOrdersChart(ORDERS)
+    let chartData = [
+      {date:'2025-11-20',count:6},
+      {date:'2025-11-21',count:11},
+      {date:'2025-11-22',count:4},
+      {date:'2025-11-23',count:9},
+      {date:'2025-11-24',count:7},
+      {date:'2025-11-25',count:14},
+      {date:'2025-11-26',count:12},
+      {date:'2025-11-27',count:5},
+      {date:'2025-11-28',count:10},
+      {date:'2025-11-29',count:8}
+    ];
 
-  const subEl=document.getElementById('insight-sub');
-  if(subEl){
-    if(rows.length){
-      const first=rows[0].date;
-      const last=rows[rows.length-1].date;
-      subEl.textContent=`prossimi ${rows.length} giorni con prenotazioni (${first} → ${last})`;
+    function getCanvasCtx(){
+      const canvas=document.getElementById('orders-chart');
+      if(!canvas) return {};
+      const ctx=canvas.getContext('2d');
+      const dpr=window.devicePixelRatio||1;
+
+      const parent=canvas.parentElement;
+      let w=parent?.clientWidth||320;
+      let h=parent?.clientHeight||120;
+
+      // Manteniamo un rapporto panoramico (larga e bassa)
+      if(h > w/2.8) h = w/2.8;
+
+      canvas.width=w*dpr;
+      canvas.height=h*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      return {canvas,ctx,width:w,height:h};
+    }
+
+    function drawChart(data){
+      const {ctx,width,height}=getCanvasCtx();
+      if(!ctx||!width||!height) return;
+
+      ctx.clearRect(0,0,width,height);
+
+      const padding={top:10,right:10,bottom:26,left:32};
+      const w=Math.max(10,width - padding.left - padding.right);
+      const h=Math.max(10,height - padding.top - padding.bottom);
+
+      // Fondo interno al grafico
+      const bgGrad=ctx.createLinearGradient(
+        padding.left, padding.top,
+        padding.left, padding.top+h
+      );
+      bgGrad.addColorStop(0,'rgba(255,255,255,0.05)');
+      bgGrad.addColorStop(1,'rgba(0,0,0,0.78)');
+      ctx.fillStyle=bgGrad;
+      ctx.fillRect(padding.left,padding.top,w,h);
+
+      if(!data.length) return;
+
+      const maxCount=Math.max(1,...data.map(d=>d.count));
+      const steps=Math.min(maxCount,4);
+
+      // Grid orizzontale
+      ctx.strokeStyle='rgba(255,255,255,0.12)';
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      for(let i=0;i<=steps;i++){
+        const y=padding.top + h - (h*i/steps);
+        ctx.moveTo(padding.left, y+0.5);
+        ctx.lineTo(padding.left + w, y+0.5);
+      }
+      ctx.stroke();
+
+      // Label Y (quantità)
+      ctx.fillStyle='rgba(255,255,255,0.7)';
+      ctx.font='10px Verdana, sans-serif';
+      ctx.textAlign='right';
+      ctx.textBaseline='middle';
+      for(let i=0;i<=steps;i++){
+        const value=Math.round(maxCount*i/steps);
+        const y=padding.top + h - (h*i/steps);
+        ctx.fillText(String(value), padding.left - 5, y);
+      }
+
+      const n=data.length;
+      const gap=6;
+      const barWidth=Math.max(4,(w-gap*(n+1))/n);
+
+      // Barre
+      data.forEach((d,i)=>{
+        const x=padding.left + gap + i*(barWidth+gap);
+        const barH=d.count/maxCount*h;
+        const y=padding.top + h - barH;
+
+        const grad=ctx.createLinearGradient(0,y,0,y+barH);
+        grad.addColorStop(0,'#ffd60a');
+        grad.addColorStop(0.5,'#ffb347');
+        grad.addColorStop(1,'#770505');
+
+        ctx.fillStyle=grad;
+        const r=4;
+        ctx.beginPath();
+        ctx.moveTo(x, y+r);
+        ctx.arcTo(x, y, x+barWidth, y, r);
+        ctx.arcTo(x+barWidth, y, x+barWidth, y+barH, r);
+        ctx.lineTo(x+barWidth, y+barH);
+        ctx.lineTo(x, y+barH);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // Label X: data chiara alla base (gg/mm)
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      ctx.font='9px Verdana, sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='top';
+
+      data.forEach((d,i)=>{
+        const xCenter = padding.left + gap + i*(barWidth+gap) + barWidth/2;
+        const [yyyy,mm,dd]=d.date.split('-');
+        const label=`${dd}/${mm}`;
+        ctx.fillText(label, xCenter, padding.top + h + 6);
+      });
+    }
+
+    // ===== Integrazione con dati reali =====
+    function buildFutureDataFromOrders(orders){
+      const today = todayISO();
+      const map = new Map();
+
+      (orders || []).forEach(o=>{
+        if(!o.date) return;
+        if(o.date >= today){ // da oggi in poi
+          map.set(o.date,(map.get(o.date)||0)+1);
+        }
+      });
+
+      const rows = Array.from(map.entries())
+        .map(([date,count])=>({date,count}))
+        .sort((a,b)=>a.date.localeCompare(b.date));
+
+      return rows.length ? rows : chartData; // se vuoto, usa demo
+    }
+
+    // Funzione chiamabile dalla pagina parent (MASTER)
+    window.updateOrdersChart = function(orders){
+      chartData = buildFutureDataFromOrders(orders);
+      drawChart(chartData);
+    };
+
+    // Primo render con dati demo (finché non arriva updateOrdersChart)
+    function init(){
+      drawChart(chartData);
+    }
+
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded',init);
     }else{
-      subEl.textContent='nessun ordine futuro trovato • dati demo';
+      init();
     }
-  }
 
-  drawOrdersChart(ordersChartData);
-}
-
-function initOrdersChart(){
-  // all'inizio solo demo
-  drawOrdersChart(ordersChartData);
-}
-
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',initOrdersChart);
-}else{
-  initOrdersChart();
-}
-
-window.addEventListener('resize',()=>{
-  drawOrdersChart(ordersChartData);
-});
-
-// espone la funzione per l'iframe / pagina padre
-window.updateOrdersChart=updateOrdersChart;
-</script>
+    window.addEventListener('resize', ()=>{
+      drawChart(chartData);
+    });
+  </script>
+</body>
+</html>
