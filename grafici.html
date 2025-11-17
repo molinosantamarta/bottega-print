@@ -1,12 +1,4 @@
-<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Insight ordini futuri</title>
-</head>
-<body>
-  <!-- Chart ordini futuri: versione senza "card" interna, pensata per iframe -->
+<!-- Chart ordini futuri: versione full-bleed per iframe, senza bordi propri -->
 
 <style>
   :root{
@@ -30,21 +22,21 @@
     box-sizing:border-box;
     height:100%;
     width:100%;
-    padding:0px;
+    padding:6px 8px;
     display:flex;
     flex-direction:column;
-    gap:0px;
+    gap:4px;
     position:relative;
   }
 
-  /* glow morbido di sfondo, ma a livello pagina, non "card" */
+  /* Glow morbido di sfondo, a livello pagina (niente bordi) */
   .insight-root::before{
     content:"";
     position:absolute;
     inset:-40%;
     background:
-      radial-gradient(circle at 8% 0%,rgba(255,214,10,.22) 0,transparent 55%),
-      radial-gradient(circle at 90% 110%,rgba(119,5,5,.38) 0,transparent 60%);
+      radial-gradient(circle at 8% 0%,rgba(255,214,10,.18) 0,transparent 55%),
+      radial-gradient(circle at 90% 110%,rgba(119,5,5,.32) 0,transparent 60%);
     opacity:.9;
     filter:blur(24px);
     mix-blend-mode:screen;
@@ -54,9 +46,9 @@
   }
 
   @keyframes insightGlow{
-    0%{transform:translate3d(-6px,-4px,0) scale(1);opacity:.8}
-    50%{transform:translate3d(4px,4px,0) scale(1.03);opacity:1}
-    100%{transform:translate3d(2px,-5px,0) scale(1.01);opacity:.9}
+    0%{transform:translate3d(-4px,-3px,0) scale(1);opacity:.8}
+    50%{transform:translate3d(3px,3px,0) scale(1.03);opacity:1}
+    100%{transform:translate3d(1px,-4px,0) scale(1.01);opacity:.9}
   }
 
   .insight-inner{
@@ -64,7 +56,7 @@
     z-index:1;
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:4px;
     height:100%;
     width:100%;
   }
@@ -74,10 +66,11 @@
     align-items:center;
     gap:8px;
     flex-wrap:wrap;
+    min-height:20px;
   }
 
   .insight-header .pill{
-    padding:3px 9px;
+    padding:2px 8px;
     border-radius:999px;
     font-size:9px;
     letter-spacing:.16em;
@@ -86,6 +79,7 @@
     color:var(--accent);
     border:1px solid rgba(255,214,10,.55);
     box-shadow:0 0 0 1px rgba(0,0,0,.55);
+    white-space:nowrap;
   }
 
   .title-wrap{
@@ -95,40 +89,38 @@
   }
 
   .title{
-    font-size:13px;
+    font-size:12px;
     font-weight:800;
     letter-spacing:.08em;
     text-transform:uppercase;
   }
 
   .subtitle{
-    font-size:10px;
+    font-size:9px;
     opacity:.8;
   }
 
   .chart-wrap{
     flex:1;
-    margin-top:4px;
-    border-radius:14px;
-    background:radial-gradient(circle at 0% 0%,rgba(255,255,255,.06) 0,rgba(0,0,0,.85) 55%);
-    border:1px solid rgba(255,255,255,.06);
+    width:100%;
+    height:100%;
+    margin:0;
+    background:radial-gradient(circle at 0% 0%,rgba(255,255,255,.04) 0,rgba(0,0,0,.9) 55%);
     overflow:hidden;
     display:flex;
   }
 
-  /* canvas fluido, senza altri contenitori "a scatola" */
+  /* canvas fluido, senza contenitori aggiuntivi */
   #orders-chart{
     width:100%;
-    height:auto;
-    aspect-ratio:3 / 1; /* larga e bassa, stile dashboard */
+    height:100%;
     display:block;
   }
 
   @media (max-width:480px){
-    .insight-root{padding:8px 8px;}
-    .title{font-size:12px;}
-    .subtitle{font-size:9px;}
-    #orders-chart{aspect-ratio: 2.4 / 1;}
+    .insight-root{padding:4px 4px;}
+    .title{font-size:11px;}
+    .subtitle{font-size:8px;}
   }
 </style>
 
@@ -180,10 +172,10 @@ function getChartCanvasAndCtx(){
 
   // fallback se il layout non è ancora misurabile
   if(!rect.width||!rect.height){
-    canvas.style.width='100%';
-    canvas.style.height='auto';
-    const baseW=canvas.parentElement?.clientWidth||320;
-    rect={width:baseW,height:baseW/3};
+    const parent=canvas.parentElement;
+    const baseW=(parent&&parent.clientWidth)||320;
+    const baseH=(parent&&parent.clientHeight)||Math.round(baseW/3);
+    rect={width:baseW,height:baseH};
   }
 
   canvas.width=rect.width*dpr;
@@ -325,6 +317,3 @@ window.addEventListener('resize',()=>{
 // espone la funzione per l'iframe / pagina padre
 window.updateOrdersChart=updateOrdersChart;
 </script>
-
-</body>
-</html>
