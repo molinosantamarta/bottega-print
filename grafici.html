@@ -35,31 +35,20 @@
 
     .chart-layout{
       width:100%;
-      max-width:100%;
       display:flex;
-      align-items:stretch;
-      justify-content:space-between;
       gap:12px;
       padding:8px 10px;
-      border-radius:18px;
-      background:linear-gradient(135deg,#050708 0%,#101218 55%,#171b22 100%);
-      box-shadow:0 12px 30px rgba(0,0,0,0.45);
-      border:1px solid rgba(255,255,255,0.06);
     }
 
     .chart-main{
       flex:2;
       min-width:0;
       display:flex;
-      align-items:stretch;
     }
 
     canvas{
-      position:relative;
-      display:block;
       width:100%;
       height:100%;
-      border-radius:14px;
     }
 
     .avicoli-bar{
@@ -68,446 +57,172 @@
       display:flex;
       flex-direction:column;
       justify-content:center;
-      gap:2px;
+      gap:4px;
       padding:6px 12px;
-      border-radius:14px;
-      background:rgba(0,0,0,0.9);
-      border-left:1px solid rgba(255,255,255,0.16);
       font-size:11px;
       line-height:1.3;
     }
-
-    
 
     .avicoli-row{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:8px;
-      padding:2px 0;
     }
-    .avicoli-row:last-child{border-bottom:none;}
+
     .avicoli-row-label{opacity:.85;}
-    .avicoli-row strong{
-      font-size:14px;
-      font-weight:800;
-      color:#ffd60a;
-    }
+    .avicoli-row strong{font-size:14px;font-weight:800;color:#ffd60a;}
 
-    @media (max-width:780px){
-      .chart-layout{
-        flex-direction:column;
-        gap:8px;
-      }
-      .avicoli-bar{
-        flex:none;
-        flex-direction:row;
-        align-items:center;
-        justify-content:space-between;
-        font-size:10px;
-      }
-      .avicoli-row{
-        border-bottom:none;
-        padding:0;
-      }
-    }
-
-    @media (max-width:480px){
-      .chart-root{padding:2px 0;}
-    }
-
-    canvas{
-      position:relative;
-      display:block;
-      width:100%;
-      height:100%;
-    }
-
-    
-    .avicoli-bar strong{
-      color:#ffd60a;
-      font-weight:700;
-    }
-
-    @media (max-width:480px){
-      .chart-root{padding:2px 0;}
+    @media(max-width:780px){
+      .chart-layout{flex-direction:column;gap:8px;}
+      .avicoli-bar{flex-direction:row;justify-content:space-between;}
     }
   </style>
 </head>
 <body>
-    <div class="chart-root">
+  <div class="chart-root">
     <div class="chart-layout">
+
       <div class="chart-main">
         <canvas id="orders-chart"></canvas>
       </div>
+
       <aside class="avicoli-bar" id="avicoli-bar">
-        <div class="avicoli-row">
-          <span class="avicoli-row-label">Oche</span>
-          <strong id="tot-oche">—</strong>
-        </div>
-        <div class="avicoli-row">
-          <span class="avicoli-row-label">Anatre</span>
-          <strong id="tot-anatre">—</strong>
-        </div>
-        <div class="avicoli-row">
-          <span class="avicoli-row-label">Caponi</span>
-          <strong id="tot-caponi">—</strong>
-        </div>
-        <div class="avicoli-row">
-          <span class="avicoli-row-label">Polli</span>
-          <strong id="tot-polli">—</strong>
-        </div>
+        <div class="avicoli-row"><span class="avicoli-row-label">Oche</span><strong id="tot-oche">—</strong></div>
+        <div class="avicoli-row"><span class="avicoli-row-label">Anatre</span><strong id="tot-anatre">—</strong></div>
+        <div class="avicoli-row"><span class="avicoli-row-label">Caponi</span><strong id="tot-caponi">—</strong></div>
+        <div class="avicoli-row"><span class="avicoli-row-label">Polli</span><strong id="tot-polli">—</strong></div>
       </aside>
+
     </div>
   </div>
-  </div>
 
-  <script>
-    // ========= Utilità base / brand =========
-    const API = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
+<script>
+// ===== API =====
+const API = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
 
-    const pad = n => String(n).padStart(2,'0');
+// ===== Helpers =====
+const pad=n=>String(n).padStart(2,'0');
+const norm=s=>s?.toString().trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"");
 
-    function today(){
-      const d = new Date();
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    }
+function today(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 
-    const norm = s => s?.toString().trim().toLowerCase()
-      .normalize("NFD").replace(/\p{Diacritic}/gu,"");
+function parseDate(s){
+  if(!s) return null;
+  const str=String(s).trim();
+  let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){return new Date(+m[3]<100?2000+ +m[3]:+m[3],+m[2]-1,+m[1],12,0,0);}  
+  m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m){return new Date(+m[1],+m[2]-1,+m[3],12,0,0);}  
+  const d=new Date(str);
+  return isNaN(d.getTime())?null:d;
+}
 
-    function parseDate(s){
-      if(!s) return null;
-      const str = String(s).trim();
-      let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-      if(m){
-        const dd=+m[1], mm=+m[2]-1, yy=+m[3];
-        return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0);
-      }
-      m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
-      const d=new Date(str);
-      return isNaN(d.getTime())?null:d;
-    }
+function pickKey(obj,cands){
+  const ks=Object.keys(obj||{});
+  for(const c of cands){const k=ks.find(x=>norm(x)===norm(c));if(k) return k;}
+  for(const c of cands){const k=ks.find(x=>norm(x).includes(norm(c)));if(k) return k;}
+  return null;
+}
 
-    function pickKey(obj,cands){
-      const ks = Object.keys(obj||{});
-      for(const c of cands){
-        const k = ks.find(x=>norm(x)===norm(c));
-        if(k) return k;
-      }
-      for(const c of cands){
-        const k = ks.find(x=>norm(x).includes(norm(c)));
-        if(k) return k;
-      }
-      return null;
-    }
+function rowToOrder(r){
+  const nameK=pickKey(r,['NOME CLIENTE','NOME','CLIENTE']);
+  if(!nameK || !String(r[nameK]).trim()) return null;
 
-    function rowToOrder(r){
-      const nameK = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']),
-            dateK = pickKey(r,['DATA ORDINE','DATA','GIORNO']),
-            timeK = pickKey(r,['ORA','ORARIO']),
-            zoneK = pickKey(r,['ZONA STOCCAGGIO','ZONA','STOCCAGGIO','UBICAZIONE']),
-            ordK  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
+  const dateK=pickKey(r,['DATA ORDINE','DATA','GIORNO']);
+  const d=dateK?parseDate(r[dateK]):null;
+  const dateISO=d?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`:today();
 
-      const name = nameK ? String(r[nameK]||'').trim() : '';
-      if(!name) return null;
+  return {date:dateISO, src:r};
+}
 
-      const d   = dateK ? parseDate(r[dateK]) : null;
-      const t   = timeK ? String(r[timeK]||'').trim() : '';
-      const zone= zoneK ? String(r[zoneK]||'').trim() : '';
-      const num = ordK ? Number(r[ordK]) : null;
-      const dateISO = d
-        ? `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
-        : today();
+// ===== Avicoli =====
+const AVICOLI_TYPES=['oche','anatre','caponi','polli'];
 
-      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k,norm(k)]));
+function computeAvicoliTotals(rows){
+  const totals={oche:0,anatre:0,caponi:0,polli:0};
+  if(!rows) return totals;
 
-      return {
-        id: (num!=null?num:null),
-        number:(num!=null?num:null),
-        name,
-        date: dateISO,
-        time: t,
-        zone,
-        src: r,
-        __normKeys
-      };
-    }
+  const keys=Object.keys(rows[0]||{});
+  const map={};
+  AVICOLI_TYPES.forEach(t=>{map[t]=keys.find(k=>norm(k).includes(t));});
 
-    // ========= Stato dati correnti =========
-    let chartData = [];
-
-    // ========= Canvas / layout lungo e stretto =========
-    function getCanvasCtx(){
-      const canvas = document.getElementById('orders-chart');
-      if(!canvas) return {};
-      const ctx = canvas.getContext('2d');
-      const dpr = window.devicePixelRatio || 1;
-
-      const parent = canvas.parentElement;
-      let w = parent?.clientWidth || 320;
-      let h = parent?.clientHeight || 120;
-
-      // mantiene grafico panoramico, basso e largo
-      const maxH = w / 3.0;
-      if(h > maxH) h = maxH;
-
-      canvas.width  = w*dpr;
-      canvas.height = h*dpr;
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-
-      return {canvas,ctx,width:w,height:h};
-    }
-
-    function drawChart(data, progress=1){
-      const {ctx,width,height} = getCanvasCtx();
-      if(!ctx||!width||!height) return;
-
-      ctx.clearRect(0,0,width,height);
-
-      const padding = {top:8,right:10,bottom:20,left:12};
-      const w = Math.max(10,width  - padding.left - padding.right);
-      const h = Math.max(10,height - padding.top  - padding.bottom);
-
-      // background del grafico (glass dark)
-            ctx.fillStyle = 'transparent';
-      ctx.fillRect(padding.left,padding.top,w,h);
-
-      if(!data.length) return;
-
-      const maxCount = Math.max(1,...data.map(d=>d.count));
-      const steps = 4;
-
-      // griglia orizzontale
-      ctx.strokeStyle='rgba(255,255,255,0.14)';
-      ctx.lineWidth=1;
-      ctx.beginPath();
-      for(let i=0;i<=steps;i++){
-        const y=padding.top + h - (h*i/steps);
-        ctx.moveTo(padding.left, y+0.5);
-        ctx.lineTo(padding.left + w, y+0.5);
-      }
-      ctx.stroke();
-
-      const n=data.length;
-      const gap=4;
-      const barWidth=Math.max(4,(w-gap*(n+1))/n);
-
-      // barre brand (giallo → rosso Molino)
-      data.forEach((d,i)=>{
-        const x=padding.left + gap + i*(barWidth+gap);
-        const barH=(d.count/maxCount*h)*progress;
-        const y=padding.top + h - barH;
-
-        const grad=ctx.createLinearGradient(0,y,0,y+barH);
-        grad.addColorStop(0,'#ffd60a');   // accent
-        grad.addColorStop(0.55,'#ffb347'); // warm
-        grad.addColorStop(1,'#770505');   // main brand red
-
-        ctx.fillStyle=grad;
-        const r=3;
-        ctx.beginPath();
-        ctx.moveTo(x, y+r);
-        ctx.arcTo(x, y, x+barWidth, y, r);
-        ctx.arcTo(x+barWidth, y, x+barWidth, y+barH, r);
-        ctx.lineTo(x+barWidth, y+barH);
-        ctx.lineTo(x, y+barH);
-        ctx.closePath();
-        ctx.fill();
-
-        // valore numerico sulla barra
-        ctx.fillStyle='rgba(0,0,0,0.85)';
-        ctx.font='9px Verdana, sans-serif';
-        ctx.textAlign='center';
-        ctx.textBaseline='bottom';
-        ctx.fillText(String(d.count), x + barWidth/2, y - 2);
-      });
-
-      // label X (gg/mm)
-      ctx.fillStyle='rgba(255,255,255,0.9)';
-      ctx.font='9px Verdana, sans-serif';
-      ctx.textAlign='center';
-      ctx.textBaseline='top';
-
-      data.forEach((d,i)=>{
-        const xCenter = padding.left + gap + i*(barWidth+gap) + barWidth/2;
-        const [yyyy,mm,dd] = d.date.split('-');
-        const label = `${dd}/${mm}`;
-        ctx.fillText(label, xCenter, padding.top + h + 6);
-      });
-    }
-
-    // ========= Aggregazione ordini futuri =========
-    function buildFutureDataFromOrders(orders){
-      const tdy = today();
-      const map = new Map();
-
-      (orders || []).forEach(o=>{
-        if(!o.date) return;
-        if(o.date >= tdy){ // da oggi in poi
-          map.set(o.date,(map.get(o.date)||0)+1);
-        }
-      });
-
-      const rows = Array.from(map.entries())
-        .map(([date,count])=>({date,count}))
-        .sort((a,b)=>a.date.localeCompare(b.date));
-
-      return rows; // se vuoto, tieni demo
-    }
-
-    const AVICOLI_TYPES = ['oche','anatre','caponi','polli'];
-
-    let chartAnimId = null;
-
-    function animateChart(data){
-      if(!data || !data.length){
-        drawChart(data||[],1);
-        return;
-      }
-      if(chartAnimId) cancelAnimationFrame(chartAnimId);
-      const start = performance.now();
-      const duration = 450;
-      function frame(now){
-        const t = Math.min(1,(now-start)/duration);
-        drawChart(data,t);
-        if(t<1){
-          chartAnimId = requestAnimationFrame(frame);
-        }
-      }
-      chartAnimId = requestAnimationFrame(frame);
-    }
-
-    const AVICOLI_TYPES = ['oche','anatre','caponi','polli'];
-
-    function computeAvicoliTotals(rows){
-      const totals = {oche:0,anatre:0,caponi:0,polli:0};
-      if(!Array.isArray(rows) || !rows.length) return totals;
-
-      const keys = Object.keys(rows[0] || {});
-      const keyByTipo = {};
-
-      AVICOLI_TYPES.forEach(tipo=>{
-        const k = keys.find(k=>norm(k).includes(tipo));
-        if(k) keyByTipo[tipo]=k;
-      });
-
-      rows.forEach(r=>{
-        AVICOLI_TYPES.forEach(tipo=>{
-          const k = keyByTipo[tipo];
-          if(!k) return;
-          const raw = r[k];
-          if(raw==null || raw==='') return;
-          const num = Number(String(raw).replace(',','.'));
-          if(!Number.isFinite(num)) return;
-          totals[tipo]+=num;
-        });
-      });
-
-      return totals;
-    }
-
-    function updateAvicoliBar(totals){
-      const bar = document.getElementById('avicoli-bar');
-      if(!bar) return;
-
-      const map = {
-        oche: document.getElementById('tot-oche'),
-        anatre: document.getElementById('tot-anatre'),
-        caponi: document.getElementById('tot-caponi'),
-        polli: document.getElementById('tot-polli')
-      };
-
-      if(!totals){
-        Object.values(map).forEach(el=>{ if(el) el.textContent='—'; });
-        return;
-      }
-
-      Object.entries(map).forEach(([tipo,el])=>{
-        if(!el) return;
-        const v = totals[tipo];
-        if(typeof v === 'number' && v > 0){
-          el.textContent = String(Math.ceil(v));
-        } else {
-          el.textContent = '0';
-        }
-      });
-    }
-
-    // ========= Fetch da Google Apps Script =========
-    async function loadOrdersAndDraw(){
-      try{
-        const res = await fetch(API+'?&_ts='+Date.now(),{
-          cache:'no-store',
-          mode:'cors',
-          headers:{Accept:'application/json, text/plain, */*'}
-        });
-
-        const ct  = (res.headers && res.headers.get('content-type')) || '';
-        const raw = await res.text();
-        if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,200)}`);
-
-        let data;
-        try{
-          const looksJson = ct.toLowerCase().includes('json')
-            || raw.trim().startsWith('{')
-            || raw.trim().startsWith('[');
-          if(looksJson) data = JSON.parse(raw);
-          else throw new Error('API non JSON ('+ct+')');
-        }catch(_){
-          const s = raw.search(/[\[{]/),
-                eB= raw.lastIndexOf('}'),
-                eA= raw.lastIndexOf(']'),
-                e = Math.max(eB,eA);
-          if(s!==-1 && e>s) data = JSON.parse(raw.slice(s,e+1));
-          else throw new Error('Parse JSON fallita');
-        }
-
-        let rows=[];
-        if(Array.isArray(data)) rows=data;
-        else if(Array.isArray(data.rows)) rows=data.rows;
-        else if(Array.isArray(data.data)) rows=data.data;
-        else if(data && typeof data==='object'){
-          const k = Object.keys(data).find(x=>Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
-          if(k) rows=data[k];
-        }
-        if(!Array.isArray(rows)) rows=[];
-
-        const orders = rows.map(rowToOrder).filter(Boolean);
-        chartData = buildFutureDataFromOrders(orders);
-        const avicoliTotals = computeAvicoliTotals(rows);
-        updateAvicoliBar(avicoliTotals);
-        animateChart(chartData);
-      }
-      catch(e){
-        console.warn('API load error (grafici.html)', e);
-        chartData = [];
-        updateAvicoliBar(null);
-        drawChart(chartData);
-      }
-    }
-
-    // ========= Integrazione opzionale con pagina parent =========
-    window.updateOrdersChart = function(orders){
-      chartData = buildFutureDataFromOrders(orders);
-      animateChart(chartData);
-    };
-
-    // ========= Init =========
-    function init(){
-      loadOrdersAndDraw();
-    }
-
-    if(document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', init);
-    }else{
-      init();
-    }
-
-    window.addEventListener('resize', ()=>{
-      drawChart(chartData);
+  rows.forEach(r=>{
+    AVICOLI_TYPES.forEach(t=>{
+      const k=map[t]; if(!k) return;
+      const v=Number(String(r[k]).replace(",",".")||0);
+      if(!isNaN(v)) totals[t]+=v;
     });
-  </script>
-</body>
-</html>
+  });
+  return totals;
+}
+
+function updateAvicoliBar(t){
+  const ids={oche:'tot-oche',anatre:'tot-anatre',caponi:'tot-caponi',polli:'tot-polli'};
+  AVICOLI_TYPES.forEach(tp=>{
+    document.getElementById(ids[tp]).textContent = Math.ceil(t[tp]||0);
+  });
+}
+
+// ===== Grafico =====
+let chartData=[];
+let chartAnimId=null;
+
+function getCanvasCtx(){
+  const c=document.getElementById('orders-chart');
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth, h=c.clientHeight;
+  c.width=w*dpr; c.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+
+function drawChart(data,progress=1){
+  const {ctx,w,h}=getCanvasCtx(); if(!ctx) return;
+  ctx.clearRect(0,0,w,h);
+
+  const padL=10, padR=10, padT=8, padB=20;
+  const W=w-padL-padR, H=h-padT-padB;
+
+  const maxC=Math.max(1,...data.map(d=>d.count));
+  const gap=6;
+  const barW=Math.max(4,(W-gap*(data.length+1))/data.length);
+
+  data.forEach((d,i)=>{
+    const x=padL + gap + i*(barW+gap);
+    const barH=(d.count/maxC*H)*progress;
+    const y=padT + (H-barH);
+
+    ctx.fillStyle='#ffd60a';
+    ctx.fillRect(x,y,barW,barH);
+
+    ctx.fillStyle='black';
+    ctx.font='10px Verdana';
+    ctx.textAlign='center';
+    ctx.fillText(d.count, x+barW/2, y-2);
+  });
+
+  ctx.fillStyle='#ccc'; ctx.font='10px Verdana'; ctx.textAlign='center';
+  data.forEach((d,i)=>{
+    const x=padL + gap + i*(barW+gap) + barW/2;
+    ctx.fillText(d.date.slice(5), x, h-padB+4);
+  });
+}
+
+function animateChart(data){
+  if(chartAnimId) cancelAnimationFrame(chartAnimId);
+  const start=performance.now(), dur=450;
+  function f(t){
+    const k=Math.min(1,(t-start)/dur);
+    drawChart(data,k);
+    if(k<1) chartAnimId=requestAnimationFrame(f);
+  }
+  chartAnimId=requestAnimationFrame(f);
+}
+
+// ===== Load =====
+async function loadOrdersAndDraw(){
+  try{
+    const res=await fetch(API+'?ts='+Date.now());
+    const raw=await res.text();
+    const data=JSON.parse(raw.match(/[{\[]([\s\S]*)[}\]]/
