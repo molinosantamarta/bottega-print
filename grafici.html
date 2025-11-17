@@ -1,116 +1,151 @@
-<!-- Insight chart: ordini futuri per giorno (dark, fluid, tech style) -->
-
-<div class="insight-card">
-  <div class="insight-header">
-    <div class="pill">INSIGHT</div>
-    <div class="title-wrap">
-      <div class="title">Ordini futuri per giorno</div>
-      <div class="subtitle" id="insight-sub">prossimi 10 giorni • dati demo</div>
-    </div>
-  </div>
-  <div class="chart-shell">
-    <canvas id="orders-chart"></canvas>
-  </div>
-</div>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Insight ordini futuri</title>
+</head>
+<body>
+  <!-- Chart ordini futuri: versione senza "card" interna, pensata per iframe -->
 
 <style>
-.insight-card{
-  position:relative;
-  width:100%;
-  min-height:150px;            /* minima per non schiacciarsi troppo */
-  border-radius:18px;
-  padding:10px 12px;
-  background:radial-gradient(circle at 0% 0%, #3b1a1a 0, #050708 45%, #000 100%);
-  border:1px solid rgba(255,255,255,.06);
-  box-shadow:0 12px 30px rgba(0,0,0,.3);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  color:#f5f5f7;
-  isolation:isolate;
-}
+  :root{
+    --main:#770505;
+    --accent:#ffd60a;
+    --bg-deep:#050708;
+  }
 
-/* glow morbido, singolo livello */
-.insight-card::before{
-  content:"";
-  position:absolute;
-  inset:-35%;
-  background:
-    radial-gradient(circle at 8% 0%,rgba(255,214,10,.22) 0,transparent 55%),
-    radial-gradient(circle at 90% 110%,rgba(119,5,5,.38) 0,transparent 60%);
-  opacity:.9;
-  filter:blur(24px);
-  mix-blend-mode:screen;
-  animation:insightGlow 20s ease-in-out infinite alternate;
-  z-index:0;
-}
+  html,body{
+    margin:0;
+    padding:0;
+    height:100%;
+    width:100%;
+    background:radial-gradient(circle at 0% 0%, #3b1a1a 0, #050708 45%, #000 100%);
+    font-family:Verdana, Geneva, sans-serif;
+    color:#f5f5f7;
+    overflow:hidden;
+  }
 
-@keyframes insightGlow{
-  0%{transform:translate3d(-6px,-4px,0) scale(1);opacity:.8}
-  50%{transform:translate3d(4px,4px,0) scale(1.03);opacity:1}
-  100%{transform:translate3d(2px,-5px,0) scale(1.01);opacity:.9}
-}
+  .insight-root{
+    box-sizing:border-box;
+    height:100%;
+    width:100%;
+    padding:10px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    position:relative;
+  }
 
-.insight-header{
-  position:relative;
-  z-index:1;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
+  /* glow morbido di sfondo, ma a livello pagina, non "card" */
+  .insight-root::before{
+    content:"";
+    position:absolute;
+    inset:-40%;
+    background:
+      radial-gradient(circle at 8% 0%,rgba(255,214,10,.22) 0,transparent 55%),
+      radial-gradient(circle at 90% 110%,rgba(119,5,5,.38) 0,transparent 60%);
+    opacity:.9;
+    filter:blur(24px);
+    mix-blend-mode:screen;
+    animation:insightGlow 20s ease-in-out infinite alternate;
+    z-index:0;
+    pointer-events:none;
+  }
 
-.insight-header .pill{
-  padding:3px 9px;
-  border-radius:999px;
-  font-size:9px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  background:rgba(0,0,0,.55);
-  color:#ffd60a;
-  border:1px solid rgba(255,214,10,.55);
-  box-shadow:0 0 0 1px rgba(0,0,0,.55);
-}
+  @keyframes insightGlow{
+    0%{transform:translate3d(-6px,-4px,0) scale(1);opacity:.8}
+    50%{transform:translate3d(4px,4px,0) scale(1.03);opacity:1}
+    100%{transform:translate3d(2px,-5px,0) scale(1.01);opacity:.9}
+  }
 
-.title-wrap{
-  display:flex;
-  flex-direction:column;
-  gap:1px;
-}
+  .insight-inner{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    height:100%;
+    width:100%;
+  }
 
-.title{
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
+  .insight-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
 
-.subtitle{
-  font-size:10px;
-  opacity:.8;
-}
+  .insight-header .pill{
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:9px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    background:rgba(0,0,0,.55);
+    color:var(--accent);
+    border:1px solid rgba(255,214,10,.55);
+    box-shadow:0 0 0 1px rgba(0,0,0,.55);
+  }
 
-/* contenitore grafico fluido */
-.chart-shell{
-  position:relative;
-  z-index:1;
-  flex:1;
-  margin-top:4px;
-  border-radius:14px;
-  background:radial-gradient(circle at 0% 0%,rgba(255,255,255,.07) 0,rgba(0,0,0,.85) 55%);
-  border:1px solid rgba(255,255,255,.04);
-  overflow:hidden;
-  display:flex;
-}
+  .title-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+  }
 
-/* mantiene proporzioni rispetto alla larghezza disponibile */
-#orders-chart{
-  width:100%;
-  height:auto;
-  aspect-ratio: 3 / 1;        /* “larga e bassa” tipo dashboard */
-  display:block;
-}
+  .title{
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .subtitle{
+    font-size:10px;
+    opacity:.8;
+  }
+
+  .chart-wrap{
+    flex:1;
+    margin-top:4px;
+    border-radius:14px;
+    background:radial-gradient(circle at 0% 0%,rgba(255,255,255,.06) 0,rgba(0,0,0,.85) 55%);
+    border:1px solid rgba(255,255,255,.06);
+    overflow:hidden;
+    display:flex;
+  }
+
+  /* canvas fluido, senza altri contenitori "a scatola" */
+  #orders-chart{
+    width:100%;
+    height:auto;
+    aspect-ratio:3 / 1; /* larga e bassa, stile dashboard */
+    display:block;
+  }
+
+  @media (max-width:480px){
+    .insight-root{padding:8px 8px;}
+    .title{font-size:12px;}
+    .subtitle{font-size:9px;}
+    #orders-chart{aspect-ratio: 2.4 / 1;}
+  }
 </style>
+
+<div class="insight-root">
+  <div class="insight-inner">
+    <div class="insight-header">
+      <div class="pill">INSIGHT</div>
+      <div class="title-wrap">
+        <div class="title">Ordini futuri per giorno</div>
+        <div class="subtitle" id="insight-sub">prossimi 10 giorni • dati demo</div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="orders-chart"></canvas>
+    </div>
+  </div>
+</div>
 
 <script>
 // ===== Util =====
@@ -143,11 +178,12 @@ function getChartCanvasAndCtx(){
   const dpr=window.devicePixelRatio||1;
   let rect=canvas.getBoundingClientRect();
 
-  // fallback se l'iframe/cell non ha ancora dimensioni
+  // fallback se il layout non è ancora misurabile
   if(!rect.width||!rect.height){
     canvas.style.width='100%';
     canvas.style.height='auto';
-    rect={width:canvas.parentElement?.clientWidth||320,height:(canvas.parentElement?.clientWidth||320)/3};
+    const baseW=canvas.parentElement?.clientWidth||320;
+    rect={width:baseW,height:baseW/3};
   }
 
   canvas.width=rect.width*dpr;
@@ -166,10 +202,10 @@ function drawOrdersChart(data){
   const w=Math.max(10,width-padding.left-padding.right);
   const h=Math.max(10,height-padding.top-padding.bottom);
 
-  // background “liquid”
+  // background "liquid" dentro l'area del grafico
   const bgGrad=ctx.createLinearGradient(padding.left, padding.top, padding.left, padding.top+h);
-  bgGrad.addColorStop(0,'rgba(255,255,255,0.04)');
-  bgGrad.addColorStop(1,'rgba(0,0,0,0.65)');
+  bgGrad.addColorStop(0,'rgba(255,255,255,0.05)');
+  bgGrad.addColorStop(1,'rgba(0,0,0,0.7)');
   ctx.fillStyle=bgGrad;
   ctx.fillRect(padding.left,padding.top,w,h);
 
@@ -211,7 +247,7 @@ function drawOrdersChart(data){
 
     const grad=ctx.createLinearGradient(0,y,0,y+barH);
     grad.addColorStop(0,'#ffd60a');
-    grad.addColorStop(0.45,'#ffb347');
+    grad.addColorStop(0.5,'#ffb347');
     grad.addColorStop(1,'#770505');
 
     ctx.fillStyle=grad;
@@ -227,7 +263,7 @@ function drawOrdersChart(data){
   });
 
   // X labels gg/mm
-  ctx.fillStyle='rgba(255,255,255,0.8)';
+  ctx.fillStyle='rgba(255,255,255,0.85)';
   ctx.font='9px Verdana, sans-serif';
   ctx.textAlign='center';
   ctx.textBaseline='top';
@@ -289,3 +325,6 @@ window.addEventListener('resize',()=>{
 // espone la funzione per l'iframe / pagina padre
 window.updateOrdersChart=updateOrdersChart;
 </script>
+
+</body>
+</html>
