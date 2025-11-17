@@ -265,7 +265,6 @@
     <div class="sheet">
       <header>
         <div class="h">Filtra reparti</div>
-        <button id="sso-filter-close" class="close" aria-label="Chiudi">Chiudi</button>
       </header>
       <div class="content">
         <div class="text">Seleziona almeno un reparto. Verranno mostrati solo gli ordini del reparto/i selezionato/i.</div>
@@ -568,19 +567,39 @@
       return false;
     };
 
-    function updateFilterUI(){
-      const badge=D.q('#sso-filter-badge'),chip=D.q('#chipbar-filter');
-      if(!badge||!chip) return;
-      if(ACTIVE.size===ALL_IDS.length){
-        badge.style.display='none';badge.innerHTML='';
-        chip.classList.remove('active');chip.classList.add('compact');
-      }else{
-        const all=[{id:'pane',icon:'🥖'},{id:'banco',icon:'🧀'},{id:'fruver',icon:'🥦'},{id:'carne',icon:'🥩'},{id:'altro',icon:'📦'}];
-        badge.style.display='inline-flex';
-        badge.innerHTML=all.filter(d=>ACTIVE.has(d.id)).map(d=>d.icon).join(' <span class="sep">+</span> ');
-        chip.classList.remove('compact');chip.classList.add('active');
-      }
-    }
+   function updateFilterUI(){
+  const badge = D.q('#sso-filter-badge');
+  const chip  = D.q('#chipbar-filter');
+  if (!badge || !chip) return;
+
+  const all = [
+    {id:'pane',   icon:'🥖'},
+    {id:'banco',  icon:'🧀'},
+    {id:'fruver', icon:'🥦'},
+    {id:'carne',  icon:'🥩'},
+    {id:'altro',  icon:'📦'}
+  ];
+
+  // Quando TUTTI i reparti sono selezionati:
+  // - il chip ha lo stesso aspetto “attivo”
+  // - il badge mostra il testo fisso
+  if (ACTIVE.size === ALL_IDS.length) {
+    chip.classList.add('active');
+    chip.classList.remove('compact');
+    badge.style.display = 'inline-flex';
+    badge.innerHTML = 'filtra tutti i reparti';
+  } else {
+    // Quando si sta filtrando davvero: icone dei reparti selezionati
+    badge.style.display = 'inline-flex';
+    badge.innerHTML = all
+      .filter(d => ACTIVE.has(d.id))
+      .map(d => d.icon)
+      .join(' <span class="sep">+</span> ');
+
+    chip.classList.add('active');
+    chip.classList.remove('compact');
+  }
+}
 
     /* ===================== Stat / Flashcards ===================== */
     function recompute(){
