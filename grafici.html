@@ -18,7 +18,7 @@
       height:100%;
       overflow:hidden;
       font-family:Verdana, Geneva, sans-serif;
-      background:#0a0a0a;
+      background:#050708;
       color:#f5f5f7;
     }
 
@@ -27,12 +27,11 @@
       width:100%;
       height:100%;
       box-sizing:border-box;
-      padding:4px 0;
+      padding:4px 0; /* un filo di respiro verticale */
     }
 
     canvas{
       position:relative;
-      z-index:1;
       display:block;
       width:100%;
       height:100%;
@@ -49,12 +48,79 @@
   </div>
 
   <script>
-    function todayISO(){
-      const d=new Date();
-      const pad=n=>String(n).padStart(2,'0');
+    // ========= Utilità base / brand =========
+    const API = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
+
+    const pad = n => String(n).padStart(2,'0');
+
+    function today(){
+      const d = new Date();
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     }
 
+    const norm = s => s?.toString().trim().toLowerCase()
+      .normalize("NFD").replace(/\p{Diacritic}/gu,"");
+
+    function parseDate(s){
+      if(!s) return null;
+      const str = String(s).trim();
+      let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if(m){
+        const dd=+m[1], mm=+m[2]-1, yy=+m[3];
+        return new Date(yy<100?2000+yy:yy,mm,dd,12,0,0);
+      }
+      m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+      const d=new Date(str);
+      return isNaN(d.getTime())?null:d;
+    }
+
+    function pickKey(obj,cands){
+      const ks = Object.keys(obj||{});
+      for(const c of cands){
+        const k = ks.find(x=>norm(x)===norm(c));
+        if(k) return k;
+      }
+      for(const c of cands){
+        const k = ks.find(x=>norm(x).includes(norm(c)));
+        if(k) return k;
+      }
+      return null;
+    }
+
+    function rowToOrder(r){
+      const nameK = pickKey(r,['NOME CLIENTE','NOME','CLIENTE']),
+            dateK = pickKey(r,['DATA ORDINE','DATA','GIORNO']),
+            timeK = pickKey(r,['ORA','ORARIO']),
+            zoneK = pickKey(r,['ZONA STOCCAGGIO','ZONA','STOCCAGGIO','UBICAZIONE']),
+            ordK  = pickKey(r,['NUMERO ORDINE','ORDINE','N° ORDINE','ORD']);
+
+      const name = nameK ? String(r[nameK]||'').trim() : '';
+      if(!name) return null;
+
+      const d   = dateK ? parseDate(r[dateK]) : null;
+      const t   = timeK ? String(r[timeK]||'').trim() : '';
+      const zone= zoneK ? String(r[zoneK]||'').trim() : '';
+      const num = ordK ? Number(r[ordK]) : null;
+      const dateISO = d
+        ? `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+        : today();
+
+      const __normKeys = Object.fromEntries(Object.keys(r).map(k=>[k,norm(k)]));
+
+      return {
+        id: (num!=null?num:null),
+        number:(num!=null?num:null),
+        name,
+        date: dateISO,
+        time: t,
+        zone,
+        src: r,
+        __normKeys
+      };
+    }
+
+    // ========= Demo di fallback (se API down) =========
     let chartData = [
       {date:'2025-11-20',count:6},
       {date:'2025-11-21',count:11},
@@ -68,51 +134,55 @@
       {date:'2025-11-29',count:8}
     ];
 
+    // ========= Canvas / layout lungo e stretto =========
     function getCanvasCtx(){
-      const canvas=document.getElementById('orders-chart');
+      const canvas = document.getElementById('orders-chart');
       if(!canvas) return {};
-      const ctx=canvas.getContext('2d');
-      const dpr=window.devicePixelRatio||1;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
 
-      const parent=canvas.parentElement;
-      let w=parent?.clientWidth||320;
-      let h=parent?.clientHeight||120;
+      const parent = canvas.parentElement;
+      let w = parent?.clientWidth || 320;
+      let h = parent?.clientHeight || 120;
 
-      // adattato: usa sempre l'altezza reale del contenitore (flashcard lunga e stretta)
-      // if(h > w/2.8) h = w/2.8;
+      // mantiene grafico panoramico, basso e largo
+      const maxH = w / 3.0;
+      if(h > maxH) h = maxH;
 
-      canvas.width=w*dpr;
-      canvas.height=h*dpr;
+      canvas.width  = w*dpr;
+      canvas.height = h*dpr;
       ctx.setTransform(dpr,0,0,dpr,0,0);
 
       return {canvas,ctx,width:w,height:h};
     }
 
     function drawChart(data){
-      const {ctx,width,height}=getCanvasCtx();
+      const {ctx,width,height} = getCanvasCtx();
       if(!ctx||!width||!height) return;
 
       ctx.clearRect(0,0,width,height);
 
-      const padding={top:4,right:8,bottom:18,left:26};
-      const w=Math.max(10,width - padding.left - padding.right);
-      const h=Math.max(10,height - padding.top - padding.bottom);
+      const padding = {top:10,right:10,bottom:26,left:32};
+      const w = Math.max(10,width  - padding.left - padding.right);
+      const h = Math.max(10,height - padding.top  - padding.bottom);
 
-      const bgGrad=ctx.createLinearGradient(
+      // background del grafico (glass dark)
+      const bgGrad = ctx.createLinearGradient(
         padding.left, padding.top,
         padding.left, padding.top+h
       );
-      bgGrad.addColorStop(0,'rgba(255,255,255,0.05)');
-      bgGrad.addColorStop(1,'rgba(0,0,0,0.78)');
-      ctx.fillStyle=bgGrad;
+      bgGrad.addColorStop(0,'rgba(255,255,255,0.06)');
+      bgGrad.addColorStop(1,'rgba(0,0,0,0.85)');
+      ctx.fillStyle = bgGrad;
       ctx.fillRect(padding.left,padding.top,w,h);
 
       if(!data.length) return;
 
-      const maxCount=Math.max(1,...data.map(d=>d.count));
-      const steps=Math.min(maxCount,4);
+      const maxCount = Math.max(1,...data.map(d=>d.count));
+      const steps = Math.min(maxCount,4);
 
-      ctx.strokeStyle='rgba(255,255,255,0.12)';
+      // griglia orizzontale
+      ctx.strokeStyle='rgba(255,255,255,0.14)';
       ctx.lineWidth=1;
       ctx.beginPath();
       for(let i=0;i<=steps;i++){
@@ -122,7 +192,8 @@
       }
       ctx.stroke();
 
-      ctx.fillStyle='rgba(255,255,255,0.7)';
+      // label Y
+      ctx.fillStyle='rgba(255,255,255,0.75)';
       ctx.font='10px Verdana, sans-serif';
       ctx.textAlign='right';
       ctx.textBaseline='middle';
@@ -133,21 +204,22 @@
       }
 
       const n=data.length;
-      const gap=6;
+      const gap=4;
       const barWidth=Math.max(4,(w-gap*(n+1))/n);
 
+      // barre brand (giallo → rosso Molino)
       data.forEach((d,i)=>{
         const x=padding.left + gap + i*(barWidth+gap);
         const barH=d.count/maxCount*h;
         const y=padding.top + h - barH;
 
         const grad=ctx.createLinearGradient(0,y,0,y+barH);
-        grad.addColorStop(0,'#ffd60a');
-        grad.addColorStop(0.5,'#ffb347');
-        grad.addColorStop(1,'#770505');
+        grad.addColorStop(0,'#ffd60a');   // accent
+        grad.addColorStop(0.55,'#ffb347'); // warm
+        grad.addColorStop(1,'#770505');   // main brand red
 
         ctx.fillStyle=grad;
-        const r=4;
+        const r=3;
         ctx.beginPath();
         ctx.moveTo(x, y+r);
         ctx.arcTo(x, y, x+barWidth, y, r);
@@ -158,26 +230,28 @@
         ctx.fill();
       });
 
-      ctx.fillStyle='rgba(255,255,255,0.85)';
+      // label X (gg/mm)
+      ctx.fillStyle='rgba(255,255,255,0.9)';
       ctx.font='9px Verdana, sans-serif';
       ctx.textAlign='center';
       ctx.textBaseline='top';
 
       data.forEach((d,i)=>{
         const xCenter = padding.left + gap + i*(barWidth+gap) + barWidth/2;
-        const [yyyy,mm,dd]=d.date.split('-');
-        const label=`${dd}/${mm}`;
+        const [yyyy,mm,dd] = d.date.split('-');
+        const label = `${dd}/${mm}`;
         ctx.fillText(label, xCenter, padding.top + h + 6);
       });
     }
 
+    // ========= Aggregazione ordini futuri =========
     function buildFutureDataFromOrders(orders){
-      const today = todayISO();
+      const tdy = today();
       const map = new Map();
 
       (orders || []).forEach(o=>{
         if(!o.date) return;
-        if(o.date >= today){
+        if(o.date >= tdy){ // da oggi in poi
           map.set(o.date,(map.get(o.date)||0)+1);
         }
       });
@@ -186,18 +260,74 @@
         .map(([date,count])=>({date,count}))
         .sort((a,b)=>a.date.localeCompare(b.date));
 
-      return rows.length ? rows : chartData;
+      return rows.length ? rows : chartData; // se vuoto, tieni demo
     }
 
+    // ========= Fetch da Google Apps Script =========
+    async function loadOrdersAndDraw(){
+      try{
+        const res = await fetch(API+'?&_ts='+Date.now(),{
+          cache:'no-store',
+          mode:'cors',
+          headers:{Accept:'application/json, text/plain, */*'}
+        });
+
+        const ct  = (res.headers && res.headers.get('content-type')) || '';
+        const raw = await res.text();
+        if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,200)}`);
+
+        let data;
+        try{
+          const looksJson = ct.toLowerCase().includes('json')
+            || raw.trim().startsWith('{')
+            || raw.trim().startsWith('[');
+          if(looksJson) data = JSON.parse(raw);
+          else throw new Error('API non JSON ('+ct+')');
+        }catch(_){
+          const s = raw.search(/[\[{]/),
+                eB= raw.lastIndexOf('}'),
+                eA= raw.lastIndexOf(']'),
+                e = Math.max(eB,eA);
+          if(s!==-1 && e>s) data = JSON.parse(raw.slice(s,e+1));
+          else throw new Error('Parse JSON fallita');
+        }
+
+        let rows=[];
+        if(Array.isArray(data)) rows=data;
+        else if(Array.isArray(data.rows)) rows=data.rows;
+        else if(Array.isArray(data.data)) rows=data.data;
+        else if(data && typeof data==='object'){
+          const k = Object.keys(data).find(x=>Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
+          if(k) rows=data[k];
+        }
+        if(!Array.isArray(rows)) rows=[];
+
+        const orders = rows.map(rowToOrder).filter(Boolean);
+        chartData = buildFutureDataFromOrders(orders);
+        drawChart(chartData);
+      }catch(e){
+        console.warn('API load error (grafici.html)', e);
+        // fallback: usa i dati demo
+        drawChart(chartData);
+      }
+    }
+
+    // ========= Integrazione opzionale con pagina parent =========
     window.updateOrdersChart = function(orders){
       chartData = buildFutureDataFromOrders(orders);
       drawChart(chartData);
     };
 
-    function init(){ drawChart(chartData); }
+    // ========= Init =========
+    function init(){
+      // primo render veloce con demo
+      drawChart(chartData);
+      // poi carico i dati reali dal foglio
+      loadOrdersAndDraw();
+    }
 
     if(document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded',init);
+      document.addEventListener('DOMContentLoaded', init);
     }else{
       init();
     }
