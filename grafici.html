@@ -1,24 +1,117 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Grafici 2.0</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Grafici — Molino</title>
   <style>
-    :root{ --accent:#ffd60a; }
-    html,body{ margin:0;padding:0;width:100%;height:100%;font-family:Verdana;background:#050708;color:#f5f5f7;overflow:hidden; }
-    .wrap{ display:flex;gap:14px;width:100%;height:100%;padding:14px;box-sizing:border-box; }
-    .left{ flex:2;min-width:0;display:flex;align-items:center;justify-content:center; }
-    .right{ flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;font-size:13px; }
-    .row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
-    .row strong{color:var(--accent);font-size:18px;font-weight:800;}
-    canvas{width:100%;height:100%;border-radius:14px;}
+    :root {
+      --accent: #ffd60a;
+      --bg: #050708;
+      --fg: #f5f5f7;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      font-family: Verdana, sans-serif;
+      color: var(--fg);
+      overflow: hidden;
+    }
+
+    .wrap {
+      display: flex;
+      gap: 10px;
+      padding: 6px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      align-items: center;
+    }
+
+    /* Grafico */
+    .chart-container {
+      flex: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+    }
+
+    /* Avicoli */
+    .avicoli {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      font-size: 11px;
+      line-height: 1.1;
+      min-width: 0;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2px;
+      padding: 0;
+      margin: 0;
+    }
+
+    .row strong {
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    /* Dot davanti a ogni avicolo */
+    .row span::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    /* Indicatore live */
+    .live-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s infinite ease-in-out;
+      margin-bottom: 6px;
+      align-self: flex-start;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: .2; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+
 <div class="wrap">
-  <div class="left"><canvas id="chart"></canvas></div>
-  <div class="right">
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div class="avicoli">
+    <div class="live-indicator"></div>
     <div class="row"><span>Oche</span><strong id="oche">0</strong></div>
     <div class="row"><span>Anatre</span><strong id="anatre">0</strong></div>
     <div class="row"><span>Caponi</span><strong id="caponi">0</strong></div>
@@ -27,84 +120,129 @@
 </div>
 
 <script>
-// Sandbox-safe fallback mode
-// If fetch fails, we use demo data instead of crashing.
+/* =============================
+   CONFIG & UTILITIES
+============================= */
+const API = "https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec";
+const TYPES = ["oche", "anatre", "caponi", "polli"];   
 
-const TYPES=["oche","anatre","caponi","polli"];
-
-function draw(data){
-  const c=document.getElementById("chart");
-  const ctx=c.getContext("2d");
-  const w=c.clientWidth,h=c.clientHeight;
-  c.width=w; c.height=h;
-  ctx.clearRect(0,0,w,h);
-  if(!data.length) return;
-
-  const pad=18;
-  const W=w-pad*2;
-  const H=h-pad*2;
-  const max=Math.max(...data.map(d=>d.count));
-  const step=W/data.length;
-  const bar=step*0.55;
-
-  ctx.font="10px Verdana";
-  ctx.textAlign="center";
-  ctx.textBaseline="bottom";
-
-  data.forEach((d,i)=>{
-    const x=pad+i*step+(step-bar)/2;
-    const bh=H*(d.count/max);
-    const y=h-pad-bh;
-
-    ctx.fillStyle="#ffd60a";
-    ctx.fillRect(x,y,bar,bh);
-
-    ctx.fillStyle="#000";
-    ctx.fillText(d.count,x+bar/2,y-3);
-
-    ctx.fillStyle="#ccc";
-    ctx.fillText(d.date.slice(5),x+bar/2,h-pad+12);
-  });
+function norm(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
-async function load(){
-  let rows=null;
-  try{
-    const res=await fetch("https://script.google.com/macros/s/INVALID_FOR_SANDBOX/exec",{mode:"no-cors"});
-    if(!res.ok) throw new Error("fetch blocked");
-  }catch(e){
-    // DEMO fallback
-    rows=[
-      {"DATA RITIRO":"2025-11-20", oche:1, anatre:0, caponi:5, polli:2},
-      {"DATA RITIRO":"2025-11-21", oche:0, anatre:1, caponi:0, polli:1},
-      {"DATA RITIRO":"2025-11-22", oche:2, anatre:0, caponi:0, polli:3}
+function cleanNum(v) {
+  return parseFloat(String(v).replace(",", ".")) || 0;
+}
+
+/* =============================
+   FETCH + PARSE ROBUSTO
+============================= */
+async function fetchData() {
+  try {
+    const res = await fetch(API, { cache: "no-store" });
+    const txt = await res.text();
+
+    // Estrarre solo la parte JSON valida
+    const json = JSON.parse(txt.match(/[\[{].*[\]}]/s)[0]);
+
+    return json.rows || json.data || json;
+  } catch (e) {
+    console.warn("API non raggiungibile, fallback DEMO", e);
+    return [
+      { "DATA RITIRO": "2025-11-20", oche: 1, anatre: 0, caponi: 5, polli: 2 },
+      { "DATA RITIRO": "2025-11-21", oche: 0, anatre: 1, caponi: 0, polli: 1 },
+      { "DATA RITIRO": "2025-11-22", oche: 2, anatre: 0, caponi: 0, polli: 3 }
     ];
   }
-
-  // Compute totals
-  const totals={oche:0,anatre:0,caponi:0,polli:0};
-  rows.forEach(r=>{
-    TYPES.forEach(tp=>{ totals[tp]+=Number(r[tp]||0); });
-  });
-
-  document.getElementById("oche").textContent=Math.ceil(totals.oche);
-  document.getElementById("anatre").textContent=Math.ceil(totals.anatre);
-  document.getElementById("caponi").textContent=Math.ceil(totals.caponi);
-  document.getElementById("polli").textContent=Math.ceil(totals.polli);
-
-  // Chart future extraction
-  const unique={};
-  rows.forEach(r=>{
-    const iso=String(r["DATA RITIRO"]);
-    unique[iso]=(unique[iso]||0)+1;
-  });
-
-  const data=Object.entries(unique).map(([date,count])=>({date,count}));
-  draw(data);
 }
 
-window.addEventListener("load",load);
-window.addEventListener("resize",load);
+/* =============================
+   AVICOLI TOTALS
+============================= */
+function computeTotals(rows) {
+  const totals = { oche: 0, anatre: 0, caponi: 0, polli: 0 };
+  rows.forEach(r => {
+    TYPES.forEach(tp => totals[tp] += cleanNum(r[tp]));
+  });
+  return totals;
+}
+
+function updateAvicoli(t) {
+  document.getElementById("oche").textContent = Math.ceil(t.oche);
+  document.getElementById("anatre").textContent = Math.ceil(t.anatre);
+  document.getElementById("caponi").textContent = Math.ceil(t.caponi);
+  document.getElementById("polli").textContent = Math.ceil(t.polli);
+}
+
+/* =============================
+   FUTURE ORDERS BY DATE
+============================= */
+function extractFuture(rows) {
+  const output = {};
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  rows.forEach(r => {
+    const iso = String(r["DATA RITIRO"] || "");
+    const dt = new Date(iso);
+    if (!iso || isNaN(dt)) return;
+    if (dt >= today) output[iso] = (output[iso] || 0) + 1;
+  });
+
+  return Object.entries(output).map(([date, count]) => ({ date, count }));
+}
+
+/* =============================
+   DRAW CHART CANVAS
+============================= */
+function drawChart(data) {
+  const c = document.getElementById("chart");
+  const ctx = c.getContext("2d");
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w; c.height = h;
+
+  ctx.clearRect(0,0,w,h);
+  if (!data.length) return;
+
+  const pad = 16;
+  const W = w - pad * 2;
+  const H = h - pad * 2;
+  const max = Math.max(...data.map(d => d.count));
+  const step = W / data.length;
+  const barW = step * 0.55;
+
+  ctx.font = "10px Verdana";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+
+  data.forEach((d,i) => {
+    const x = pad + i * step + (step - barW) / 2;
+    const barH = H * (d.count / max);
+    const y = h - pad - barH;
+
+    ctx.fillStyle = "#ffd60a";
+    ctx.fillRect(x, y, barW, barH);
+
+    ctx.fillStyle = "#000";
+    ctx.fillText(d.count, x + barW/2, y - 2);
+
+    ctx.fillStyle = "#ccc";
+    ctx.fillText(d.date.slice(5), x + barW/2, h - pad + 12);
+  });
+}
+
+/* =============================
+   MAIN LOAD + POLLING
+============================= */
+async function load() {
+  const rows = await fetchData();
+  updateAvicoli(computeTotals(rows));
+  drawChart(extractFuture(rows));
+}
+
+window.addEventListener("load", load);
+window.addEventListener("resize", load);
+setInterval(load, 15 * 60 * 1000);
 </script>
+
 </body>
 </html>
