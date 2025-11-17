@@ -1,102 +1,86 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LED Ultra Pixel</title>
-<style>
-  body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#000 !important;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-family:'Courier New', monospace;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LED Ultra Pixel</title>
 
-  /* ULTRA-Pixel GRID */
-  .pixel-grid{
-    position:absolute;
-    width:100%;
-    height:100%;
-    background:radial-gradient(circle at center,#000 0%,#000 40%,#010101 100%);
-    pointer-events:none;
-    z-index:1;
-  }
+  <!-- Font Pixelify Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
 
-  .pixel-grid::after{
-    content:"";
-    position:absolute;
-    top:0;left:0;
-    width:100%;height:100%;
-    background-image:
-      repeating-linear-gradient(90deg, rgba(255,0,0,0.12) 0px, rgba(255,0,0,0.12) 1px, transparent 1px, transparent 8px),
-      repeating-linear-gradient(0deg, rgba(255,0,0,0.08) 0px, rgba(255,0,0,0.08) 1px, transparent 1px, transparent 8px);
-    mix-blend-mode:screen;
-    opacity:0.35;
-    image-rendering:pixelated;
-  }
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
 
-  /* SCROLLING TEXT */
-  #led{
-    text-align:center;
-    z-index:2;
-    white-space:nowrap;
-    color:#ff1a00;
-    text-shadow:
-      0 0 2px #ff1a00,
-      0 0 4px #ff1a00,
-      0 0 8px #ff3000,
-      0 0 10px #ff3000;
-    image-rendering:pixelated;
-    animation:scroll 24s linear infinite;
-  }
+    body {
+      display: flex;
+      align-items: center;   /* centro verticale */
+      justify-content: flex-start;
+      font-family: "Pixelify Sans", monospace;
+    }
 
-  @keyframes scroll{
-    0%   { transform:translateX(100vw); }
-    100% { transform:translateX(-220%); }
-  }
-</style>
+    #led {
+      white-space: nowrap;
+      color: #ff1a00;
+      text-shadow:
+        0 0 2px #ff1a00,
+        0 0 4px #ff1a00,
+        0 0 8px #ff3000,
+        0 0 10px #ff3000;
+      image-rendering: pixelated;
+      font-size: 4.5vw;        /* adattato alla larghezza schermo */
+      padding-left: 100vw;     /* parte da fuori a destra */
+    }
+
+    .scroll {
+      animation: scroll 24s linear infinite;
+    }
+
+    @keyframes scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-220%); }
+    }
+  </style>
 </head>
 
 <body>
-<div class="pixel-grid"></div>
-<div id="led">...</div>
+  <div id="led">...</div>
 
-<script>
-const phrases=[
-  "Veronica non è scema: è limited edition. E pure difettata di fabbrica.",
-  "Veronica ha un talento: riesce a sbagliare anche quando non c’è niente da sbagliare.",
-  "Veronica non fa figuracce: le colleziona.",
-  "Veronica non capisce le cose al volo… le capisce in volo, ma dopo che sono già atterrate.",
-  "Veronica ha una mente brillante. La luminosità è solo su 'minimo'.",
-  "Veronica non commette errori: li produce in serie."
-];
+  <script>
+    const phrases = [
+      "Veronica non è scema: è limited edition. E pure difettata di fabbrica.",
+      "Veronica ha un talento: riesce a sbagliare anche quando non c’è niente da sbagliare.",
+      "Veronica non fa figuracce: le colleziona.",
+      "Veronica non capisce le cose al volo… le capisce in volo, ma dopo che sono già atterrate.",
+      "Veronica ha una mente brillante. La luminosità è solo su 'minimo'.",
+      "Veronica non commette errori: li produce in serie."
+    ];
 
-let index=0;
-const led=document.getElementById("led");
+    const led = document.getElementById("led");
+    let index = 0;
 
-function resizeText(){
-  const base=window.innerWidth;
-  const size=Math.max(30, base*0.055);
-  led.style.fontSize=size+"px";
-}
+    function updateText() {
+      led.textContent = phrases[index];
 
-function newText(){
-  led.textContent=phrases[index];
-  led.style.animation='none';
-  void led.offsetWidth;
-  led.style.animation='';
-  index=(index+1)%phrases.length;
-}
+      // reset animazione per far ripartire lo scroll dall'inizio
+      led.classList.remove("scroll");
+      void led.offsetWidth;      // forza reflow
+      led.classList.add("scroll");
 
-resizeText();
-newText();
-setInterval(newText,24000);
-window.addEventListener('resize',resizeText);
-</script>
+      index = (index + 1) % phrases.length;
+    }
+
+    // primo testo + start animazione
+    updateText();
+    // cambia frase ad ogni ciclo completo (24s)
+    setInterval(updateText, 24000);
+  </script>
 </body>
 </html>
