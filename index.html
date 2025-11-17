@@ -63,7 +63,31 @@
     /* RIGHT: Controlli */
     .right{display:flex;flex-direction:column;gap:var(--g)}
     .controls{padding:var(--pad)}
-    .flashcards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+    /* Riga flashcards + contenitore extra */
+    .flash-row{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      margin-bottom:0;
+    }
+
+    .flashcards{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      width:33%;
+      min-width:260px;
+    }
+
+    .flashcard-extra{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      /* aspetto identico a una card ma senza contenuto obbligatorio */
+    }
+
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
     .card .k{font-size:12px;opacity:.7}
     .card .v{font-size:56px;font-weight:900;margin-top:4px}
@@ -99,7 +123,7 @@
     .meta{font-size:15px;opacity:1}
     .dept-icons{display:inline-flex;align-items:center;gap:4px;font-size:16px;margin:0 4px;}
     /* Bolla stoccaggio stile Stòc */
-.order-name{font-weight:900;font-size: 19px;}
+    .order-name{font-weight:900;font-size: 19px;}
     .meta-zone{
       display:inline-flex;
       align-items:center;
@@ -130,7 +154,11 @@
     .filter-actions{display:flex;gap:10px;margin-top:16px}
 
     /* Responsive */
-    @media (max-width:1200px){.flashcards{grid-template-columns:repeat(3,1fr)}.searchbar{grid-template-columns:1fr auto;grid-auto-flow:row}}
+    @media (max-width:1200px){
+      .flashcards{grid-template-columns:repeat(3,1fr);width:100%;}
+      .flash-row{flex-direction:column;}
+      .searchbar{grid-template-columns:1fr auto;grid-auto-flow:row}
+    }
     @media (max-width:1100px){:root{--pw:35%;--sw:65%}}
     @media (max-width:860px){.app{grid-template-columns:1fr}.ticket-bar{position:static}.list{max-height:none}.searchbar{grid-template-columns:1fr}}
 
@@ -153,11 +181,11 @@
       .holiday-msg{font-size:40px;font-weight:700;color:var(--main)}
     }
     .order-main {
-  display: flex;
-  align-items: center;
-  gap: 28px; /* distanza più ampia tra badge, nome, data, icone e pillola */
-  flex-wrap: wrap;
-}
+      display: flex;
+      align-items: center;
+      gap: 28px; /* distanza più ampia tra badge, nome, data, icone e pillola */
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -175,20 +203,29 @@
     <!-- RIGHT: Controlli (82%) -->
     <aside class="panel right">
       <div class="controls">
-        <div class="flashcards" id="flashcards">
-          <div class="card" data-filter="all">
-            <div class="k">Totale ordini</div>
-            <div id="fc-total" class="v">—</div>
+        <!-- NUOVA RIGA: 3 flashcard + contenitore vuoto -->
+        <div class="flash-row">
+          <div class="flashcards" id="flashcards">
+            <div class="card" data-filter="all">
+              <div class="k">Totale ordini</div>
+              <div id="fc-total" class="v">—</div>
+            </div>
+            <div class="card" data-filter="pickup_today">
+              <div class="k">Ritirano oggi</div>
+              <div id="fc-pickup-today" class="v">—</div>
+            </div>
+            <div class="card" data-filter="pickup_future">
+              <div class="k">Ritiri futuri</div>
+              <div id="fc-pickup-future" class="v">—</div>
+            </div>
           </div>
-          <div class="card" data-filter="pickup_today">
-            <div class="k">Ritirano oggi</div>
-            <div id="fc-pickup-today" class="v">—</div>
-          </div>
-          <div class="card" data-filter="pickup_future">
-            <div class="k">Ritiri futuri</div>
-            <div id="fc-pickup-future" class="v">—</div>
+
+          <!-- Contenitore vuoto stile flashcard -->
+          <div class="card flashcard-extra" id="flashcard-extra">
+            <!-- Vuota per ora, solo aspetto grafico -->
           </div>
         </div>
+
         <div class="searchbar">
           <input id="q" class="input" type="search" placeholder="Cerca cliente…" />
           <button id="btn-search" class="btn primary">Cerca</button>
@@ -236,26 +273,26 @@
     const hasV=v=>{const t=String(v||'').trim();return t!==''&&t!=='0'&&t!=='-'&&t.toLowerCase()!=='n/d'};
     const isYes=v=>['si','sì','y','yes','true','1'].includes(norm(v));
     const fmtLong = (iso) => {
-  if (!iso) return "—";
-  const d = new Date(iso + "T12:00:00");
+      if (!iso) return "—";
+      const d = new Date(iso + "T12:00:00");
 
-  const giorniSettimana = [
-    "domenica","lunedì","martedì","mercoledì",
-    "giovedì","venerdì","sabato"
-  ];
+      const giorniSettimana = [
+        "domenica","lunedì","martedì","mercoledì",
+        "giovedì","venerdì","sabato"
+      ];
 
-  const mesi = [
-    "gennaio","febbraio","marzo","aprile","maggio","giugno",
-    "luglio","agosto","settembre","ottobre","novembre","dicembre"
-  ];
+      const mesi = [
+        "gennaio","febbraio","marzo","aprile","maggio","giugno",
+        "luglio","agosto","settembre","ottobre","novembre","dicembre"
+      ];
 
-  const g = giorniSettimana[d.getDay()];
-  const giorno = d.getDate();
-  const mese = mesi[d.getMonth()];
-  const anno = d.getFullYear();
+      const g = giorniSettimana[d.getDay()];
+      const giorno = d.getDate();
+      const mese = mesi[d.getMonth()];
+      const anno = d.getFullYear();
 
-  return `${g}, ${giorno} ${mese} ${anno}`;
-};
+      return `${g}, ${giorno} ${mese} ${anno}`;
+    };
 
     let ORDERS=[],view=[],index=0,active='all';
 
