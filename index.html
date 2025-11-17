@@ -691,10 +691,57 @@
       optsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply(); }));
       updToggle(); updApply();
     }
-    const countSel=()=>{let c=0; optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>{if(i.checked) c++}); return c;}
-    const setAll=b=>{optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i=>i.checked=b); updToggle(); updApply();}
-    const updToggle=()=>{const tot=5,sel=countSel(); toggleAllBtn.textContent=(sel===tot)?'Deseleziona tutti':'Seleziona tutti';}
-    const updApply=()=>{applyBtn.disabled=(countSel()===0);}
+        const countSel = () => {
+      let c = 0;
+      optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i => {
+        if (i.checked) c++;
+      });
+      return c;
+    };
+
+    const setAll = b => {
+      optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i => {
+        i.checked = b;
+      });
+      updToggle();
+      updApply();
+    };
+
+    const updToggle = () => {
+      const tot = ALL_IDS.length;
+      const sel = countSel();
+      toggleAllBtn.textContent = (sel === tot) ? 'Deseleziona tutti' : 'Seleziona tutti';
+    };
+
+    const updApply = () => {
+      applyBtn.disabled = (countSel() === 0);
+    };
+
+    // Wiring bottoni modale: aggiorna ACTIVE e ri-applica il filtro a cascata
+    if (toggleAllBtn) {
+      toggleAllBtn.addEventListener('click', () => {
+        const tot = ALL_IDS.length;
+        const sel = countSel();
+        setAll(sel !== tot);              // se non sono tutti, seleziona tutti; se sono tutti, deseleziona tutti
+      });
+    }
+
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        const selected = [];
+        optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i => {
+          if (i.checked) selected.push(i.dataset.dep);
+        });
+
+        // Se qualcosa va storto e non c'è nulla selezionato, fallback a tutti i reparti
+        const next = selected.length ? selected : ALL_IDS;
+        ACTIVE = new Set(next);
+        localStorage.setItem('sso_active_depts', JSON.stringify([...ACTIVE]));
+
+        closeModal();
+        apply();                          // ricalcola lista ordini (dopo filtro flashcard)
+      });
+    }
 
     /* ===================== Scroll lock per modale ===================== */
     function lock(){
