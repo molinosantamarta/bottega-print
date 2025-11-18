@@ -629,7 +629,32 @@
       const ta=(a.time||''),tb=(b.time||'');
       return ta<tb?1:(ta>tb?-1:0);
     }
-    function highlight(){D.qa('#orders-list .order').forEach((n,i)=>n.classList.toggle('selected',i===index))}
+   function highlight(){
+  const listEl = D.q('#orders-list');
+  const nodes  = D.qa('#orders-list .order');
+
+  // evidenzia l'ordine selezionato
+  nodes.forEach((n,i)=>n.classList.toggle('selected', i === index));
+
+  if (!listEl || index < 0 || index >= nodes.length) return;
+
+  const sel = nodes[index];
+
+  // bounding rect di lista e elemento selezionato
+  const listRect = listEl.getBoundingClientRect();
+  const selRect  = sel.getBoundingClientRect();
+
+  const margin = 8; // piccolo respiro
+
+  // Se l'elemento selezionato è SOPRA l'area visibile
+  if (selRect.top < listRect.top + margin) {
+    listEl.scrollTop -= (listRect.top + margin) - selRect.top;
+  }
+  // Se l'elemento selezionato è SOTTO l'area visibile
+  else if (selRect.bottom > listRect.bottom - margin) {
+    listEl.scrollTop += selRect.bottom - (listRect.bottom - margin);
+  }
+}
     function renderList(list){
       const sorted = [...list].sort(sortDesc);
       const el     = D.q('#orders-list');
