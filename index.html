@@ -65,45 +65,45 @@
     .controls{padding:var(--pad)}
 
     /* Riga flashcards + contenitore extra */
-.flash-row{
-  display:flex;
-  gap:10px;
-  align-items:stretch;   /* così la bolla ha l’altezza delle flashcard */
-  margin-bottom:0;
-}
+    .flash-row{
+      display:flex;
+      gap:10px;
+      align-items:stretch;   /* così la bolla ha l’altezza delle flashcard */
+      margin-bottom:0;
+    }
 
-/* Colonna flashcard (come prima) */
-.flashcards{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  width:33%;
-  min-width:260px;
-}
+    /* Colonna flashcard */
+    .flashcards{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      width:33%;
+      min-width:340px;
+    }
 
-/* Contenitore del grafico: è la "card" coi bordi stondati */
-.flashcard-extra{
-  flex:1;
-  display:flex;
-  align-items:stretch;
-  justify-content:center;
-  cursor:default;
-  padding:0;
-  border-radius:14px;                       /* bordi stondati */
-  background:#fff;                          /* stesso look delle card */
-  border:1px solid rgba(0,0,0,.08);         /* come le altre card */
-  box-shadow:var(--e);                      /* stessa ombra */
-  overflow:hidden;                          /* taglia l’iframe dentro */
-  position:relative;
-}
+    /* Contenitore del grafico: è la "card" coi bordi stondati */
+    .flashcard-extra{
+      flex:1;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      cursor:default;
+      padding:0;
+      border-radius:14px;                       /* bordi stondati */
+      background:#fff;                          /* stesso look delle card */
+      border:1px solid rgba(0,0,0,.08);         /* come le altre card */
+      box-shadow:var(--e);                      /* stessa ombra */
+      overflow:hidden;                          /* taglia l’iframe dentro */
+      position:relative;
+    }
 
-/* L’iframe riempie completamente la bolla, senza bordi */
-.flashcard-extra iframe{
-  width:100%;
-  height:100%;
-  display:block;
-  border:0;
-}
+    /* L’iframe riempie completamente la bolla, senza bordi */
+    .flashcard-extra iframe{
+      width:100%;
+      height:100%;
+      display:block;
+      border:0;
+    }
 
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
     .card .k{font-size:12px;opacity:.7}
@@ -172,7 +172,7 @@
 
     /* Responsive */
     @media (max-width:1200px){
-      .flashcards{grid-template-columns:repeat(3,1fr);width:100%;}
+      .flashcards{grid-template-columns:repeat(4,1fr);width:100%;}
       .flash-row{flex-direction:column;}
       .searchbar{grid-template-columns:1fr auto;grid-auto-flow:row}
     }
@@ -220,7 +220,7 @@
     <!-- RIGHT: Controlli (82%) -->
     <aside class="panel right">
       <div class="controls">
-        <!-- 3 flashcard + contenitore grafici -->
+        <!-- 4 flashcard + contenitore grafici -->
         <div class="flash-row">
           <div class="flashcards" id="flashcards">
             <div class="card" data-filter="all">
@@ -230,6 +230,10 @@
             <div class="card" data-filter="pickup_today">
               <div class="k">Ritirano oggi</div>
               <div id="fc-pickup-today" class="v">—</div>
+            </div>
+            <div class="card" data-filter="pickup_tomorrow">
+              <div class="k">Ritirano domani</div>
+              <div id="fc-pickup-tomorrow" class="v">—</div>
             </div>
             <div class="card" data-filter="pickup_future">
               <div class="k">Ritiri futuri</div>
@@ -282,6 +286,14 @@
     const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))};
     const pad=n=>String(n).padStart(2,'0');
     const today=()=>{const d=new Date;return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+    const addDaysISO=(iso,days)=>{
+      if(!iso) return null;
+      const d=new Date(iso+"T12:00:00");
+      d.setDate(d.getDate()+days);
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    };
+    const tomorrow=()=>addDaysISO(today(),1);
+
     const giorniSettimana=['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
     const fmtIT=(iso)=>{ if(!iso) return '—'; const d=new Date(iso+"T12:00:00"); return `${giorniSettimana[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`; };
     const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
@@ -332,7 +344,7 @@
       };
 
       const groups={pane:[],banco:[],fruver:[],carne:[],altro:[]};
-      let current=null; let avicoloDesc=''; let lastAviIdx=-1; 
+      let current=null; let avicoloDesc=''; let lastAviIdx=-1;
       let noteOrder='';
 
       const pushLines=(arr,text)=>{
@@ -343,14 +355,15 @@
       for(const [kr,vr] of entries){
         const k=norm(kr); const val=(vr==null?'':String(vr)).trim();
         if(!hasV(val)) continue;
+
         // NOTE SULL'ORDINE (mostrale in fondo, se presenti)
         if (
-  (k.includes('note') && (k.includes('ordine') || k.includes('ord'))) ||
-  k === norm("note sull'ordine")
-) {
-  noteOrder = val;
-  continue;
-}
+          (k.includes('note') && (k.includes('ordine') || k.includes('ord'))) ||
+          k === norm("note sull'ordine")
+        ) {
+          noteOrder = val;
+          continue;
+        }
 
         if( (k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))) || k.includes('descrizione preparazione avicolo') ){
           avicoloDesc=val; continue;
@@ -384,14 +397,14 @@
         if(pieces.length>0) pieces.push('<div class="dept-sep"></div>');
         pieces.push(...arr);
       }
-      
+
       // NOTE in fondo (se presenti)
-if (hasV(noteOrder)) {
-  if (pieces.length > 0) pieces.push('<div class="dept-sep"></div>');
-  // stesso rendering delle altre linee
-  String(noteOrder).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV)
-    .forEach(s=>pieces.push(`<div class="line">${esc(s)}</div>`));
-}
+      if (hasV(noteOrder)) {
+        if (pieces.length > 0) pieces.push('<div class="dept-sep"></div>');
+        String(noteOrder).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV)
+          .forEach(s=>pieces.push(`<div class="line">${esc(s)}</div>`));
+      }
+
       return pieces.join('');
     }
 
@@ -447,40 +460,39 @@ if (hasV(noteOrder)) {
     }
 
     function deptIcons(row){
-  const src = row.src || {};
-  const nkMap = row.__normKeys || {};
+      const src = row.src || {};
+      const nkMap = row.__normKeys || {};
 
-  const hasHead = (normKey) => {
-    for (const [k, v] of Object.entries(src)) {
-      const nk = nkMap[k] || norm(k);
-      if (nk === normKey && hasV(v)) return true;
+      const hasHead = (normKey) => {
+        for (const [k, v] of Object.entries(src)) {
+          const nk = nkMap[k] || norm(k);
+          if (nk === normKey && hasV(v)) return true;
+        }
+        return false;
+      };
+
+      const icons = [];
+      if (hasHead(DEPTS[0].k)) icons.push('🥖');
+      if (hasHead(DEPTS[1].k)) icons.push('🧀');
+      if (hasHead(DEPTS[2].k)) icons.push('🥦');
+      if (hasHead(DEPTS[3].k)) icons.push('🥩');
+      if (hasHead(DEPTS[4].k)) icons.push('📦');
+
+      // 🐔 Solo se il campo avicoli è "SI"
+      let hasAvicolo = false;
+      for (const [k, v] of Object.entries(src)) {
+        const nk = nkMap[k] || norm(k);
+        if (nk.includes('avicol') && isYes(v)) {
+          hasAvicolo = true;
+          break;
+        }
+      }
+      if (hasAvicolo) icons.push('🐔');
+
+      return icons.length
+        ? `<span class="dept-icons">${icons.join(' ')}</span>`
+        : '';
     }
-    return false;
-  };
-
-  const icons = [];
-  if (hasHead(DEPTS[0].k)) icons.push('🥖');
-  if (hasHead(DEPTS[1].k)) icons.push('🧀');
-  if (hasHead(DEPTS[2].k)) icons.push('🥦');
-  if (hasHead(DEPTS[3].k)) icons.push('🥩');
-  if (hasHead(DEPTS[4].k)) icons.push('📦');
-
-  // 🐔 Solo se il campo avicoli è "SI"
-  let hasAvicolo = false;
-  for (const [k, v] of Object.entries(src)) {
-    const nk = nkMap[k] || norm(k);
-    if (nk.includes('avicol') && isYes(v)) {
-      hasAvicolo = true;
-      break;
-    }
-  }
-  if (hasAvicolo) icons.push('🐔');
-
-  return icons.length
-    ? `<span class="dept-icons">${icons.join(' ')}</span>`
-    : '';
-}
-    
 
     const avicoloYN=r=>{
       for(const k of Object.keys(r.src||{}))
@@ -584,56 +596,60 @@ if (hasV(noteOrder)) {
       return false;
     };
 
-   function updateFilterUI(){
-  const badge = D.q('#sso-filter-badge');
-  const chip  = D.q('#chipbar-filter');
-  if (!badge || !chip) return;
+    function updateFilterUI(){
+      const badge = D.q('#sso-filter-badge');
+      const chip  = D.q('#chipbar-filter');
+      if (!badge || !chip) return;
 
-  const all = [
-    {id:'pane',   icon:'🥖'},
-    {id:'banco',  icon:'🧀'},
-    {id:'fruver', icon:'🥦'},
-    {id:'carne',  icon:'🥩'},
-    {id:'altro',  icon:'📦'}
-  ];
+      const all = [
+        {id:'pane',   icon:'🥖'},
+        {id:'banco',  icon:'🧀'},
+        {id:'fruver', icon:'🥦'},
+        {id:'carne',  icon:'🥩'},
+        {id:'altro',  icon:'📦'}
+      ];
 
-  // ➤ Caso: TUTTI i reparti sono selezionati → filtro NON attivo
-  if (ACTIVE.size === ALL_IDS.length) {
-    chip.classList.add('compact');
-    chip.classList.remove('active');
+      // ➤ Caso: TUTTI i reparti sono selezionati → filtro NON attivo
+      if (ACTIVE.size === ALL_IDS.length) {
+        chip.classList.add('compact');
+        chip.classList.remove('active');
 
-    // Nessun badge, nessun testo
-    badge.style.display = 'none';
-    badge.innerHTML = '';
-    return;
-  }
+        // Nessun badge, nessun testo
+        badge.style.display = 'none';
+        badge.innerHTML = '';
+        return;
+      }
 
-  // ➤ Caso: filtro attivo (almeno un reparto deselezionato)
-  chip.classList.remove('compact');
-  chip.classList.add('active');
+      // ➤ Caso: filtro attivo (almeno un reparto deselezionato)
+      chip.classList.remove('compact');
+      chip.classList.add('active');
 
-  // Badge visibile con le icone dei reparti selezionati
-  badge.style.display = 'inline-flex';
-  badge.innerHTML = all
-    .filter(d => ACTIVE.has(d.id))
-    .map(d => d.icon)
-    .join(' <span class="sep">+</span> ');
-}
+      // Badge visibile con le icone dei reparti selezionati
+      badge.style.display = 'inline-flex';
+      badge.innerHTML = all
+        .filter(d => ACTIVE.has(d.id))
+        .map(d => d.icon)
+        .join(' <span class="sep">+</span> ');
+    }
 
     /* ===================== Stat / Flashcards ===================== */
     function recompute(){
-      const t=ORDERS.length,tdy=today();let pT=0,pF=0,max=0;
+      const t=ORDERS.length, tdy=today(), tmr=tomorrow();
+      let pT=0,pD=0,pF=0,max=0;
       for(const o of ORDERS){
         if(o.date===tdy) pT++;
+        if(o.date===tmr) pD++;
         if(o.date>tdy) pF++;
         if(typeof o.number==='number'&&!isNaN(o.number)) max=Math.max(max,o.number);
       }
       const total=Math.max(max,t+1);
       const elTotal=D.q('#fc-total');
       const elPT=D.q('#fc-pickup-today');
+      const elPD=D.q('#fc-pickup-tomorrow');
       const elPF=D.q('#fc-pickup-future');
       if(elTotal) elTotal.textContent=total;
       if(elPT) elPT.textContent=pT;
+      if(elPD) elPD.textContent=pD;
       if(elPF) elPF.textContent=pF;
     }
 
@@ -647,40 +663,40 @@ if (hasV(noteOrder)) {
       return ta<tb?1:(ta>tb?-1:0);
     }
     function sortFutureByDateDesc(a,b){
-  // data più recente -> più lontana
-  if (a.date !== b.date) return a.date > b.date ? 1 : -1;
+      // data più recente -> più lontana
+      if (a.date !== b.date) return a.date > b.date ? 1 : -1;
 
-  // stessa data: ora più recente -> più vecchia
-  const ta = (a.time || '');
-  const tb = (b.time || '');
-  return ta < tb ? 1 : (ta > tb ? -1 : 0);
-}
-   function highlight(){
-  const listEl = D.q('#orders-list');
-  const nodes  = D.qa('#orders-list .order');
+      // stessa data: ora più recente -> più vecchia
+      const ta = (a.time || '');
+      const tb = (b.time || '');
+      return ta < tb ? 1 : (ta > tb ? -1 : 0);
+    }
+    function highlight(){
+      const listEl = D.q('#orders-list');
+      const nodes  = D.qa('#orders-list .order');
 
-  // evidenzia l'ordine selezionato
-  nodes.forEach((n,i)=>n.classList.toggle('selected', i === index));
+      // evidenzia l'ordine selezionato
+      nodes.forEach((n,i)=>n.classList.toggle('selected', i === index));
 
-  if (!listEl || index < 0 || index >= nodes.length) return;
+      if (!listEl || index < 0 || index >= nodes.length) return;
 
-  const sel = nodes[index];
+      const sel = nodes[index];
 
-  // bounding rect di lista e elemento selezionato
-  const listRect = listEl.getBoundingClientRect();
-  const selRect  = sel.getBoundingClientRect();
+      // bounding rect di lista e elemento selezionato
+      const listRect = listEl.getBoundingClientRect();
+      const selRect  = sel.getBoundingClientRect();
 
-  const margin = 8; // piccolo respiro
+      const margin = 8; // piccolo respiro
 
-  // Se l'elemento selezionato è SOPRA l'area visibile
-  if (selRect.top < listRect.top + margin) {
-    listEl.scrollTop -= (listRect.top + margin) - selRect.top;
-  }
-  // Se l'elemento selezionato è SOTTO l'area visibile
-  else if (selRect.bottom > listRect.bottom - margin) {
-    listEl.scrollTop += selRect.bottom - (listRect.bottom - margin);
-  }
-}
+      // Se l'elemento selezionato è SOPRA l'area visibile
+      if (selRect.top < listRect.top + margin) {
+        listEl.scrollTop -= (listRect.top + margin) - selRect.top;
+      }
+      // Se l'elemento selezionato è SOTTO l'area visibile
+      else if (selRect.bottom > listRect.bottom - margin) {
+        listEl.scrollTop += selRect.bottom - (listRect.bottom - margin);
+      }
+    }
     function renderList(list){
       const sorted = [...list].sort(active === 'pickup_future' ? sortFutureByDateDesc : sortDesc);
       const el     = D.q('#orders-list');
@@ -729,9 +745,10 @@ if (hasV(noteOrder)) {
     /* ===================== Ricerca/Filtri ===================== */
     function select(i){if(i<0||i>=view.length) return; index=i; highlight(); renderTicket();}
     function apply(){
-      const q=(D.q('#q').value||'').trim().toLowerCase(),tdy=today();
+      const q=(D.q('#q').value||'').trim().toLowerCase(), tdy=today(), tmr=tomorrow();
       let base=[...ORDERS];
       if(active==='pickup_today') base=base.filter(o=>o.date===tdy);
+      else if(active==='pickup_tomorrow') base=base.filter(o=>o.date===tmr);
       else if(active==='pickup_future') base=base.filter(o=>o.date>tdy);
       base=base.filter(matchesActive);
       if(q) base=base.filter(o=>norm(o.name).includes(norm(q)));
@@ -773,7 +790,8 @@ if (hasV(noteOrder)) {
       optsEl.querySelectorAll('input[type="checkbox"]').forEach(i=>i.addEventListener('change',()=>{ updToggle(); updApply(); }));
       updToggle(); updApply();
     }
-        const countSel = () => {
+
+    const countSel = () => {
       let c = 0;
       optsEl.querySelectorAll('input[type="checkbox"][data-dep]').forEach(i => {
         if (i.checked) c++;
@@ -984,3 +1002,4 @@ if (hasV(noteOrder)) {
   </script>
 </body>
 </html>
+
