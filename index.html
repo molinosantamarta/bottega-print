@@ -320,7 +320,7 @@
         'inserimento','timestamp','created','created at','creazione','data inserimento','insertion','stoccaggio','telefono','cellulare','tel','phone','mobile','contatto',
         'reparto','reparti','avicolo'
       ].map(norm);
-      const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline','quaglia','quaglie','germano','germani'];
+      const AV=['anatra','anatre','oca','oche','capone','capponi','faraona','faraone','pollo','polli','gallo','galline'];
       const isAvKey=k=>AV.some(t=>k.includes(t));
 
       const HEAD_MAP={
@@ -332,7 +332,8 @@
       };
 
       const groups={pane:[],banco:[],fruver:[],carne:[],altro:[]};
-      let current=null; let avicoloDesc=''; let lastAviIdx=-1;
+      let current=null; let avicoloDesc=''; let lastAviIdx=-1; 
+      let noteOrder='';
 
       const pushLines=(arr,text)=>{
         String(text).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV)
@@ -342,6 +343,14 @@
       for(const [kr,vr] of entries){
         const k=norm(kr); const val=(vr==null?'':String(vr)).trim();
         if(!hasV(val)) continue;
+        // NOTE SULL'ORDINE (mostrale in fondo, se presenti)
+        if (
+  (k.includes('note') && (k.includes('ordine') || k.includes('ord'))) ||
+  k === norm("note sull'ordine")
+) {
+  noteOrder = val;
+  continue;
+}
 
         if( (k.includes('avicol') && (k.includes('descrizion') || k.includes('prepar'))) || k.includes('descrizione preparazione avicolo') ){
           avicoloDesc=val; continue;
@@ -375,6 +384,14 @@
         if(pieces.length>0) pieces.push('<div class="dept-sep"></div>');
         pieces.push(...arr);
       }
+      
+      // NOTE in fondo (se presenti)
+if (hasV(noteOrder)) {
+  if (pieces.length > 0) pieces.push('<div class="dept-sep"></div>');
+  // stesso rendering delle altre linee
+  String(noteOrder).split(/\r?\n|;|•/).map(t=>t.trim()).filter(hasV)
+    .forEach(s=>pieces.push(`<div class="line">${esc(s)}</div>`));
+}
       return pieces.join('');
     }
 
