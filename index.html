@@ -646,6 +646,15 @@ if (hasV(noteOrder)) {
       const ta=(a.time||''),tb=(b.time||'');
       return ta<tb?1:(ta>tb?-1:0);
     }
+    function sortFutureByDateDesc(a,b){
+  // data più recente -> più lontana
+  if (a.date !== b.date) return a.date > b.date ? 1 : -1;
+
+  // stessa data: ora più recente -> più vecchia
+  const ta = (a.time || '');
+  const tb = (b.time || '');
+  return ta < tb ? 1 : (ta > tb ? -1 : 0);
+}
    function highlight(){
   const listEl = D.q('#orders-list');
   const nodes  = D.qa('#orders-list .order');
@@ -673,7 +682,7 @@ if (hasV(noteOrder)) {
   }
 }
     function renderList(list){
-      const sorted = [...list].sort(sortDesc);
+      const sorted = [...list].sort(active === 'pickup_future' ? sortFutureByDateDesc : sortDesc);
       const el     = D.q('#orders-list');
 
       if(!sorted.length){
