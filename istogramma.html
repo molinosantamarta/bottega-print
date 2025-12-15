@@ -154,7 +154,7 @@
         data:{
           labels,
           datasets:[{
-            label:'Ordini futuri',
+            label:'ordini',
             data: values,
             borderWidth: 1
           }]
@@ -183,8 +183,8 @@
     }
 
     load();
-    // refresh leggero (opzionale): ogni 60s
-    setInterval(load, 60000);
+    // refresh leggero (opzionale): ogni ora
+    setInterval(load, 3600000);
   </script>
 </body>
 </html>
