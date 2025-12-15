@@ -10,13 +10,7 @@
       display:grid;
       place-items:center;
     }
-    
-    
-    
-    
-    
-    
-    canvas{flex:1; width:100% !important; height:100% !important;}
+    canvas{flex:1; width:100% !important; height:100% !important; padding:8px 12px 0 0; box-sizing:border-box;}
   </style>
 </head>
 <body>
@@ -26,10 +20,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <script>
-    // === 1) METTI QUI IL TUO ENDPOINT (è lo stesso che usi nel master) ===
     const API = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
 
-    // Utils mini (coerenti con il tuo master)
     const pad=n=>String(n).padStart(2,'0');
     const todayISO=()=>{
       const d=new Date();
@@ -40,19 +32,14 @@
     function parseDateAny(s){
       if(!s) return null;
       const str=String(s).trim();
-
-      // dd/mm/yyyy
       let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
       if(m){
         const dd=+m[1], mm=+m[2]-1, yy=+m[3];
         const y = yy<100 ? 2000+yy : yy;
         return new Date(y,mm,dd,12,0,0);
       }
-
-      // yyyy-mm-dd
       m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
-
       const d=new Date(str);
       return isNaN(d.getTime())?null:d;
     }
@@ -69,7 +56,6 @@
     }
 
     function fmtITShort(iso){
-      // iso: YYYY-MM-DD -> dd/mm
       if(!iso) return '';
       const [y,m,d]=iso.split('-');
       return `${d}/${m}`;
@@ -85,22 +71,17 @@
     let chart=null;
 
     async function load(){
-      
-
       try{
         const res=await fetch(API+'?&_ts='+Date.now(), {cache:'no-store', mode:'cors'});
         const raw=await res.text();
         if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,120)}`);
-
         let data;
         try{ data=JSON.parse(raw); }
         catch{
-          // fallback: estrai JSON da eventuale wrapper
           const s=raw.search(/[\[{]/), eB=raw.lastIndexOf('}'), eA=raw.lastIndexOf(']'), e=Math.max(eB,eA);
           if(s!==-1 && e>s) data=JSON.parse(raw.slice(s,e+1));
           else throw new Error('Risposta non JSON');
         }
-
         let rows=[];
         if(Array.isArray(data)) rows=data;
         else if(Array.isArray(data.rows)) rows=data.rows;
@@ -110,53 +91,35 @@
           if(k) rows=data[k];
         }
 
-        // Mappa: prendo la colonna data (come nel tuo master)
         const tdy=todayISO();
-
-        const counts = new Map(); // isoDate -> count
+        const counts=new Map();
         for(const r of rows){
           const dateK = pickKey(r, ['DATA ORDINE','DATA','GIORNO','DATA RITIRO','RITIRO']);
           const d = dateK ? parseDateAny(r[dateK]) : null;
           if(!d) continue;
-
           const iso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-          if(iso <= tdy) continue; // solo FUTURI (da domani)
-
-          counts.set(iso, (counts.get(iso)||0) + 1);
+          if(iso <= tdy) continue;
+          counts.set(iso,(counts.get(iso)||0)+1);
         }
-
-        const labels = Array.from(counts.keys()).sort();     // cronologico (vicino -> lontano)
-        const values = labels.map(k=>counts.get(k));
-
-        const total = values.reduce((a,b)=>a+b,0);
-        
-        
-
-        
-
-        renderChart(labels, values);
-      }catch(e){
-        console.warn(e);
-        
-        
-        
-      }
+        const labels=[...counts.keys()].sort();
+        const values=labels.map(k=>counts.get(k));
+        renderChart(labels,values);
+      }catch(e){ console.warn(e); }
     }
 
     function renderChart(labelsISO, values){
       const ctx=document.getElementById('chart');
-      const labels = labelsISO.map(d=>fmtITShort(d));
-
+      const labels=labelsISO.map(fmtITShort);
       if(chart) chart.destroy();
-
-      chart=new Chart(ctx, {
+      chart=new Chart(ctx,{
         type:'bar',
         data:{
           labels,
           datasets:[{
             label:'ordini',
             data: values,
-            borderWidth: 1
+            borderWidth: 1,
+            backgroundColor:'#ffd60a'
           }]
         },
         options:{
@@ -164,15 +127,7 @@
           maintainAspectRatio:false,
           plugins:{
             legend:{display:false},
-            tooltip:{
-              callbacks:{
-                title:(items)=>{
-                  const i = items?.[0]?.dataIndex ?? 0;
-                  const iso = labelsISO[i];
-                  return fmtITLong(iso);
-                }
-              }
-            }
+            tooltip:{ callbacks:{ title:(items)=>fmtITLong(labelsISO[items?.[0]?.dataIndex ?? 0]) } }
           },
           scales:{
             x:{ grid:{display:false}, ticks:{maxRotation:0, autoSkip:true} },
@@ -183,7 +138,6 @@
     }
 
     load();
-    // refresh leggero (opzionale): ogni ora
     setInterval(load, 3600000);
   </script>
 </body>
