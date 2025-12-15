@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ritiri futuri — Istogramma</title>
+  <style>
+    html,body{height:100%;margin:0;background:#fff;color:#111;font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      box-sizing:border-box;
+    }
+    .card{
+      width:min(980px,92vw);
+      height:min(520px,70vh);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
+      padding:16px 16px 10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .top{
+      display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    }
+    .h{font-weight:900;font-size:18px;margin:0}
+    .sub{opacity:.7;font-size:13px}
+    .msg{opacity:.8;font-size:14px}
+    canvas{flex:1; width:100% !important; height:100% !important;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="h">Ritiri futuri</div>
+          <div class="sub" id="sub">—</div>
+        </div>
+        <div class="sub" id="updated">—</div>
+      </div>
+
+      <div class="msg" id="msg">Carico dati…</div>
+      <canvas id="chart" aria-label="Istogramma ritiri futuri" role="img"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script>
+    // === 1) METTI QUI IL TUO ENDPOINT (è lo stesso che usi nel master) ===
+    const API = 'https://script.google.com/macros/s/AKfycbzp_2RNQO9ROQkpcGebBpZ9P_MyZEmxkqLh5G-ODe4Yo2x9E0aRbEQIbmofaxhod9VGFA/exec';
+
+    // Utils mini (coerenti con il tuo master)
+    const pad=n=>String(n).padStart(2,'0');
+    const todayISO=()=>{
+      const d=new Date();
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    };
+    const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+
+    function parseDateAny(s){
+      if(!s) return null;
+      const str=String(s).trim();
+
+      // dd/mm/yyyy
+      let m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if(m){
+        const dd=+m[1], mm=+m[2]-1, yy=+m[3];
+        const y = yy<100 ? 2000+yy : yy;
+        return new Date(y,mm,dd,12,0,0);
+      }
+
+      // yyyy-mm-dd
+      m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+
+      const d=new Date(str);
+      return isNaN(d.getTime())?null:d;
+    }
+
+    function pickKey(obj,cands){
+      const ks=Object.keys(obj||{});
+      for(const c of cands){
+        const k=ks.find(x=>norm(x)===norm(c)); if(k) return k;
+      }
+      for(const c of cands){
+        const k=ks.find(x=>norm(x).includes(norm(c))); if(k) return k;
+      }
+      return null;
+    }
+
+    function fmtITShort(iso){
+      // iso: YYYY-MM-DD -> dd/mm
+      if(!iso) return '';
+      const [y,m,d]=iso.split('-');
+      return `${d}/${m}`;
+    }
+
+    function fmtITLong(iso){
+      if(!iso) return '';
+      const d=new Date(iso+"T12:00:00");
+      const mesi=["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+      return `${d.getDate()} ${mesi[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    let chart=null;
+
+    async function load(){
+      const msgEl=document.getElementById('msg');
+      const subEl=document.getElementById('sub');
+      const updEl=document.getElementById('updated');
+
+      try{
+        const res=await fetch(API+'?&_ts='+Date.now(), {cache:'no-store', mode:'cors'});
+        const raw=await res.text();
+        if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,120)}`);
+
+        let data;
+        try{ data=JSON.parse(raw); }
+        catch{
+          // fallback: estrai JSON da eventuale wrapper
+          const s=raw.search(/[\[{]/), eB=raw.lastIndexOf('}'), eA=raw.lastIndexOf(']'), e=Math.max(eB,eA);
+          if(s!==-1 && e>s) data=JSON.parse(raw.slice(s,e+1));
+          else throw new Error('Risposta non JSON');
+        }
+
+        let rows=[];
+        if(Array.isArray(data)) rows=data;
+        else if(Array.isArray(data.rows)) rows=data.rows;
+        else if(Array.isArray(data.data)) rows=data.data;
+        else if(data && typeof data==='object'){
+          const k=Object.keys(data).find(x=>Array.isArray(data[x]) && (data[x].length===0 || typeof data[x][0]==='object'));
+          if(k) rows=data[k];
+        }
+
+        // Mappa: prendo la colonna data (come nel tuo master)
+        const tdy=todayISO();
+
+        const counts = new Map(); // isoDate -> count
+        for(const r of rows){
+          const dateK = pickKey(r, ['DATA ORDINE','DATA','GIORNO','DATA RITIRO','RITIRO']);
+          const d = dateK ? parseDateAny(r[dateK]) : null;
+          if(!d) continue;
+
+          const iso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+          if(iso <= tdy) continue; // solo FUTURI (da domani)
+
+          counts.set(iso, (counts.get(iso)||0) + 1);
+        }
+
+        const labels = Array.from(counts.keys()).sort();     // cronologico (vicino -> lontano)
+        const values = labels.map(k=>counts.get(k));
+
+        const total = values.reduce((a,b)=>a+b,0);
+        subEl.textContent = total
+          ? `${total} ordini futuri • ${labels.length} giorni`
+          : `0 ordini futuri`;
+        updEl.textContent = `Aggiornato: ${new Date().toLocaleString('it-IT')}`;
+
+        msgEl.textContent = total
+          ? `Distribuzione dei ritiri futuri per giorno.`
+          : `Nessun ritiro futuro trovato nei dati.`;
+
+        renderChart(labels, values);
+      }catch(e){
+        console.warn(e);
+        msgEl.textContent = `Errore: ${String(e.message||e)}`;
+        subEl.textContent = '—';
+        updEl.textContent = '—';
+      }
+    }
+
+    function renderChart(labelsISO, values){
+      const ctx=document.getElementById('chart');
+      const labels = labelsISO.map(d=>fmtITShort(d));
+
+      if(chart) chart.destroy();
+
+      chart=new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels,
+          datasets:[{
+            label:'Ordini futuri',
+            data: values,
+            borderWidth: 1
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                title:(items)=>{
+                  const i = items?.[0]?.dataIndex ?? 0;
+                  const iso = labelsISO[i];
+                  return fmtITLong(iso);
+                }
+              }
+            }
+          },
+          scales:{
+            x:{ grid:{display:false}, ticks:{maxRotation:0, autoSkip:true} },
+            y:{ beginAtZero:true, ticks:{precision:0} }
+          }
+        }
+      });
+    }
+
+    load();
+    // refresh leggero (opzionale): ogni 60s
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>
