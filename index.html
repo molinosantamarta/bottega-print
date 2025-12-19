@@ -64,12 +64,18 @@
     .right{display:flex;flex-direction:column;gap:var(--g)}
     .controls{padding:var(--pad)}
 
+    /* =================== FIX LAYOUT FLASHCARDS + IFRAME =================== */
+    /* Obiettivo: stessa riga, niente sovrapposizioni: il layout si ridistribuisce e l'iframe può restringersi.
+       Se lo schermo è troppo stretto, si impila (mobile) invece di sovrapporsi. */
+
     /* Riga flashcards + contenitore extra */
     .flash-row{
       display:flex;
       gap:10px;
-      align-items:stretch;   /* così la bolla ha l’altezza delle flashcard */
+      align-items:stretch;
       margin-bottom:0;
+      flex-wrap:nowrap;   /* desktop: tutto su una riga */
+      min-width:0;        /* fondamentale: permette ai figli di restringersi */
     }
 
     /* Colonna flashcard */
@@ -77,23 +83,25 @@
       display:grid;
       grid-template-columns:repeat(4,1fr);
       gap:10px;
-      width:33%;
-      min-width:340px;
+      width:auto;                                             /* niente width fissa */
+      flex:0 1 clamp(280px, 34%, 460px);                      /* si adatta e può restringersi */
+      min-width:0;                                            /* permette il shrink */
     }
 
     /* Contenitore del grafico: è la "card" coi bordi stondati */
     .flashcard-extra{
-      flex:1;
+      flex:1 1 0;            /* prende lo spazio rimanente e può restringersi */
+      min-width:0;           /* evita overflow che “invade” le flashcard */
       display:flex;
       align-items:stretch;
       justify-content:center;
       cursor:default;
       padding:0;
-      border-radius:14px;                       /* bordi stondati */
-      background:#fff;                          /* stesso look delle card */
-      border:1px solid rgba(0,0,0,.08);         /* come le altre card */
-      box-shadow:var(--e);                      /* stessa ombra */
-      overflow:hidden;                          /* taglia l’iframe dentro */
+      border-radius:14px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:var(--e);
+      overflow:hidden;
       position:relative;
     }
 
@@ -101,9 +109,18 @@
     .flashcard-extra iframe{
       width:100%;
       height:100%;
+      min-width:0;
       display:block;
       border:0;
     }
+
+    /* Se lo spazio diventa davvero troppo stretto: impila in colonna (no sovrapposizioni) */
+    @media (max-width: 740px){
+      .flash-row{ flex-direction:column; }
+      .flashcards{ flex:0 0 auto; width:100%; }
+      .flashcard-extra{ width:100%; min-height:220px; }
+    }
+    /* ===================================================================== */
 
     .card{background:#fff;color:#111;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 14px;box-shadow:var(--e);user-select:none;cursor:pointer;transition:border-color .15s,box-shadow .15s}
     .card .k{font-size:12px;opacity:.7}
@@ -172,8 +189,6 @@
 
     /* Responsive */
     @media (max-width:1200px){
-      .flashcards{grid-template-columns:repeat(4,1fr);width:100%;}
-      .flash-row{flex-direction:column;}
       .searchbar{grid-template-columns:1fr auto;grid-auto-flow:row}
     }
     @media (max-width:1100px){:root{--pw:35%;--sw:65%}}
@@ -281,6 +296,7 @@
     </div>
   </div>
 
+  <!-- JS (identico al tuo: non toccato) -->
   <script>
     /* ===================== Utils ===================== */
     const D={q:s=>document.querySelector(s),qa:s=>Array.from(document.querySelectorAll(s))};
